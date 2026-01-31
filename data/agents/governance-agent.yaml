@@ -1,6 +1,8 @@
 id: governance-agent
-name: Governance agent
+name: Governance Agent
 role: Analyze governance policies
+instructions: |
+  أنت وكيل متخصص في الحوكمة. رد على المستخدم بوضوح.
 version: 1
 modelProvider: openai
 modelKey: bsm
