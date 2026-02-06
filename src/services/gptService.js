@@ -1,8 +1,27 @@
 import fetch from "node-fetch";
+import https from "https";
+import http from "http";
 import { AppError } from "../utils/errors.js";
 
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
+
+// HTTP/HTTPS agent with connection pooling and keep-alive for better performance
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: REQUEST_TIMEOUT_MS
+});
+
+const httpAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30000,
+  maxSockets: 50,
+  maxFreeSockets: 10,
+  timeout: REQUEST_TIMEOUT_MS
+});
 
 export const runGPT = async ({ model, apiKey, system, user, messages }) => {
   if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
@@ -28,7 +47,8 @@ export const runGPT = async ({ model, apiKey, system, user, messages }) => {
         messages: chatMessages,
         max_tokens: 1200
       }),
-      signal: controller.signal
+      signal: controller.signal,
+      agent: API_URL.startsWith('https') ? httpsAgent : httpAgent
     });
 
     clearTimeout(timeoutId);
