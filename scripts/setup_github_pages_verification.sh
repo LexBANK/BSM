@@ -1,214 +1,148 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Cloudflare zone and GitHub Pages challenge details for LexBANK/BSM.
-# Note: Zone ID is not highly sensitive and is also present in dns/lexdo-uk-zone.txt
-# For additional security, you can set this via CLOUDFLARE_ZONE_ID environment variable
-ZONE_ID="${CLOUDFLARE_ZONE_ID:-1c32bc5010d8b0c4a501e8458fd2cc14}"
+CLOUDFLARE_API="https://api.cloudflare.com/client/v4"
+ZONE_ID_DEFAULT="1c32bc5010d8b0c4a501e8458fd2cc14"
 RECORD_TYPE="TXT"
-RECORD_NAME="_github-pages-challenge-LexBANK.lexdo.uk"
-RECORD_CONTENT=""  # To be filled with actual challenge value from GitHub
-TTL=1
-
-# DNS propagation polling configuration
-MAX_PROPAGATION_ATTEMPTS=20
-PROPAGATION_SLEEP_SECONDS=15
-
-API_BASE="https://api.cloudflare.com/client/v4"
-VERIFY_URL="https://github.com/LexBANK/BSM/settings/pages"
+RECORD_NAME_DEFAULT="_github-pages-challenge-MOTEB1989.lexdo.uk"
+RECORD_CONTENT_DEFAULT="2807347ff93e933b27e52bb29e794c"
+RECORD_TTL=1
+GITHUB_VERIFY_URL_DEFAULT="https://github.com/LexBANK/BSM/settings/pages"
 
 usage() {
-  cat <<'USAGE'
+  cat <<USAGE
 Usage:
-  bash setup_github_pages_verification.sh <CLOUDFLARE_API_TOKEN> [RECORD_CONTENT]
+  bash scripts/setup_github_pages_verification.sh <CLOUDFLARE_API_TOKEN> [zone_id] [record_name] [record_content]
 
-Arguments:
-  CLOUDFLARE_API_TOKEN  Your Cloudflare API token with DNS edit permissions
-  RECORD_CONTENT        (Optional) The GitHub Pages challenge value
-                        If not provided, it must be set in the script or via
-                        GITHUB_PAGES_CHALLENGE environment variable
-
-Tip:
-  You can also pass values via environment variables:
-  CLOUDFLARE_API_TOKEN=... GITHUB_PAGES_CHALLENGE=... bash setup_github_pages_verification.sh
-
-Example:
-  bash setup_github_pages_verification.sh your_api_token abc123def456
+Optional environment variables:
+  GITHUB_VERIFY_URL   Override the GitHub Pages settings URL printed at the end.
+  DNS_POLL_ATTEMPTS   Number of DNS propagation checks (default: 18).
+  DNS_POLL_INTERVAL   Seconds between checks (default: 10).
 USAGE
 }
 
-TOKEN="${1:-${CLOUDFLARE_API_TOKEN:-}}"
-RECORD_CONTENT="${2:-${GITHUB_PAGES_CHALLENGE:-${RECORD_CONTENT}}}"
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+TOKEN="${1:-}"
+ZONE_ID="${2:-$ZONE_ID_DEFAULT}"
+RECORD_NAME="${3:-$RECORD_NAME_DEFAULT}"
+RECORD_CONTENT="${4:-$RECORD_CONTENT_DEFAULT}"
+GITHUB_VERIFY_URL="${GITHUB_VERIFY_URL:-$GITHUB_VERIFY_URL_DEFAULT}"
+DNS_POLL_ATTEMPTS="${DNS_POLL_ATTEMPTS:-18}"
+DNS_POLL_INTERVAL="${DNS_POLL_INTERVAL:-10}"
 
 if [[ -z "$TOKEN" ]]; then
-  echo "Error: CLOUDFLARE_API_TOKEN is required."
-  echo
+  echo "❌ Missing Cloudflare API token."
   usage
   exit 1
 fi
-
-if [[ -z "$RECORD_CONTENT" ]]; then
-  echo "Error: RECORD_CONTENT (GitHub Pages challenge value) is required."
-  echo "Get this from: $VERIFY_URL"
-  echo
-  usage
-  exit 1
-fi
-
-AUTH_HEADER="Authorization: Bearer ${TOKEN}"
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
-    echo "Error: missing required command '$1'."
+    echo "❌ Required command not found: $1"
     exit 1
   fi
 }
 
-json_success() {
-  python3 -c 'import json,sys; data=json.load(sys.stdin); print("true" if data.get("success") else "false")'
-}
+require_cmd curl
+require_cmd python3
 
-# Performs a Cloudflare API call and returns only the response body to stdout.
-# On HTTP errors, prints a helpful message (including response body when possible) and exits.
-cf_api() {
+api_call() {
   local method="$1"
-  local path="$2"
+  local endpoint="$2"
   local data="${3:-}"
 
-  local response
   if [[ -n "$data" ]]; then
-    response=$(curl -sS -X "$method" "${API_BASE}${path}" \
-      -H "${AUTH_HEADER}" \
+    curl -sS -X "$method" "$CLOUDFLARE_API$endpoint" \
+      -H "Authorization: Bearer $TOKEN" \
       -H "Content-Type: application/json" \
-      --data "$data" \
-      -w $'\n%{http_code}')
+      --data "$data"
   else
-    response=$(curl -sS -X "$method" "${API_BASE}${path}" \
-      -H "${AUTH_HEADER}" \
-      -H "Content-Type: application/json" \
-      -w $'\n%{http_code}')
+    curl -sS -X "$method" "$CLOUDFLARE_API$endpoint" \
+      -H "Authorization: Bearer $TOKEN" \
+      -H "Content-Type: application/json"
   fi
-
-  local http_code body
-  http_code="${response##*$'\n'}"
-  body="${response%$'\n'*}"
-
-  if [[ ! "$http_code" =~ ^2 ]]; then
-    echo "Cloudflare API request failed (${method} ${path}) with HTTP ${http_code}."
-    if [[ -n "$body" ]]; then
-      echo "Response body:"
-      printf '%s\n' "$body"
-    fi
-    exit 1
-  fi
-
-  printf '%s' "$body"
 }
 
-check_token() {
-  echo "1) Verifying API token..."
-
-  local response ok
-  response=$(cf_api "GET" "/user/tokens/verify")
-  ok=$(printf '%s' "$response" | json_success)
-
-  if [[ "$ok" != "true" ]]; then
-    echo "Token verification failed. Cloudflare response:"
-    printf '%s\n' "$response"
-    exit 1
-  fi
-
-  echo "✓ Token is valid."
+parse_json() {
+  local key="$1"
+  python3 -c "import json,sys; d=json.load(sys.stdin); print($key)"
 }
 
-get_existing_record_id() {
-  local response
-  response=$(cf_api "GET" "/zones/${ZONE_ID}/dns_records?type=${RECORD_TYPE}&name=${RECORD_NAME}")
+echo "🔐 Verifying Cloudflare API token..."
+VERIFY_RESPONSE="$(api_call GET "/user/tokens/verify")"
+VERIFY_SUCCESS="$(printf '%s' "$VERIFY_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
 
-  python3 - <<'PY' "$RECORD_CONTENT" "$response"
-import json,sys
-expected = sys.argv[1]
-data = json.loads(sys.argv[2])
-for record in data.get("result", []):
-    if record.get("content") == expected:
-        print(record.get("id", ""))
-        break
+if [[ "$VERIFY_SUCCESS" != "true" ]]; then
+  ERRORS="$(printf '%s' "$VERIFY_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
+  echo "❌ Token verification failed: ${ERRORS:-Unknown error}"
+  exit 1
+fi
+
+echo "✅ Token is valid."
+
+echo "🔎 Checking whether TXT record already exists..."
+EXISTING_RESPONSE="$(api_call GET "/zones/$ZONE_ID/dns_records?type=$RECORD_TYPE&name=$RECORD_NAME")"
+EXISTING_SUCCESS="$(printf '%s' "$EXISTING_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
+
+if [[ "$EXISTING_SUCCESS" != "true" ]]; then
+  ERRORS="$(printf '%s' "$EXISTING_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
+  echo "❌ Failed fetching DNS records: ${ERRORS:-Unknown error}"
+  exit 1
+fi
+
+RECORD_ID="$(printf '%s' "$EXISTING_RESPONSE" | parse_json 'd.get("result", [{}])[0].get("id", "") if d.get("result") else ""')"
+
+PAYLOAD="$(python3 - <<PY
+import json
+print(json.dumps({
+  "type": "$RECORD_TYPE",
+  "name": "$RECORD_NAME",
+  "content": "$RECORD_CONTENT",
+  "ttl": $RECORD_TTL,
+  "proxied": False,
+}))
 PY
-}
+)"
 
-create_record() {
-  echo "2) Creating TXT record in Cloudflare..."
+if [[ -n "$RECORD_ID" ]]; then
+  echo "✏️ Existing record found. Updating record..."
+  UPSERT_RESPONSE="$(api_call PUT "/zones/$ZONE_ID/dns_records/$RECORD_ID" "$PAYLOAD")"
+else
+  echo "➕ Creating TXT record..."
+  UPSERT_RESPONSE="$(api_call POST "/zones/$ZONE_ID/dns_records" "$PAYLOAD")"
+fi
 
-  local payload response ok
-  payload=$(cat <<JSON
-{"type":"${RECORD_TYPE}","name":"${RECORD_NAME}","content":"${RECORD_CONTENT}","ttl":${TTL}}
-JSON
-)
+UPSERT_SUCCESS="$(printf '%s' "$UPSERT_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
+if [[ "$UPSERT_SUCCESS" != "true" ]]; then
+  ERRORS="$(printf '%s' "$UPSERT_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
+  echo "❌ Failed writing TXT record: ${ERRORS:-Unknown error}"
+  exit 1
+fi
 
-  response=$(cf_api "POST" "/zones/${ZONE_ID}/dns_records" "$payload")
-  ok=$(printf '%s' "$response" | json_success)
+echo "✅ TXT record is set: $RECORD_NAME"
+echo "📡 Checking DNS propagation..."
 
-  if [[ "$ok" != "true" ]]; then
-    echo "Failed to create TXT record. Cloudflare response:"
-    printf '%s\n' "$response"
-    exit 1
-  fi
+if command -v dig >/dev/null 2>&1; then
+  for ((i=1; i<=DNS_POLL_ATTEMPTS; i++)); do
+    DIG_OUTPUT="$(dig +short TXT "$RECORD_NAME" | tr -d '"')"
+    if printf '%s\n' "$DIG_OUTPUT" | grep -Fxq "$RECORD_CONTENT"; then
+      echo "✅ DNS propagated successfully on attempt $i/$DNS_POLL_ATTEMPTS."
+      echo "🔗 Open GitHub and click Verify: $GITHUB_VERIFY_URL"
+      exit 0
+    fi
 
-  echo "✓ TXT record created."
-}
-
-wait_for_dns_propagation() {
-  echo "3) Waiting for DNS propagation..."
-
-  for ((attempt=1; attempt<=MAX_PROPAGATION_ATTEMPTS; attempt++)); do
-    echo "   Attempt ${attempt}/${MAX_PROPAGATION_ATTEMPTS}..."
-
-    for resolver in "@1.1.1.1" "@8.8.8.8"; do
-      local output
-      output=$(dig +short "$resolver" TXT "$RECORD_NAME" || true)
-      if printf '%s' "$output" | tr -d '"' | grep -Fq "$RECORD_CONTENT"; then
-        echo "✓ DNS propagated successfully via ${resolver}."
-        return 0
-      fi
-    done
-
-    sleep "$PROPAGATION_SLEEP_SECONDS"
+    echo "⏳ Attempt $i/$DNS_POLL_ATTEMPTS: record not visible yet. Waiting ${DNS_POLL_INTERVAL}s..."
+    sleep "$DNS_POLL_INTERVAL"
   done
 
-  echo "⚠ DNS record was created but did not propagate within expected time."
-  echo "You can still proceed and verify manually after a few minutes."
-}
-
-main() {
-  require_cmd curl
-  require_cmd dig
-  require_cmd python3
-
-  echo "GitHub Pages Verification Setup for LexBANK/BSM"
-  echo "==============================================="
-  echo "Domain: lexdo.uk"
-  echo "Record Name: ${RECORD_NAME}"
-  echo "Challenge Value: ${RECORD_CONTENT}"
-  echo
-
-  check_token
-
-  local record_id
-  record_id=$(get_existing_record_id)
-
-  if [[ -n "$record_id" ]]; then
-    echo "2) TXT record already exists with expected value (ID: $record_id)."
-  else
-    create_record
-  fi
-
-  wait_for_dns_propagation
-
-  echo
-  echo "Done! Next steps:"
-  echo "1. Open GitHub Pages settings: $VERIFY_URL"
-  echo "2. Click 'Verify' next to your domain"
-  echo "3. GitHub should now detect the TXT record and verify your domain"
-}
-
-main
+  echo "⚠️ Record created but not visible yet in public DNS."
+  echo "   It may need more time to propagate. Re-run this script in a few minutes."
+  echo "🔗 Once visible, verify in GitHub: $GITHUB_VERIFY_URL"
+else
+  echo "⚠️ 'dig' command is not installed, so propagation check was skipped."
+  echo "🔗 Verify in GitHub after a short wait: $GITHUB_VERIFY_URL"
+fi
