@@ -164,7 +164,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Install tools
         run: |
@@ -187,12 +187,11 @@ EOF
 
 # Main run script (already exists, skip)
 
-# Make scripts executable
-chmod +x scripts/run_agents.sh
+# Make bootstrap script executable
 chmod +x scripts/bootstrap_bsm_agents.sh || true
 
 # Commit all created files
-git add .github/agents .github/PULL_REQUEST_TEMPLATE .github/workflows scripts
+git add .github/agents .github/PULL_REQUEST_TEMPLATE .github/workflows
 git commit -m "Bootstrap BSM Agents automation and workflow" || true
 
 # Push branch
