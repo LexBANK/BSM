@@ -183,7 +183,9 @@ Some workflows produce artifacts that can be downloaded:
 | Workflow | Artifact | Retention |
 |----------|----------|-----------|
 | `pr-checks.yml` | agents-reports-{sha} | 30 days |
-| `run-bsm-agents.yml` | agents-report-json, agents-report-md, agents-run-log | 30-90 days |
+| `run-bsm-agents.yml` | agents-report-json | 90 days |
+| `run-bsm-agents.yml` | agents-report-md | 90 days |
+| `run-bsm-agents.yml` | agents-run-log | 30 days |
 | `weekly-agents.yml` | weekly-agents-report | 90 days |
 
 ## Troubleshooting

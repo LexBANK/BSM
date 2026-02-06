@@ -28,12 +28,12 @@ jobs:
         run: npm ci
       
       - name: Run ESLint (if configured)
-        run: npm run lint || echo "ESLint not configured yet"
-        continue-on-error: true
+        run: npm run lint || echo "ESLint not configured yet - will be required once configured"
+        continue-on-error: true  # TODO: Remove continue-on-error once ESLint is configured
       
       - name: Run Prettier (if configured)
-        run: npm run format:check || echo "Prettier not configured yet"
-        continue-on-error: true
+        run: npm run format:check || echo "Prettier not configured yet - will be required once configured"
+        continue-on-error: true  # TODO: Remove continue-on-error once Prettier is configured
       
       - name: Validate data structure
         run: npm run validate
@@ -59,8 +59,8 @@ jobs:
         run: npm ci
       
       - name: Run tests
-        run: npm test || echo "Tests not configured yet - this will be required soon"
-        continue-on-error: true
+        run: npm test || echo "Tests not configured yet - will be required once test suite is complete"
+        continue-on-error: true  # TODO: Remove continue-on-error once full test suite is configured
         env:
           NODE_ENV: test
       
@@ -151,9 +151,11 @@ jobs:
       - name: Test Docker image (if built)
         run: |
           if docker image inspect bsm-api:${{ github.sha }} > /dev/null 2>&1; then
+            # Generate a secure random token for testing
+            TEST_TOKEN=$(openssl rand -base64 24)
             docker run -d --name bsm-test -p 3000:3000 \
               -e NODE_ENV=production \
-              -e ADMIN_TOKEN=test-token-1234567890 \
+              -e ADMIN_TOKEN="${TEST_TOKEN}" \
               bsm-api:${{ github.sha }}
             sleep 5
             curl -f http://localhost:3000/api/health || exit 1
