@@ -135,14 +135,17 @@ createApp({
         let url, body;
 
         if (mode.value === 'direct') {
-          // Direct GPT chat with history
+          // Direct GPT chat with history (limit to last 20 messages for performance)
           url = `${API_BASE}/api/chat/direct`;
+          const recentHistory = messages.value
+            .filter(m => m.role === 'user' || m.role === 'assistant')
+            .slice(-20) // Keep only last 20 messages
+            .map(m => ({ role: m.role, content: m.content }));
+          
           body = {
             message: text,
             language: lang.value,
-            history: messages.value
-              .filter(m => m.role === 'user' || m.role === 'assistant')
-              .map(m => ({ role: m.role, content: m.content }))
+            history: recentHistory
           };
         } else {
           // Agent-based chat

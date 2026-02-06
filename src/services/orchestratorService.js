@@ -1,4 +1,4 @@
-import fs from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import logger from "../utils/logger.js";
 import { AppError } from "../utils/errors.js";
@@ -15,10 +15,8 @@ export const runOrchestration = async () => {
     const reportDir = path.join(process.cwd(), "reports");
     const reportFile = path.join(reportDir, `agents-summary-${timestamp}.md`);
 
-    // Ensure reports directory exists
-    if (!fs.existsSync(reportDir)) {
-      fs.mkdirSync(reportDir, { recursive: true });
-    }
+    // Ensure reports directory exists (async)
+    await fs.mkdir(reportDir, { recursive: true });
 
     logger.info({ timestamp }, "Starting orchestration");
 
@@ -113,9 +111,9 @@ export const generateReport = (results) => {
 };
 
 /**
- * Save report to file
+ * Save report to file (async)
  */
-export const saveReport = (reportFile, content) => {
-  fs.writeFileSync(reportFile, content, "utf8");
+export const saveReport = async (reportFile, content) => {
+  await fs.writeFile(reportFile, content, "utf8");
   logger.info({ reportFile }, "Report saved");
 };
