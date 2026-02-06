@@ -15,10 +15,11 @@ import routes from "./routes/index.js";
 
 const app = express();
 
-const corsOptions = env.corsOrigins.length
+const corsOptions = env.corsOriginsSet.size > 0
   ? {
       origin: (origin, callback) => {
-        if (!origin || env.corsOrigins.includes(origin)) {
+        // Use Set for O(1) lookup instead of Array includes O(n)
+        if (!origin || env.corsOriginsSet.has(origin)) {
           return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));
