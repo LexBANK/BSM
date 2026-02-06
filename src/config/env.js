@@ -13,7 +13,9 @@ export const env = {
     : [],
   rateLimitWindowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
   rateLimitMax: parseNumber(process.env.RATE_LIMIT_MAX, 100),
-  maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000)
+  maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000),
+  githubToken: process.env.GITHUB_TOKEN,
+  githubModelsModel: process.env.GITHUB_MODELS_MODEL || "gpt-4o"
 };
 
 // Validate admin token in production
