@@ -51,11 +51,8 @@ jobs:
           git commit -m "docs: publish agents report [automated]"
           git push
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs
+      # GitHub Pages deployment is handled automatically by pages.yml workflow
+      # when docs/ changes are pushed to main branch
 
       - name: Create notification issue
         uses: actions/github-script@v7
