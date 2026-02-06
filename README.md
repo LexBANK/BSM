@@ -203,11 +203,25 @@ With GitHub Copilot Pro integration, our development workflow includes:
 
 ## CI/CD
 
-The project includes GitHub Actions workflows:
+The project includes comprehensive GitHub Actions workflows:
 
-- **Validate**: Runs on every PR and push to main, validates data structure
-- **CodeQL**: Security analysis for JavaScript code
+### Automated PR Checks
+- **PR Checks**: Comprehensive validation for all Pull Requests including:
+  - Code quality and linting checks
+  - Multi-version testing (Node 20, 22)
+  - Security scanning (CodeQL, npm audit, Trivy)
+  - Build verification with Docker health checks
+  - BSM custom agents execution (Architect, Runner, Security, Orchestrator)
+- **Validate**: Quick validation on every PR and push to main
+- **CodeQL**: Security analysis for JavaScript code on PRs and main
+- **Secret Scanning**: Multi-layer secret detection (Gitleaks, TruffleHog, Git Secrets)
+
+### Deployment & Publishing
 - **Pages**: Deploys `docs/` to GitHub Pages on push to main
+- **Publish Reports**: Automated report generation and artifact publishing
+
+### Documentation
+For detailed information about the PR checking process, see [PR Checking Process](docs/PR-CHECKING-PROCESS.md)
 
 ## Benefits
 
@@ -247,9 +261,14 @@ The project includes GitHub Actions workflows:
 Contributions are welcome! Please ensure that:
 - Code follows the project's style guidelines
 - All tests pass successfully (`npm run validate`)
+- All automated PR checks pass (see [PR Checking Process](docs/PR-CHECKING-PROCESS.md))
 - Documentation is updated accordingly
 - GitHub Copilot suggestions are reviewed for quality
 - Security best practices are followed
+- No hardcoded secrets or credentials are committed
+- Pull Request template checklist is completed
+
+When you open a Pull Request, automated checks will run to validate your changes. These checks include code quality, security scanning, testing, and build verification. See the [PR template](.github/PULL_REQUEST_TEMPLATE.md) for the complete checklist.
 
 ## License
 
