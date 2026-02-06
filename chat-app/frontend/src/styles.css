@@ -1,0 +1,10 @@
+:root { font-family: Inter, system-ui, sans-serif; }
+body { margin: 0; background: #0f172a; color: #e2e8f0; }
+.card, .chat-wrap { max-width: 540px; margin: 5rem auto; display: grid; gap: .75rem; padding: 1rem; background: #1e293b; border-radius: .75rem; }
+input, button { padding: .75rem; border: 0; border-radius: .5rem; }
+button { background: #3b82f6; color: white; cursor: pointer; }
+.messages { min-height: 240px; background: #0b1220; padding: .75rem; border-radius: .5rem; overflow: auto; }
+.bubble { background: #334155; margin-bottom: .5rem; padding: .5rem .75rem; border-radius: .5rem; }
+header, footer { display: flex; gap: .5rem; justify-content: space-between; }
+footer input { flex: 1; }
+a { color: #93c5fd; }
