@@ -35,8 +35,19 @@ log_step() {
   local status="$2"
   local output="$3"
   
-  # Append step to JSON (simple append, not proper JSON merging)
   echo "  Step: ${step_name} - ${status}"
+  
+  # Append to JSON using jq if available, otherwise create simple JSON
+  if command -v jq >/dev/null 2>&1; then
+    # Use jq to properly append to the steps array
+    local tmp_json=$(mktemp)
+    jq --arg name "${step_name}" --arg status "${status}" --arg output "${output}" \
+      '.steps += [{"name": $name, "status": $status, "output": $output}]' \
+      "${RESULT_FILE}" > "${tmp_json}" && mv "${tmp_json}" "${RESULT_FILE}"
+  else
+    # Fallback: simple append (not proper JSON but better than nothing)
+    echo "    {\"name\": \"${step_name}\", \"status\": \"${status}\"}" >> "${RESULT_FILE}.log"
+  fi
 }
 
 # ---------------------------------------------------------------------------
