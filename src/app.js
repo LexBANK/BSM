@@ -27,7 +27,18 @@ const corsOptions = env.corsOrigins.length
   : { origin: true };
 
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"]
+    }
+  }
+}));
 app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
