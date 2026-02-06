@@ -73,7 +73,8 @@ class Cache {
 // Singleton instance
 const cache = new Cache();
 
-// Periodic cleanup every 5 minutes
-setInterval(() => cache.cleanup(), 5 * 60 * 1000);
+// Periodic cleanup every 5 minutes (unref to allow process exit)
+const cleanupInterval = setInterval(() => cache.cleanup(), 5 * 60 * 1000);
+cleanupInterval.unref(); // Allow Node.js to exit even if interval is active
 
 export default cache;
