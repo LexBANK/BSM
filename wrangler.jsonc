@@ -1,7 +1,14 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "bsm",
+  "main": "src/agents/orbit/orbit.worker.ts",
   "compatibility_date": "2026-02-06",
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
+  "vars": {
+    "ORBIT_GITHUB_REPO": "OWNER/REPO"
+  },
   "assets": {
     "directory": "./docs"
   }

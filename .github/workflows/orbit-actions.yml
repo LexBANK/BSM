@@ -1,0 +1,61 @@
+name: ORBIT Self-Healing
+
+on:
+  repository_dispatch:
+    types: [orbit_actions]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  orbit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse actions
+        id: parse
+        run: |
+          echo 'actions=${{ toJson(github.event.client_payload.actions) }}' >> "$GITHUB_OUTPUT"
+
+      - name: Run ORBIT actions
+        env:
+          ACTIONS: ${{ steps.parse.outputs.actions }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "ORBIT actions: $ACTIONS"
+
+          if echo "$ACTIONS" | grep -q "trigger:deploy"; then
+            gh workflow run cf-deploy.yml
+          fi
+
+          if echo "$ACTIONS" | grep -q "trigger:purge-cache"; then
+            gh workflow run cf-purge-cache.yml -f mode=full
+          fi
+
+          if echo "$ACTIONS" | grep -q "trigger:cleanup-branches"; then
+            bash ./cleanup-branches.sh
+          fi
+
+          if echo "$ACTIONS" | grep -q "trigger:dedupe-files"; then
+            bash ./scripts/dedupe-files.sh
+          fi
+
+          if echo "$ACTIONS" | grep -q "trigger:dedupe-code"; then
+            bash ./scripts/dedupe-code.sh
+          fi
+
+      - name: Commit dedupe changes (if any)
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git config user.name "orbit-bot"
+            git config user.email "orbit-bot@users.noreply.github.com"
+            git add .
+            git commit -m "chore(orbit): apply self-healing dedupe"
+            git push
+          else
+            echo "No changes to commit."
+          fi
