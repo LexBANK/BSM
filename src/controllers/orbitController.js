@@ -1,6 +1,6 @@
 import { orbitAgent } from "../services/orbitAgent.js";
 import { telegramNotificationService } from "../services/telegramNotificationService.js";
-import { logger } from "../utils/logger.js";
+import logger from "../utils/logger.js";
 
 /**
  * ORBIT Agent Controller

@@ -22,7 +22,7 @@
  */
 
 import { telegramNotificationService } from "../src/services/telegramNotificationService.js";
-import { logger } from "../src/utils/logger.js";
+import logger from "../src/utils/logger.js";
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
