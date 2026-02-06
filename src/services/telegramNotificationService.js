@@ -32,7 +32,7 @@ class TelegramNotificationService {
    * Send a notification message
    * @param {string} message - The message to send
    * @param {object} options - Optional settings
-   * @param {string} options.parseMode - 'Markdown' or 'HTML'
+   * @param {string} options.parseMode - 'MarkdownV2' or 'HTML' (default: MarkdownV2)
    * @param {boolean} options.disableNotification - Silent notification
    * @returns {Promise<object>} Response from Telegram API
    */
@@ -43,7 +43,7 @@ class TelegramNotificationService {
     }
 
     const {
-      parseMode = "Markdown",
+      parseMode = "MarkdownV2",
       disableNotification = false
     } = options;
 
@@ -90,6 +90,8 @@ class TelegramNotificationService {
     const timestamp = new Date().toISOString();
     const emoji = this.getActionEmoji(action);
     
+    // Use basic Markdown (legacy) for better compatibility
+    // Escape special characters if using MarkdownV2
     let message = `${emoji} *ORBIT Agent*\n\n`;
     message += `*Action:* ${action}\n`;
     message += `*Time:* ${timestamp}\n`;
@@ -110,7 +112,8 @@ class TelegramNotificationService {
       message += `*Result:* ${details.result}\n`;
     }
 
-    return this.send(message);
+    // Use Markdown (legacy) for backward compatibility
+    return this.send(message, { parseMode: "Markdown" });
   }
 
   /**
@@ -138,8 +141,8 @@ class TelegramNotificationService {
       message += `*Details:* ${context.details}\n`;
     }
 
-    // Critical alerts are never silent
-    return this.send(message, { disableNotification: false });
+    // Use Markdown (legacy) for backward compatibility
+    return this.send(message, { disableNotification: false, parseMode: "Markdown" });
   }
 
   /**

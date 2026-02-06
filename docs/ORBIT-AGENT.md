@@ -15,6 +15,8 @@ The **ORBIT Self-Healing Agent** is an intelligent monitoring and automation sys
 - **🎯 Multiple Action Types**: Cache purging, branch cleanup, health checks, and more
 - **⚡ Real-time Monitoring**: Continuous system health monitoring
 
+**⚠️ Note**: The current implementation includes simulation logic for demonstration purposes. Actions like cache purging, branch cleanup, and service restarts use simulated delays and random values. In production, replace these with actual API calls to Cloudflare, Git/GitHub, systemctl, or your infrastructure management tools.
+
 ## Telegram Setup
 
 ### Step 1: Create a Telegram Bot
@@ -460,6 +462,136 @@ fetch('/api/orbit/history?limit=10')
 5. **Handle Failures Gracefully**: Ensure critical alerts are sent for failures
 6. **Keep Actions Idempotent**: Actions should be safe to retry
 7. **Log Everything**: All actions are logged for auditing
+8. **Replace Simulations**: Update simulation logic with actual API calls for production
+
+## Production Integration
+
+The current implementation includes simulation logic for demonstration. To use in production:
+
+### 1. Replace Cloudflare Cache Purge Simulation
+
+```javascript
+// In src/services/orbitAgent.js, replace simulation with:
+import fetch from 'node-fetch';
+
+async purgeCloudflareCache(zone = "default") {
+  const CLOUDFLARE_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN;
+  const CLOUDFLARE_ZONE_ID = process.env.CLOUDFLARE_ZONE_ID;
+  
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${CLOUDFLARE_API_TOKEN}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ purge_everything: true })
+    }
+  );
+  
+  const result = await response.json();
+  // ... handle result and send notification
+}
+```
+
+### 2. Replace Git Branch Cleanup Simulation
+
+```javascript
+// Use GitHub API or local git commands
+import { Octokit } from '@octokit/rest';
+
+async cleanGitBranches(maxAge = 30) {
+  const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - maxAge);
+  
+  const { data: branches } = await octokit.repos.listBranches({
+    owner: 'your-org',
+    repo: 'your-repo'
+  });
+  
+  // Filter and delete old branches
+  // ... implementation details
+}
+```
+
+### 3. Replace Health Check Simulation
+
+```javascript
+// Use actual system metrics
+import os from 'os';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
+
+async performHealthCheck() {
+  // Get actual CPU usage
+  const cpus = os.cpus();
+  const cpuUsage = cpus.reduce((acc, cpu) => {
+    const total = Object.values(cpu.times).reduce((a, b) => a + b);
+    const idle = cpu.times.idle;
+    return acc + ((total - idle) / total) * 100;
+  }, 0) / cpus.length;
+  
+  // Get memory usage
+  const totalMem = os.totalmem();
+  const freeMem = os.freemem();
+  const memoryUsage = ((totalMem - freeMem) / totalMem) * 100;
+  
+  // Get disk usage (Linux)
+  const { stdout } = await execPromise("df -h / | tail -1 | awk '{print $5}'");
+  const diskUsage = parseFloat(stdout.replace('%', ''));
+  
+  const healthStatus = {
+    cpu: cpuUsage,
+    memory: memoryUsage,
+    disk: diskUsage,
+    uptime: process.uptime()
+  };
+  
+  // ... rest of implementation
+}
+```
+
+### 4. Replace Service Restart Simulation
+
+```javascript
+// Use systemctl, pm2, or Docker
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execPromise = promisify(exec);
+
+async restartService(serviceName) {
+  // For systemd services
+  await execPromise(`sudo systemctl restart ${serviceName}`);
+  
+  // Or for PM2
+  // await execPromise(`pm2 restart ${serviceName}`);
+  
+  // Or for Docker
+  // await execPromise(`docker restart ${serviceName}`);
+  
+  // ... handle result and send notification
+}
+```
+
+### Required Environment Variables for Production
+
+Add these to your `.env` file:
+
+```bash
+# Cloudflare (if using cache purge)
+CLOUDFLARE_API_TOKEN=your-cloudflare-api-token
+CLOUDFLARE_ZONE_ID=your-zone-id
+
+# GitHub (if using branch cleanup)
+GITHUB_TOKEN=your-github-token
+
+# Add other credentials as needed
+```
 
 ## Examples
 

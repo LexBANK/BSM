@@ -75,8 +75,9 @@ class OrbitAgent {
     logger.info(`ORBIT: Purging Cloudflare cache for zone: ${zone}`);
     
     try {
-      // Simulate cache purge operation
-      // In production, this would call Cloudflare API
+      // NOTE: This is simulation logic for demonstration purposes
+      // In production, replace with actual Cloudflare API call:
+      // const result = await cloudflareAPI.purgeCache(zone);
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const details = {
@@ -122,10 +123,12 @@ class OrbitAgent {
     logger.info(`ORBIT: Cleaning branches older than ${maxAge} days`);
     
     try {
-      // Simulate branch cleanup
-      // In production, this would call Git/GitHub API
+      // NOTE: This is simulation logic for demonstration purposes
+      // In production, replace with actual Git/GitHub API call:
+      // const result = await gitAPI.deleteOldBranches(maxAge);
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Simulate random number of branches removed (1-5)
       const branchesRemoved = Math.floor(Math.random() * 5) + 1;
       
       const details = {
@@ -168,7 +171,14 @@ class OrbitAgent {
     logger.info("ORBIT: Performing health check");
     
     try {
-      // Simulate health check
+      // NOTE: This is simulation logic for demonstration purposes
+      // In production, use actual system metrics:
+      // const os = require('os');
+      // const cpuUsage = calculateCPUUsage();
+      // const memoryUsage = (1 - os.freemem() / os.totalmem()) * 100;
+      // const diskUsage = await getDiskUsage();
+      
+      // Simulated health metrics (replace with real metrics in production)
       const healthStatus = {
         cpu: Math.random() * 100,
         memory: Math.random() * 100,
@@ -231,7 +241,10 @@ class OrbitAgent {
     logger.info(`ORBIT: Restarting service: ${serviceName}`);
     
     try {
-      // Simulate service restart
+      // NOTE: This is simulation logic for demonstration purposes
+      // In production, implement actual service restart logic:
+      // await systemctl.restart(serviceName);
+      // or: await pm2.restart(serviceName);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const details = {
