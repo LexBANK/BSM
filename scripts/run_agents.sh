@@ -4,84 +4,109 @@ set -euo pipefail
 REPORT_DIR=${1:-reports}
 OPEN_PR=${2:-false}
 TIMESTAMP=$(date +"%Y%m%dT%H%M%S")
-OUTFILE="${REPORT_DIR}/agents-summary-${TIMESTAMP}.md"
+JSON_OUTFILE="${REPORT_DIR}/result_${TIMESTAMP}.json"
+MARKDOWN_OUTFILE="${REPORT_DIR}/report_${TIMESTAMP}.md"
 TMPDIR=$(mktemp -d)
+ARCHITECT_RESULT="warning"
+ARCHITECT_DETAILS="No architecture summary was generated"
+RUNNER_RESULT="warning"
+RUNNER_DETAILS="No npm tests were detected or npm was unavailable"
+SECURITY_RESULT="warning"
+SECURITY_DETAILS="Security scan completed with warnings"
 
 mkdir -p "${REPORT_DIR}"
 
-echo "# BSM Agents Run Report - ${TIMESTAMP}" > "${OUTFILE}"
-echo "" >> "${OUTFILE}"
-
 # Architect step (attempt Copilot CLI)
-echo "## Architect Analysis" >> "${OUTFILE}"
 if command -v copilot >/dev/null 2>&1; then
   copilot agents run architect --repo . --output "${TMPDIR}/architect.json" || true
   if [ -f "${TMPDIR}/architect.json" ]; then
-    jq -r '.summary // "- No summary generated"' "${TMPDIR}/architect.json" >> "${OUTFILE}" || true
+    ARCHITECT_RESULT="ok"
+    ARCHITECT_DETAILS=$(jq -r '.summary // "Architecture summary generated"' "${TMPDIR}/architect.json" 2>/dev/null || echo "Architecture summary generated")
   else
-    echo "- Architect: no JSON output; fallback quick scan performed" >> "${OUTFILE}"
-    echo "- Suggested refactors: move /src/legacy -> /src/legacy-archive" >> "${OUTFILE}"
+    ARCHITECT_DETAILS="No architect JSON output; fallback quick scan performed"
   fi
 else
-  echo "- copilot CLI not found; running fallback static analysis" >> "${OUTFILE}"
-  echo "- Suggested refactors: move /src/legacy -> /src/legacy-archive" >> "${OUTFILE}"
+  ARCHITECT_DETAILS="copilot CLI not found; fallback static analysis used"
 fi
-echo "" >> "${OUTFILE}"
 
 # Runner step
-echo "## Runner Results" >> "${OUTFILE}"
 if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
   if npm test --silent; then
-    echo "- Tests passed" >> "${OUTFILE}"
+    RUNNER_RESULT="ok"
+    RUNNER_DETAILS="Tests passed"
   else
-    echo "- Some tests failed; see CI logs" >> "${OUTFILE}"
+    RUNNER_RESULT="warning"
+    RUNNER_DETAILS="Some tests failed; see CI logs"
   fi
 else
-  echo "- No npm tests detected or npm not installed" >> "${OUTFILE}"
+  RUNNER_DETAILS="No npm tests detected or npm not installed"
 fi
-echo "" >> "${OUTFILE}"
 
 # Security step
-echo "## Security Findings" >> "${OUTFILE}"
 if command -v snyk >/dev/null 2>&1; then
   snyk test --json > "${TMPDIR}/snyk.json" || true
   if [ -s "${TMPDIR}/snyk.json" ]; then
-    echo "- Snyk results saved to snyk.json" >> "${OUTFILE}"
+    SECURITY_RESULT="ok"
+    SECURITY_DETAILS="Snyk results saved"
   else
-    echo "- Snyk ran but returned no JSON output" >> "${OUTFILE}"
+    SECURITY_DETAILS="Snyk ran but returned no JSON output"
   fi
 else
-  echo "- Snyk not installed; skipping Snyk scan" >> "${OUTFILE}"
+  SECURITY_DETAILS="Snyk not installed; skipping Snyk scan"
 fi
 
 SECRET_FOUND=false
 if command -v git >/dev/null 2>&1; then
   while IFS= read -r f; do
     if grep -I -nE "AKIA|AIza|SECRET|PRIVATE_KEY|password|passwd|token|-----BEGIN PRIVATE KEY-----" "$f" >/dev/null 2>&1; then
-      echo "- Potential secret pattern found in ${f}" >> "${OUTFILE}"
       SECRET_FOUND=true
     fi
   done < <(git ls-files)
-  if [ "$SECRET_FOUND" = false ]; then
-    echo "- Quick scan: no obvious secret patterns found" >> "${OUTFILE}"
+  if [ "$SECRET_FOUND" = true ]; then
+    SECURITY_RESULT="warning"
+    SECURITY_DETAILS="Potential secret patterns found during quick scan"
+  elif [ "$SECURITY_RESULT" = "ok" ]; then
+    SECURITY_DETAILS="Snyk results saved; no obvious secret patterns found"
+  else
+    SECURITY_DETAILS="Quick scan found no obvious secret patterns"
   fi
-else
-  echo "- Git not available for quick secret scan" >> "${OUTFILE}"
 fi
-echo "" >> "${OUTFILE}"
 
-# Aggregate JSON outputs
-echo "## Aggregated Outputs" >> "${OUTFILE}"
-for jf in "${TMPDIR}"/*.json; do
-  [ -e "$jf" ] || continue
-  echo "- Included JSON: $(basename "$jf")" >> "${OUTFILE}"
+OVERALL_STATUS="success"
+for result in "$ARCHITECT_RESULT" "$RUNNER_RESULT" "$SECURITY_RESULT"; do
+  if [ "$result" = "failed" ]; then
+    OVERALL_STATUS="failed"
+    break
+  elif [ "$result" = "warning" ] && [ "$OVERALL_STATUS" = "success" ]; then
+    OVERALL_STATUS="partial_success"
+  fi
 done
-echo "" >> "${OUTFILE}"
 
-echo "## Summary" >> "${OUTFILE}"
-echo "- Architect: actionable suggestions included (see above)" >> "${OUTFILE}"
-echo "- Runner: test/build status included" >> "${OUTFILE}"
-echo "- Security: recommendations included" >> "${OUTFILE}"
+jq -n \
+  --arg run_id "$TIMESTAMP" \
+  --arg status "$OVERALL_STATUS" \
+  --arg architect_result "$ARCHITECT_RESULT" \
+  --arg architect_details "$ARCHITECT_DETAILS" \
+  --arg runner_result "$RUNNER_RESULT" \
+  --arg runner_details "$RUNNER_DETAILS" \
+  --arg security_result "$SECURITY_RESULT" \
+  --arg security_details "$SECURITY_DETAILS" \
+  '{
+    run_id: $run_id,
+    status: $status,
+    agents: [
+      { name: "architect-agent", result: $architect_result, details: $architect_details },
+      { name: "runner-agent", result: $runner_result, details: $runner_details },
+      { name: "security-agent", result: $security_result, details: $security_details }
+    ]
+  }' > "$JSON_OUTFILE"
+
+echo "▶ Converting JSON report to Markdown..."
+node scripts/json_to_md.js "$JSON_OUTFILE" "$MARKDOWN_OUTFILE"
+
+mkdir -p docs/reports
+cp "$MARKDOWN_OUTFILE" "docs/reports/"
+node scripts/build_reports_index.js
 
 # Optional PR creation
 PR_BRANCH="bsm-agents-suggestions-${TIMESTAMP}"
@@ -97,8 +122,8 @@ if [ "${OPEN_PR}" = "true" ]; then
   if command -v gh >/dev/null 2>&1; then
     git checkout -b "${PR_BRANCH}"
     mkdir -p .github/agents/reports
-    cp "${OUTFILE}" ".github/agents/reports/agents-summary-${TIMESTAMP}.md"
-    git add .github/agents/reports/agents-summary-${TIMESTAMP}.md
+    cp "${MARKDOWN_OUTFILE}" ".github/agents/reports/report_${TIMESTAMP}.md"
+    git add .github/agents/reports/report_${TIMESTAMP}.md
     git commit -m "Add agents report ${TIMESTAMP}" || true
     git push --set-upstream origin "${PR_BRANCH}"
     gh pr create --title "${PR_TITLE}" --body-file "${PR_BODY_FILE}" --label "automation" --draft
@@ -108,4 +133,5 @@ if [ "${OPEN_PR}" = "true" ]; then
   fi
 fi
 
-echo "Report generated at ${OUTFILE}"
+echo "JSON report generated at ${JSON_OUTFILE}"
+echo "Markdown report generated at ${MARKDOWN_OUTFILE}"
