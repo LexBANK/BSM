@@ -22,6 +22,7 @@ BSM/
 │   └── CNAME               # Domain configuration
 ├── scripts/                # Build and validation scripts
 │   ├── validate.js         # Data structure validation
+│   ├── runner.js           # BSM build/test runner CLI
 │   └── setup_github_pages_verification.sh # GitHub Pages DNS setup
 ├── src/
 │   ├── admin/              # Admin UI (HTML/CSS/JS)
@@ -31,6 +32,8 @@ BSM/
 │   ├── middleware/         # Express middleware
 │   ├── routes/             # API route definitions
 │   ├── runners/            # Agent execution logic
+│   │   ├── agentRunner.js     # Agent runner
+│   │   └── buildTestRunner.js # Build/test runner
 │   ├── services/           # Business logic
 │   ├── utils/              # Utility functions
 │   ├── app.js              # Express app setup
@@ -141,7 +144,15 @@ npm start
 
 # Validate data structure
 npm run validate
+
+# Run build/test runner
+npm run runner
+
+# Run runner with output files
+npm run runner -- --output results.json --markdown summary.md
 ```
+
+For detailed information about the BSM Runner, see [docs/RUNNER.md](docs/RUNNER.md).
 
 ## GitHub Copilot Pro Integration
 

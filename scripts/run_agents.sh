@@ -30,14 +30,22 @@ echo "" >> "${OUTFILE}"
 
 # Runner step
 echo "## Runner Results" >> "${OUTFILE}"
-if [ -f package.json ] && command -v npm >/dev/null 2>&1; then
-  if npm test --silent; then
-    echo "- Tests passed" >> "${OUTFILE}"
+if [ -f package.json ] && command -v node >/dev/null 2>&1; then
+  # Use the new BSM runner
+  if node scripts/runner.js --output "${TMPDIR}/runner-results.json" --markdown "${TMPDIR}/runner-summary.md" --skip-validation; then
+    echo "- BSM Runner completed successfully" >> "${OUTFILE}"
+    if [ -f "${TMPDIR}/runner-summary.md" ]; then
+      echo "" >> "${OUTFILE}"
+      cat "${TMPDIR}/runner-summary.md" >> "${OUTFILE}"
+    fi
   else
-    echo "- Some tests failed; see CI logs" >> "${OUTFILE}"
+    echo "- BSM Runner encountered failures; see runner-results.json" >> "${OUTFILE}"
+    if [ -f "${TMPDIR}/runner-results.json" ]; then
+      echo "- Results saved to runner-results.json" >> "${OUTFILE}"
+    fi
   fi
 else
-  echo "- No npm tests detected or npm not installed" >> "${OUTFILE}"
+  echo "- No package.json detected or node not installed" >> "${OUTFILE}"
 fi
 echo "" >> "${OUTFILE}"
 
