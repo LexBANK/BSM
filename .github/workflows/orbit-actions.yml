@@ -34,6 +34,9 @@ jobs:
   orbit-healing:
     name: ORBIT Automated Healing
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     
     steps:
       - name: Checkout repository
@@ -170,6 +173,8 @@ jobs:
     needs: orbit-healing
     runs-on: ubuntu-latest
     if: always()
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout repository
