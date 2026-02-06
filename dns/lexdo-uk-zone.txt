@@ -2,6 +2,10 @@
 ; Upload this file to Cloudflare DNS > Import DNS records
 ; See DNS-RECORD-TYPES.md for record type documentation
 
+; --- Authoritative nameservers (configured at registrar, not imported as zone records) ---
+; jule.ns.cloudflare.com
+; tim.ns.cloudflare.com
+
 ; --- IP Address Resolution (A records) ---
 ; Apex domain (lexdo.uk) - GitHub Pages IPs
 ; These A records point the root domain to GitHub Pages servers
