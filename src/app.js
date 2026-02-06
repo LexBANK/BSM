@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 
 import { correlationMiddleware } from "./middleware/correlation.js";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { performanceMiddleware } from "./middleware/performance.js";
 import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
@@ -15,10 +16,11 @@ import routes from "./routes/index.js";
 
 const app = express();
 
-const corsOptions = env.corsOrigins.length
+const corsOptions = env.corsOriginsSet.size > 0
   ? {
       origin: (origin, callback) => {
-        if (!origin || env.corsOrigins.includes(origin)) {
+        // Use Set for O(1) lookup instead of Array includes O(n)
+        if (!origin || env.corsOriginsSet.has(origin)) {
           return callback(null, true);
         }
         return callback(new Error("Not allowed by CORS"));
@@ -32,6 +34,7 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
+app.use(performanceMiddleware);
 
 app.use(
   "/api",

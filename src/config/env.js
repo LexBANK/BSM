@@ -11,6 +11,10 @@ export const env = {
   corsOrigins: process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean)
     : [],
+  // Use Set for O(1) lookup performance
+  corsOriginsSet: process.env.CORS_ORIGINS
+    ? new Set(process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim()).filter(Boolean))
+    : new Set(),
   rateLimitWindowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
   rateLimitMax: parseNumber(process.env.RATE_LIMIT_MAX, 100),
   maxAgentInputLength: parseNumber(process.env.MAX_AGENT_INPUT_LENGTH, 4000)
