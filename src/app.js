@@ -12,6 +12,7 @@ import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 
 import routes from "./routes/index.js";
+import agentsRoutes from "./routes/agents.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use(
     legacyHeaders: false
   })
 );
+app.use("/api/agents", agentsRoutes);
 app.use("/api", routes);
 
 // serve admin UI static

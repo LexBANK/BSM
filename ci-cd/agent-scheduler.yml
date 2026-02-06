@@ -1,0 +1,17 @@
+name: agent-scheduler
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: node -e "import('./core/engine.js').then(({ listAgents, runAgent }) => { const agents = listAgents(); for (const agent of agents) { runAgent({ agentId: agent.id, input: 'scheduled-run' }); } console.log('Executed', agents.length, 'agents'); })"
