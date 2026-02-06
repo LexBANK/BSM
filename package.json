@@ -1,6 +1,7 @@
 {
-  "name": "bsm",
-  "version": "1.0.0",
+  "name": "bsm-agentos",
+  "version": "2.0.0",
+  "description": "BSM-AgentOS: The smartest AI Agent platform globally with multi-agent orchestration, ML engine, security hub, and real-time monitoring",
   "private": true,
   "type": "module",
   "main": "src/server.js",
@@ -8,19 +9,70 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
-    "test": "node scripts/validate.js"
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testMatch='**/tests/unit/**/*.test.js'",
+    "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testMatch='**/tests/integration/**/*.test.js'",
+    "test:watch": "npm run test:unit -- --watch",
+    "test:coverage": "npm run test:unit -- --coverage",
+    "migrate": "node scripts/db-migrate.js",
+    "migrate:up": "node scripts/db-migrate.js up",
+    "migrate:down": "node scripts/db-migrate.js down",
+    "seed": "node scripts/seed-data.js",
+    "setup": "npm run migrate:up && npm run seed",
+    "dashboard": "streamlit run src/dashboard/streamlit/app.py",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "format": "prettier --write \"src/**/*.js\"",
+    "docker:build": "docker build -t bsm-agentos:latest .",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "build:docs": "node scripts/build_reports_index.js"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "express-rate-limit": "^7.5.1",
     "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
+    "pg": "^8.11.3",
     "pino": "^9.0.0",
-    "yaml": "^2.4.5"
+    "redis": "^4.6.12",
+    "yaml": "^2.4.5",
+    "@tensorflow/tfjs-node": "^4.15.0",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.0",
-    "pino-pretty": "^11.0.0"
+    "pino-pretty": "^11.0.0",
+    "jest": "^29.7.0",
+    "eslint": "^8.56.0",
+    "prettier": "^3.2.4",
+    "supertest": "^6.3.4"
+  },
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "agentos",
+    "multi-agent",
+    "ml",
+    "machine-learning",
+    "security",
+    "orchestration",
+    "automation",
+    "chatbot",
+    "nlp"
+  ],
+  "author": "LexBANK",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LexBANK/BSM.git"
   }
 }
