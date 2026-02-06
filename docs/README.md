@@ -10,6 +10,7 @@ The documentation is organized into the following categories:
 
 | Document | Description | Size | Audience |
 |----------|-------------|------|----------|
+| [Core Completion Pack](CORE-COMPLETION.md) | Consolidated core architecture, setup, and documentation handoff checklist | 4KB | Developers, Maintainers |
 | [System Architecture](ARCHITECTURE.md) | Complete architectural overview, component breakdown, data flows, and scalability roadmap | 23KB | Developers, Architects |
 | [Agent Orchestration Patterns](AGENT-ORCHESTRATION.md) | Multi-agent design patterns, communication strategies, and workflow orchestration | 18KB | Developers, Architects |
 | [Analysis Summary](ANALYSIS-SUMMARY.md) | Session summary with findings, metrics, and recommendations | 10KB | All Stakeholders |
