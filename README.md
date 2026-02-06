@@ -220,6 +220,7 @@ The project includes GitHub Actions workflows:
 ## Technology Stack
 
 - **Backend**: Node.js, Express.js
+- **Languages**: JavaScript (Node.js), Go (experimental support)
 - **AI/ML**: OpenAI GPT models, advanced NLP
 - **Development**: GitHub Copilot Pro for intelligent code generation
 - **Infrastructure**: Scalable cloud-based architecture (Render.com ready)
@@ -233,6 +234,7 @@ The project includes GitHub Actions workflows:
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [Go Language Support](docs/GO-SUPPORT.md) - Go integration and build automation
 
 ### API Documentation
 - API endpoints documented above
