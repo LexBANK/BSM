@@ -81,6 +81,7 @@ log_step "go_build" "${BUILD_STATUS}" "${BUILD_OUTPUT}"
 # ---------------------------------------------------------------------------
 echo ""
 echo "=== Running Go Application ==="
+RUN_OUTPUT="N/A"
 if [ "${BUILD_STATUS}" = "success" ]; then
   RUN_OUTPUT=$(./app 2>&1)
   echo "${RUN_OUTPUT}"
