@@ -10,7 +10,10 @@ import logger from "../utils/logger.js";
 export const runAgent = async ({ agentId, input }) => {
   try {
     const agents = await loadAgents();
-    const agent = agents.find(a => a.id === agentId);
+    // Convert to Map for O(1) lookup performance
+    const agentsMap = new Map(agents.map(a => [a.id, a]));
+    const agent = agentsMap.get(agentId);
+    
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
     const knowledge = await loadKnowledgeIndex();
