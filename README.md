@@ -4,6 +4,16 @@
 
 The **LexBANK and BSM Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
 
+### 🆕 Hybrid Node.js/Go Architecture
+
+The platform now features a **hybrid microservices architecture** combining:
+- **Node.js** for API gateway, AI integration, and rapid development
+- **Go** for high-performance document processing, search, and analytics
+
+**Benefits**: 10-100x performance improvement, 60% cost reduction, better scalability
+
+📖 See [Go Integration Architecture](docs/GO-INTEGRATION-ARCHITECTURE.md) for details.
+
 ## Project Structure
 
 ```
