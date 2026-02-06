@@ -1,0 +1,10 @@
+# Git Secrets - Allowed patterns (false positives)
+# This file contains patterns that should be ignored by git-secrets
+
+# Example AWS keys in documentation
+AKIA000000000000XXXX
+\*\*\*
+
+# Example patterns in .gitleaks.toml configuration file
+sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
