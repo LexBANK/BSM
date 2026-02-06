@@ -1,0 +1,30 @@
+{
+  "name": "lexchat-worker",
+  "version": "1.0.0",
+  "description": "LexChat Image Processing Worker for Cloudflare",
+  "main": "workflows/image-processing.ts",
+  "type": "module",
+  "scripts": {
+    "deploy": "wrangler deploy --env production",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:dev": "wrangler deploy --env development",
+    "dev": "wrangler dev",
+    "tail": "wrangler tail",
+    "publish": "wrangler deploy --env production --name lexchat",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "cloudflare",
+    "workers",
+    "ai",
+    "image-processing",
+    "r2"
+  ],
+  "author": "BSM Platform",
+  "license": "MIT",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240129.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^3.78.12"
+  }
+}

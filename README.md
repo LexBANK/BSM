@@ -23,9 +23,24 @@ BSM/
 │   ├── ARCHITECTURE.md     # System architecture documentation
 │   ├── CICD-RECOMMENDATIONS.md # CI/CD enhancement guide
 │   ├── SECURITY-DEPLOYMENT.md  # Security and deployment guide
-│   └── AGENT-ORCHESTRATION.md  # Agent patterns and workflows
-├── scripts/                # Build and validation scripts
+│   ├── AGENT-ORCHESTRATION.md  # Agent patterns and workflows
+│   ├── CLOUDFLARE-INFRASTRUCTURE.md # Cloudflare setup guide
+│   └── reports/            # Auto-generated reports
+├── workers/                # Cloudflare Workers
+│   └── lexchat/           # LexChat image processing worker
+│       ├── workflows/      # Worker implementations
+│       │   └── image-processing.ts # Main worker
+│       ├── wrangler.toml   # Cloudflare configuration
+│       └── README.md       # Worker documentation
+├── app/                    # Cloudflare Pages frontend
+│   ├── index.html          # Main page
+│   ├── styles.css          # Styles
+│   └── app.js              # Frontend logic
+├── scripts/                # Build and deployment scripts
 │   ├── validate.js         # Data structure validation
+│   ├── deploy-worker.sh    # Worker deployment
+│   ├── deploy-pages.sh     # Pages deployment
+│   ├── auto-update-docs.sh # Documentation updates
 │   └── setup_github_pages_verification.sh # GitHub Pages DNS setup
 ├── src/
 │   ├── admin/              # Admin UI (HTML/CSS/JS)
@@ -40,6 +55,7 @@ BSM/
 │   ├── app.js              # Express app setup
 │   └── server.js           # Server entry point
 └── .github/workflows/      # CI/CD workflows
+    └── deploy-cloudflare.yml # Cloudflare deployment automation
 ```
 
 ## API Endpoints
@@ -86,6 +102,7 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 ### Prerequisites
 - Node.js 22+
 - npm or equivalent package manager
+- Cloudflare account (for Workers and Pages deployment)
 
 ### Installation
 
@@ -99,10 +116,55 @@ cd BSM
 # Install dependencies
 npm install
 
+# Install worker dependencies
+cd workers/lexchat && npm install && cd ../..
+
 # Copy environment template
 cp .env.example .env
 
 # Edit .env with your configuration
+```
+
+### Cloudflare Infrastructure Setup
+
+The platform uses Cloudflare Workers for serverless computing and Pages for static hosting.
+
+#### Quick Setup
+
+```bash
+# 1. Login to Cloudflare
+wrangler login
+
+# 2. Setup infrastructure (creates buckets, prompts for secrets)
+npm run deploy:setup
+
+# 3. Deploy everything
+npm run deploy:worker
+npm run deploy:pages
+```
+
+#### Services
+
+- **LexChat Worker**: https://lexchat.moteb.uk (Image processing with AI)
+- **Frontend Pages**: https://lexdo.uk (Static frontend)
+- **Documentation**: See [Cloudflare Infrastructure Guide](docs/CLOUDFLARE-INFRASTRUCTURE.md)
+
+#### Deployment Commands
+
+```bash
+# Workers
+npm run deploy:worker              # Deploy to production
+npm run deploy:worker:staging      # Deploy to staging
+npm run deploy:worker:dev          # Deploy to development
+npm run worker:logs                # View production logs
+npm run worker:secrets             # Configure secrets
+
+# Pages
+npm run deploy:pages               # Deploy frontend to Pages
+npm run pages:check                # Security check before deploy
+
+# Documentation
+npm run update:reports             # Update documentation reports
 ```
 
 ### Configuration
@@ -233,6 +295,12 @@ The project includes GitHub Actions workflows:
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [Cloudflare Infrastructure](docs/CLOUDFLARE-INFRASTRUCTURE.md) - Complete Cloudflare setup and deployment guide
+
+### Workers and Services
+- [LexChat Worker](workers/lexchat/README.md) - Image processing worker documentation
+- Worker API endpoints and integration examples
+- R2 Storage and AI model usage
 
 ### API Documentation
 - API endpoints documented above

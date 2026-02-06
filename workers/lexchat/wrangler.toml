@@ -1,0 +1,90 @@
+# Cloudflare Workers Configuration for LexChat
+# https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "lexchat"
+main = "workflows/image-processing.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Account settings (replace with your values)
+# account_id = "YOUR_ACCOUNT_ID"
+# workers_dev = true
+
+# Environment Variables - SECURE: Never expose secrets to frontend
+# All sensitive data MUST be set via `wrangler secret put` command
+# Example: wrangler secret put OPENAI_API_KEY
+[vars]
+ALLOWED_ORIGINS = "https://lexdo.uk,https://www.lexdo.uk"
+LOG_LEVEL = "info"
+MAX_IMAGE_SIZE = "10485760" # 10MB
+ENVIRONMENT = "production"
+
+# R2 Bucket Binding - لتخزين الصور
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "lexchat-images"
+preview_bucket_name = "lexchat-images-preview"
+
+# AI Model Binding - لمعالجة الصور
+[ai]
+binding = "AI"
+
+# Production Environment
+[env.production]
+name = "lexchat"
+route = { pattern = "lexchat.moteb.uk/*", zone_name = "moteb.uk" }
+# workers_dev = false
+
+[env.production.vars]
+ALLOWED_ORIGINS = "https://lexdo.uk,https://www.lexdo.uk"
+ENVIRONMENT = "production"
+
+# Routes Configuration
+[[env.production.routes]]
+pattern = "lexchat.moteb.uk/*"
+zone_name = "moteb.uk"
+
+# Development Environment
+[env.development]
+name = "lexchat-dev"
+vars = { ENVIRONMENT = "development", ALLOWED_ORIGINS = "*" }
+
+[[env.development.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "lexchat-images-dev"
+preview_bucket_name = "lexchat-images-dev-preview"
+
+# Staging Environment
+[env.staging]
+name = "lexchat-staging"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+ALLOWED_ORIGINS = "https://staging.lexdo.uk,https://lexdo.uk"
+
+[[env.staging.r2_buckets]]
+binding = "BUCKET"
+bucket_name = "lexchat-images-staging"
+
+# Build Configuration
+[build]
+command = ""
+# cwd = ""
+# watch_dirs = ["workflows"]
+
+# Observability
+[observability]
+enabled = true
+head_sampling_rate = 1.0
+
+# Placement
+[placement]
+mode = "smart"
+
+# Limits
+[limits]
+cpu_ms = 50
+
+# Safety: Rate limiting at worker level
+# Note: This is in addition to Cloudflare's default protections
+# Additional rate limiting should be implemented in the application code
