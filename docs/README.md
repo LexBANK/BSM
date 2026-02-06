@@ -14,6 +14,13 @@ The documentation is organized into the following categories:
 | [Agent Orchestration Patterns](AGENT-ORCHESTRATION.md) | Multi-agent design patterns, communication strategies, and workflow orchestration | 18KB | Developers, Architects |
 | [Analysis Summary](ANALYSIS-SUMMARY.md) | Session summary with findings, metrics, and recommendations | 10KB | All Stakeholders |
 
+### 🤖 ORBIT Self-Healing Agent
+
+| Document | Description | Size | Audience |
+|----------|-------------|------|----------|
+| [ORBIT Quick Start](ORBIT-QUICKSTART.md) | Get started with ORBIT in 5 minutes | 4KB | All Users |
+| [ORBIT Agent Guide](ORBIT-AGENT.md) | Complete guide with API reference, setup instructions, and examples | 12KB | Developers, DevOps |
+
 ### 🚀 Operations & Deployment
 
 | Document | Description | Size | Audience |
@@ -40,6 +47,7 @@ The documentation is organized into the following categories:
 ### For Developers
 - Start here: [System Architecture](ARCHITECTURE.md) → [Agent Orchestration](AGENT-ORCHESTRATION.md)
 - Learn about: Component structure, design patterns, best practices
+- Try ORBIT: [ORBIT Quick Start](ORBIT-QUICKSTART.md) → [ORBIT Guide](ORBIT-AGENT.md)
 - Tools: Testing strategies, code examples, configuration samples
 
 ### For Architects
@@ -50,6 +58,7 @@ The documentation is organized into the following categories:
 ### For DevOps/SRE
 - Start here: [Security & Deployment](SECURITY-DEPLOYMENT.md) → [CI/CD Recommendations](CICD-RECOMMENDATIONS.md)
 - Focus on: Deployment procedures, monitoring, incident response
+- Set up ORBIT: [ORBIT Quick Start](ORBIT-QUICKSTART.md) for self-healing and notifications
 - Implement: Automation workflows, security hardening, observability
 
 ### For Security Team
@@ -272,11 +281,13 @@ npm ci
 ```
 
 ### Essential Endpoints
-- Health Check: `GET /api/health`
+- Health Check: `GET /api/health` (includes ORBIT status)
+- ORBIT Status: `GET /api/orbit/status`
+- ORBIT Actions: `POST /api/orbit/actions/*`
 - List Agents: `GET /api/agents`
 - Run Agent: `POST /api/agents/run`
 - Chat Interface: `/chat`
-- Admin UI: `/admin`
+- Admin UI: `/admin` (with ORBIT monitoring)
 
 ### Essential Files
 - Main Entry: `src/server.js`
