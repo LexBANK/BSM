@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Schedule - PTO & On-Call Tracker</title>
+  <meta name="description" content="Track team PTO and on-call schedules with weekly capacity visualization" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📅</text></svg>" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f4ff',
+              100: '#dbe4ff',
+              200: '#bac8ff',
+              300: '#91a7ff',
+              400: '#748ffc',
+              500: '#5c7cfa',
+              600: '#4c6ef5',
+              700: '#4263eb',
+              800: '#3b5bdb',
+              900: '#364fc7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity 0.3s;
+    }
+    .fade-enter-from, .fade-leave-to {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body class="dark bg-gray-950 text-white min-h-screen">
+
+  <div id="app" class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-2xl shadow-lg">
+            📅
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-white">Team Schedule Tracker</h1>
+            <p class="text-xs text-gray-400">PTO & On-Call Management</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button 
+            v-for="view in views" 
+            :key="view.id"
+            @click="currentView = view.id"
+            class="px-4 py-2 text-sm rounded-lg transition-all"
+            :class="currentView === view.id 
+              ? 'bg-primary-600 text-white shadow-lg' 
+              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'"
+          >
+            {{ view.icon }} {{ view.label }}
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 py-6">
+
+      <!-- Team View -->
+      <div v-if="currentView === 'team'" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Team Members</h2>
+          <button @click="showAddTeamModal = true" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm font-medium">
+            + Add Member
+          </button>
+        </div>
+
+        <!-- Team Members List -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-for="member in team" :key="member.id" 
+            class="bg-gray-800/50 border border-gray-700 rounded-xl p-4 hover:border-primary-600/50 transition-all">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-primary-600/20 rounded-full flex items-center justify-center text-xl">
+                  {{ member.name.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <h3 class="font-semibold text-white">{{ member.name }}</h3>
+                  <p class="text-sm text-gray-400">{{ member.role }}</p>
+                </div>
+              </div>
+              <span class="px-2 py-1 text-xs rounded-full" :class="member.active ? 'bg-green-600/20 text-green-400' : 'bg-gray-700 text-gray-400'">
+                {{ member.active ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-400 mb-3">{{ member.email }}</p>
+            <div class="flex gap-2">
+              <button @click="editTeamMember(member)" class="flex-1 px-3 py-1.5 text-xs bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                Edit
+              </button>
+              <button @click="deleteTeamMember(member.id)" class="px-3 py-1.5 text-xs bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-lg transition-colors">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PTO View -->
+      <div v-if="currentView === 'pto'" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">PTO Requests</h2>
+          <button @click="showAddPTOModal = true" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm font-medium">
+            + Request PTO
+          </button>
+        </div>
+
+        <!-- PTO List -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-800 border-b border-gray-700">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Team Member</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Type</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Start Date</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">End Date</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Days</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
+                <th class="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="pto in sortedPTO" :key="pto.id" class="border-b border-gray-700/50 hover:bg-gray-700/30">
+                <td class="px-4 py-3 text-sm">{{ pto.memberName }}</td>
+                <td class="px-4 py-3 text-sm">
+                  <span class="px-2 py-1 text-xs rounded-full bg-blue-600/20 text-blue-400">
+                    {{ pto.type }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-300">{{ formatDate(pto.startDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-300">{{ formatDate(pto.endDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-300">{{ calculateDays(pto.startDate, pto.endDate) }}</td>
+                <td class="px-4 py-3 text-sm">
+                  <span class="px-2 py-1 text-xs rounded-full bg-green-600/20 text-green-400">
+                    {{ pto.status }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-right">
+                  <button @click="deletePTO(pto.id)" class="px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="ptoRecords.length === 0">
+                <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                  No PTO requests yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- On-Call View -->
+      <div v-if="currentView === 'oncall'" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">On-Call Schedule</h2>
+          <button @click="showAddOnCallModal = true" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm font-medium">
+            + Add Schedule
+          </button>
+        </div>
+
+        <!-- On-Call List -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-800 border-b border-gray-700">
+              <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Team Member</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Type</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Start Date</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">End Date</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-300">Notes</th>
+                <th class="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="schedule in sortedOnCall" :key="schedule.id" class="border-b border-gray-700/50 hover:bg-gray-700/30">
+                <td class="px-4 py-3 text-sm">{{ schedule.memberName }}</td>
+                <td class="px-4 py-3 text-sm">
+                  <span class="px-2 py-1 text-xs rounded-full" 
+                    :class="schedule.type === 'primary' ? 'bg-purple-600/20 text-purple-400' : 'bg-orange-600/20 text-orange-400'">
+                    {{ schedule.type }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-300">{{ formatDate(schedule.startDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-300">{{ formatDate(schedule.endDate) }}</td>
+                <td class="px-4 py-3 text-sm text-gray-400">{{ schedule.notes || '-' }}</td>
+                <td class="px-4 py-3 text-sm text-right">
+                  <button @click="deleteOnCall(schedule.id)" class="px-2 py-1 text-xs text-red-400 hover:text-red-300 transition-colors">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="onCallSchedules.length === 0">
+                <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                  No on-call schedules yet
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Capacity View -->
+      <div v-if="currentView === 'capacity'" class="space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-2xl font-bold">Weekly Capacity</h2>
+          <div class="flex gap-2 items-center">
+            <label class="text-sm text-gray-400">Week Starting:</label>
+            <input 
+              v-model="selectedWeek" 
+              @change="loadCapacity"
+              type="date" 
+              class="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none"
+            />
+          </div>
+        </div>
+
+        <!-- Capacity Cards -->
+        <div v-if="capacity" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="text-gray-400 text-sm mb-2">Total Team</div>
+            <div class="text-3xl font-bold text-white">{{ capacity.totalTeam }}</div>
+            <div class="text-xs text-gray-500 mt-1">Active members</div>
+          </div>
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="text-gray-400 text-sm mb-2">Total Capacity</div>
+            <div class="text-3xl font-bold text-white">{{ capacity.totalCapacity }}</div>
+            <div class="text-xs text-gray-500 mt-1">Person-days</div>
+          </div>
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="text-gray-400 text-sm mb-2">PTO Days</div>
+            <div class="text-3xl font-bold text-orange-400">{{ capacity.ptoCapacity }}</div>
+            <div class="text-xs text-gray-500 mt-1">Days off</div>
+          </div>
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="text-gray-400 text-sm mb-2">Available</div>
+            <div class="text-3xl font-bold text-green-400">{{ capacity.availableCapacity }}</div>
+            <div class="text-xs text-gray-500 mt-1">{{ capacity.utilizationPercent }}% available</div>
+          </div>
+        </div>
+
+        <!-- Capacity Chart -->
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+          <h3 class="text-lg font-semibold mb-4">Capacity Breakdown</h3>
+          <canvas id="capacityChart" class="max-h-64"></canvas>
+        </div>
+
+        <!-- Details -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- PTO This Week -->
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <h3 class="text-lg font-semibold mb-4">PTO This Week</h3>
+            <div v-if="capacity.ptoDays.length > 0" class="space-y-3">
+              <div v-for="pto in capacity.ptoDays" :key="pto.id" class="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div>
+                  <div class="font-medium">{{ pto.memberName }}</div>
+                  <div class="text-xs text-gray-400">{{ formatDate(pto.startDate) }} - {{ formatDate(pto.endDate) }}</div>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full bg-blue-600/20 text-blue-400">
+                  {{ pto.type }}
+                </span>
+              </div>
+            </div>
+            <p v-else class="text-gray-500 text-sm">No PTO scheduled this week</p>
+          </div>
+
+          <!-- On-Call This Week -->
+          <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <h3 class="text-lg font-semibold mb-4">On-Call This Week</h3>
+            <div v-if="capacity.onCallAssignments.length > 0" class="space-y-3">
+              <div v-for="oncall in capacity.onCallAssignments" :key="oncall.id" class="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div>
+                  <div class="font-medium">{{ oncall.memberName }}</div>
+                  <div class="text-xs text-gray-400">{{ formatDate(oncall.startDate) }} - {{ formatDate(oncall.endDate) }}</div>
+                </div>
+                <span class="px-2 py-1 text-xs rounded-full" 
+                  :class="oncall.type === 'primary' ? 'bg-purple-600/20 text-purple-400' : 'bg-orange-600/20 text-orange-400'">
+                  {{ oncall.type }}
+                </span>
+              </div>
+            </div>
+            <p v-else class="text-gray-500 text-sm">No on-call assignments this week</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Add Team Member Modal -->
+    <div v-if="showAddTeamModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showAddTeamModal = false">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">{{ editingTeamMember ? 'Edit' : 'Add' }} Team Member</h3>
+        <form @submit.prevent="saveTeamMember" class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Name *</label>
+            <input v-model="teamForm.name" required type="text" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Email *</label>
+            <input v-model="teamForm.email" required type="email" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Role</label>
+            <input v-model="teamForm.role" type="text" placeholder="e.g., Developer, QA, DevOps" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+          </div>
+          <div v-if="editingTeamMember" class="flex items-center">
+            <input v-model="teamForm.active" type="checkbox" id="active" class="w-4 h-4 text-primary-600 bg-gray-700 border-gray-600 rounded focus:ring-primary-600" />
+            <label for="active" class="ml-2 text-sm text-gray-400">Active</label>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <button type="button" @click="cancelTeamForm" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm">
+              {{ editingTeamMember ? 'Update' : 'Add' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add PTO Modal -->
+    <div v-if="showAddPTOModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showAddPTOModal = false">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">Request PTO</h3>
+        <form @submit.prevent="savePTO" class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Team Member *</label>
+            <select v-model="ptoForm.memberId" required @change="updatePTOMember" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none">
+              <option value="">Select a team member</option>
+              <option v-for="member in activeTeam" :key="member.id" :value="member.id">{{ member.name }}</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm text-gray-400 mb-1">Start Date *</label>
+              <input v-model="ptoForm.startDate" required type="date" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-1">End Date *</label>
+              <input v-model="ptoForm.endDate" required type="date" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Type</label>
+            <select v-model="ptoForm.type" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none">
+              <option value="vacation">Vacation</option>
+              <option value="sick">Sick Leave</option>
+              <option value="personal">Personal</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Notes</label>
+            <textarea v-model="ptoForm.notes" rows="2" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none resize-none"></textarea>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <button type="button" @click="cancelPTOForm" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm">
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Add On-Call Modal -->
+    <div v-if="showAddOnCallModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="showAddOnCallModal = false">
+      <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">Add On-Call Schedule</h3>
+        <form @submit.prevent="saveOnCall" class="space-y-4">
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Team Member *</label>
+            <select v-model="onCallForm.memberId" required @change="updateOnCallMember" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none">
+              <option value="">Select a team member</option>
+              <option v-for="member in activeTeam" :key="member.id" :value="member.id">{{ member.name }}</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm text-gray-400 mb-1">Start Date *</label>
+              <input v-model="onCallForm.startDate" required type="date" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-400 mb-1">End Date *</label>
+              <input v-model="onCallForm.endDate" required type="date" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Type</label>
+            <select v-model="onCallForm.type" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none">
+              <option value="primary">Primary</option>
+              <option value="backup">Backup</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm text-gray-400 mb-1">Notes</label>
+            <textarea v-model="onCallForm.notes" rows="2" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:border-primary-600 focus:ring-1 focus:ring-primary-600 outline-none resize-none"></textarea>
+          </div>
+          <div class="flex gap-2 justify-end">
+            <button type="button" @click="cancelOnCallForm" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-sm">
+              Cancel
+            </button>
+            <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors text-sm">
+              Add Schedule
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <transition name="fade">
+      <div v-if="toast.show" class="fixed bottom-4 right-4 bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 shadow-xl z-50 max-w-sm">
+        <div class="flex items-center gap-3">
+          <div :class="toast.type === 'success' ? 'text-green-400' : 'text-red-400'">
+            <svg v-if="toast.type === 'success'" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <span class="text-sm text-white">{{ toast.message }}</span>
+        </div>
+      </div>
+    </transition>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

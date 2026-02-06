@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1770414898811",
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "role": "Senior Developer",
+    "active": true,
+    "createdAt": "2026-02-06T21:54:58.811Z"
+  },
+  {
+    "id": "1770414898812",
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "role": "DevOps Engineer",
+    "active": true,
+    "createdAt": "2026-02-06T21:54:58.811Z"
+  },
+  {
+    "id": "1770414898813",
+    "name": "Carol Williams",
+    "email": "carol@example.com",
+    "role": "QA Engineer",
+    "active": true,
+    "createdAt": "2026-02-06T21:54:58.811Z"
+  }
+]

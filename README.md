@@ -55,6 +55,17 @@ BSM/
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
 
+### Schedule Tracker
+- `/schedule` - Team PTO & On-Call tracking with weekly capacity visualization
+- `GET /api/schedule/team` - List team members
+- `POST /api/schedule/team` - Add team member
+- `GET /api/schedule/pto` - List PTO requests
+- `POST /api/schedule/pto` - Submit PTO request
+- `GET /api/schedule/oncall` - List on-call schedules
+- `POST /api/schedule/oncall` - Create on-call assignment
+- `GET /api/schedule/capacity/:week` - Get weekly capacity analysis
+- See [Schedule Tracker Documentation](docs/SCHEDULE-TRACKER.md) for full API details
+
 ### Admin Endpoints (requires x-admin-token header)
 - `GET /api/admin/agents` - Get agents configuration
 - `GET /api/admin/knowledge` - Get knowledge documents

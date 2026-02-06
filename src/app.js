@@ -27,7 +27,26 @@ const corsOptions = env.corsOrigins.length
   : { origin: true };
 
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://unpkg.com",
+        "https://cdn.tailwindcss.com",
+        "https://cdn.jsdelivr.net"
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.tailwindcss.com"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'", "data:", "https:"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: []
+    }
+  }
+}));
 app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
@@ -47,6 +66,7 @@ app.use("/api", routes);
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
 app.use("/chat", express.static(path.join(process.cwd(), "src/chat")));
+app.use("/schedule", express.static(path.join(process.cwd(), "src/schedule")));
 
 app.use(notFound);
 app.use(errorHandler);
