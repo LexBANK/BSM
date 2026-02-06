@@ -10,6 +10,7 @@ import { notFound } from "./middleware/notFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
+import { applySecurityLayer } from "../security/layer.js";
 
 import routes from "./routes/index.js";
 
@@ -32,6 +33,7 @@ app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
+app.use("/api", applySecurityLayer);
 
 app.use(
   "/api",
