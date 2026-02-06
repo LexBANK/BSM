@@ -7,7 +7,16 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "validate": "node scripts/validate.js"
+    "validate": "node scripts/validate.js",
+    "deploy:worker": "./scripts/deploy-worker.sh production",
+    "deploy:worker:staging": "./scripts/deploy-worker.sh staging",
+    "deploy:worker:dev": "./scripts/deploy-worker.sh development",
+    "deploy:pages": "./scripts/deploy-pages.sh deploy",
+    "deploy:setup": "./scripts/deploy-worker.sh setup && ./scripts/deploy-pages.sh setup",
+    "worker:logs": "./scripts/deploy-worker.sh logs",
+    "worker:secrets": "./scripts/deploy-worker.sh secrets",
+    "pages:check": "./scripts/deploy-pages.sh check",
+    "update:reports": "node scripts/build_reports_index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
