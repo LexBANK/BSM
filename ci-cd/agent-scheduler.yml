@@ -1,0 +1,17 @@
+name: Scheduled Agent Run
+
+on:
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+
+jobs:
+  runAgents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Agents
+        run: |
+          chmod +x scripts/run_agents.sh
+          ./scripts/run_agents.sh reports false
