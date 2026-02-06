@@ -1,0 +1,7 @@
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Generated analyses content
+analyses/**/*.md
+!analyses/**/.gitkeep
