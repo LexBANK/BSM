@@ -2,11 +2,17 @@
 set -euo pipefail
 
 # Cloudflare zone and GitHub Pages challenge details for LexBANK/BSM.
-ZONE_ID="1c32bc5010d8b0c4a501e8458fd2cc14"
+# Note: Zone ID is not highly sensitive and is also present in dns/lexdo-uk-zone.txt
+# For additional security, you can set this via CLOUDFLARE_ZONE_ID environment variable
+ZONE_ID="${CLOUDFLARE_ZONE_ID:-1c32bc5010d8b0c4a501e8458fd2cc14}"
 RECORD_TYPE="TXT"
 RECORD_NAME="_github-pages-challenge-LexBANK.lexdo.uk"
 RECORD_CONTENT=""  # To be filled with actual challenge value from GitHub
 TTL=1
+
+# DNS propagation polling configuration
+MAX_PROPAGATION_ATTEMPTS=20
+PROPAGATION_SLEEP_SECONDS=15
 
 API_BASE="https://api.cloudflare.com/client/v4"
 VERIFY_URL="https://github.com/LexBANK/BSM/settings/pages"
@@ -154,11 +160,8 @@ JSON
 wait_for_dns_propagation() {
   echo "3) Waiting for DNS propagation..."
 
-  local max_attempts=20
-  local sleep_seconds=15
-
-  for ((attempt=1; attempt<=max_attempts; attempt++)); do
-    echo "   Attempt ${attempt}/${max_attempts}..."
+  for ((attempt=1; attempt<=MAX_PROPAGATION_ATTEMPTS; attempt++)); do
+    echo "   Attempt ${attempt}/${MAX_PROPAGATION_ATTEMPTS}..."
 
     for resolver in "@1.1.1.1" "@8.8.8.8"; do
       local output
@@ -169,7 +172,7 @@ wait_for_dns_propagation() {
       fi
     done
 
-    sleep "$sleep_seconds"
+    sleep "$PROPAGATION_SLEEP_SECONDS"
   done
 
   echo "⚠ DNS record was created but did not propagate within expected time."
