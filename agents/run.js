@@ -12,14 +12,22 @@ async function main() {
   let endpoint = process.env.KM_ENDPOINT || "";
   let outputFile = "";
 
-  // Parse CLI arguments
+  // Parse CLI arguments (simple parser for --key value format)
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--endpoint" && i + 1 < args.length) {
+    const arg = args[i];
+    if ((arg === "--endpoint" || arg === "-e") && i + 1 < args.length) {
       endpoint = args[i + 1];
       i++;
-    } else if (args[i] === "--out" && i + 1 < args.length) {
+    } else if ((arg === "--out" || arg === "-o") && i + 1 < args.length) {
       outputFile = args[i + 1];
       i++;
+    } else if (arg === "--help" || arg === "-h") {
+      console.log("Usage: node agents/run.js [options]");
+      console.log("Options:");
+      console.log("  --endpoint, -e <url>   Knowledge management endpoint (env: KM_ENDPOINT)");
+      console.log("  --out, -o <file>       Output file path for JSON results");
+      console.log("  --help, -h             Show this help message");
+      process.exit(0);
     }
   }
 
@@ -37,7 +45,7 @@ async function main() {
       console.log(`  - ${agent.id}: ${agent.name}`);
     });
 
-    // Prepare results
+    // Prepare results (currently only validates agent loading, not execution)
     const results = {
       timestamp: new Date().toISOString(),
       endpoint: endpoint,
@@ -45,12 +53,13 @@ async function main() {
         id: a.id,
         name: a.name,
         role: a.role,
-        status: "loaded"
+        modelProvider: a.modelProvider || "openai",
+        actions: a.actions || []
       })),
       summary: {
         total: agents.length,
-        loaded: agents.length,
-        failed: 0
+        validated: agents.length,
+        message: "All agents loaded and validated successfully"
       }
     };
 
