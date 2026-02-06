@@ -51,6 +51,7 @@ BSM/
 - `POST /api/agents/run` - Execute an agent with input
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
 - `POST /api/chat/direct` - Direct GPT chat with conversation history
+- `POST /api/github-models` - GitHub Models API chat (supports GPT-4o, DeepSeek, and more)
 
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)
@@ -119,6 +120,10 @@ OPENAI_BSM_KEY=your_key_here
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini
+
+# GitHub Models API (via Azure REST AI Inference)
+GITHUB_TOKEN=your_github_token_here
+GITHUB_MODELS_MODEL=gpt-4o
 
 # Admin (use strong token in production)
 ADMIN_TOKEN=change-me-to-strong-token
@@ -233,9 +238,11 @@ The project includes GitHub Actions workflows:
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
+- [GitHub Models Integration](docs/GITHUB-MODELS-INTEGRATION.md) - GitHub Models API integration guide
 
 ### API Documentation
 - API endpoints documented above
+- [GitHub Models API Guide](docs/GITHUB-MODELS-INTEGRATION.md) - Complete guide for using GitHub Models
 - OpenAPI/Swagger specification (coming soon)
 
 ### DNS and Infrastructure
