@@ -104,7 +104,9 @@ All agents follow strict security guidelines:
 ## Documentation
 
 For more information, see:
-- [Main README](../../README.md)
-- [Architecture Documentation](../../docs/ARCHITECTURE.md)
-- [Agent Orchestration Patterns](../../docs/AGENT-ORCHESTRATION.md)
-- [Security Guide](../../docs/SECURITY-DEPLOYMENT.md)
+- [Main README](/README.md)
+- [Architecture Documentation](/docs/ARCHITECTURE.md)
+- [Agent Orchestration Patterns](/docs/AGENT-ORCHESTRATION.md)
+- [Security Guide](/docs/SECURITY-DEPLOYMENT.md)
+- [Secrets Management](/docs/SECRETS-MANAGEMENT.md)
+- [Security Quick Start](/docs/SECURITY-QUICKSTART.md)
