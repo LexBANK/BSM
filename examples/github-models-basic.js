@@ -15,7 +15,7 @@ export async function main() {
   const response = await client.path("/chat/completions").post({
     body: {
       messages: [
-        { role:"user", content: "What is the capital of France?" }
+        { role: "user", content: "What is the capital of France?" }
       ],
       max_tokens: 2048,
       model: model

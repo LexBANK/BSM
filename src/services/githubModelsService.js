@@ -3,7 +3,6 @@ import { AzureKeyCredential } from "@azure/core-auth";
 import { AppError } from "../utils/errors.js";
 
 const GITHUB_MODELS_ENDPOINT = "https://models.inference.ai.azure.com";
-const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
 /**
  * Run GitHub Models inference using Azure REST AI Inference SDK
