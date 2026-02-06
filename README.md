@@ -13,13 +13,16 @@ BSM/
 │   └── knowledge/          # Knowledge documents
 ├── dns/                    # DNS configuration and documentation
 │   ├── lexdo-uk-zone.txt   # Cloudflare DNS zone file
-│   └── DNS-RECORD-TYPES.md # DNS record types reference
+│   ├── DNS-RECORD-TYPES.md # DNS record types reference
+│   └── GITHUB-PAGES-VERIFICATION.md # GitHub Pages verification guide
 ├── docs/                   # GitHub Pages frontend (lexdo.uk)
 │   ├── index.html          # Standalone chat interface
 │   ├── app.js              # Vue 3 chat application
 │   ├── styles.css          # Custom styles
 │   └── CNAME               # Domain configuration
 ├── scripts/                # Build and validation scripts
+│   ├── validate.js         # Data structure validation
+│   └── setup_github_pages_verification.sh # GitHub Pages DNS setup
 ├── src/
 │   ├── admin/              # Admin UI (HTML/CSS/JS)
 │   ├── chat/               # Chat UI (Vue 3 + Tailwind)
@@ -57,6 +60,22 @@ BSM/
 - Hosted at `https://www.lexdo.uk` via GitHub Pages
 - Connects to the API backend (configurable URL)
 - Same chat interface with API URL configuration
+- Automated DNS verification setup available (see `dns/GITHUB-PAGES-VERIFICATION.md`)
+
+## DNS Management
+
+The platform includes automated DNS management tools for Cloudflare:
+
+### GitHub Pages Domain Verification
+
+Automate GitHub Pages custom domain verification:
+
+```bash
+# Automated setup with Cloudflare API
+./scripts/setup_github_pages_verification.sh <CLOUDFLARE_API_TOKEN> <GITHUB_CHALLENGE_VALUE>
+```
+
+See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructions.
 
 ## Getting Started
 
