@@ -85,10 +85,6 @@ createApp({
       });
     }
 
-    function handleScroll() {
-      // Could track scroll position for "scroll to bottom" button
-    }
-
     function handleEnter(e) {
       if (!e.shiftKey) {
         e.preventDefault();
@@ -211,7 +207,6 @@ createApp({
       formatTime,
       renderMarkdown,
       scrollToBottom,
-      handleScroll,
       handleEnter,
       autoResize,
       sendQuickAction,
