@@ -5,6 +5,7 @@ node_modules
 # Reports - ignore most but keep security reports
 reports/*
 !reports/SECURITY-*.md
+!reports/.gitkeep
 
 # Sensitive files - Security
 *.key
@@ -25,3 +26,9 @@ secrets.json
 certs/
 certificates/
 ssl/
+
+# Go build artifacts
+examples/go-example/app
+examples/go-example/*.exe
+*.test
+*.out
