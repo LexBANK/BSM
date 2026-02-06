@@ -2,6 +2,12 @@ node_modules
 .env
 .DS_Store
 
+# Build artifacts
+dist/
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
 # Reports - ignore most but keep security reports
 reports/*
 !reports/SECURITY-*.md

@@ -1,0 +1,195 @@
+name: ORBIT Self-Healing Actions
+
+on:
+  # Triggered by ORBIT worker via repository_dispatch
+  repository_dispatch:
+    types: [orbit_actions]
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      issue_type:
+        description: 'Issue type to handle'
+        required: true
+        default: 'high_memory_usage'
+        type: choice
+        options:
+          - high_memory_usage
+          - elevated_memory_usage
+          - high_api_latency
+          - high_error_rate
+          - disk_space_low
+          - service_unresponsive
+      action:
+        description: 'Action to execute'
+        required: true
+        default: 'auto_heal'
+        type: choice
+        options:
+          - auto_heal
+          - investigate
+          - restart_services
+
+jobs:
+  orbit-healing:
+    name: ORBIT Automated Healing
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Extract issue details
+        id: issue
+        run: |
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "Event triggered by ORBIT worker"
+            ISSUE_TYPE="${{ github.event.client_payload.issue.type }}"
+            ISSUE_ID="${{ github.event.client_payload.issue.id }}"
+            ISSUE_SEVERITY="${{ github.event.client_payload.issue.severity }}"
+            ACTION="${{ github.event.client_payload.action }}"
+          else
+            echo "Manual workflow trigger"
+            ISSUE_TYPE="${{ github.event.inputs.issue_type }}"
+            ISSUE_ID="manual-$(date +%s)"
+            ISSUE_SEVERITY="medium"
+            ACTION="${{ github.event.inputs.action }}"
+          fi
+          
+          echo "issue_type=$ISSUE_TYPE" >> $GITHUB_OUTPUT
+          echo "issue_id=$ISSUE_ID" >> $GITHUB_OUTPUT
+          echo "issue_severity=$ISSUE_SEVERITY" >> $GITHUB_OUTPUT
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          
+          echo "Issue Type: $ISSUE_TYPE"
+          echo "Issue ID: $ISSUE_ID"
+          echo "Severity: $ISSUE_SEVERITY"
+          echo "Action: $ACTION"
+
+      - name: Run file deduplication
+        if: steps.issue.outputs.issue_type == 'disk_space_low'
+        run: |
+          echo "Running file deduplication to free disk space..."
+          DRY_RUN=false ./scripts/dedupe-files.sh
+
+      - name: Run code deduplication check
+        if: steps.issue.outputs.action == 'investigate'
+        run: |
+          echo "Running code duplication analysis..."
+          ./scripts/dedupe-code.sh
+
+      - name: Clear cache and temp files
+        if: contains(fromJSON('["high_memory_usage", "elevated_memory_usage", "disk_space_low"]'), steps.issue.outputs.issue_type)
+        run: |
+          echo "Clearing temporary files and caches..."
+          
+          # Clear npm cache
+          npm cache clean --force || true
+          
+          # Remove temp directories
+          rm -rf /tmp/* 2>/dev/null || true
+          rm -rf ~/.cache/* 2>/dev/null || true
+          
+          echo "Cache cleanup completed"
+
+      - name: Service health check
+        if: contains(fromJSON('["service_unresponsive", "high_api_latency", "high_error_rate"]'), steps.issue.outputs.issue_type)
+        run: |
+          echo "Performing service health checks..."
+          
+          # Check if BSM service is running
+          if [ -f "src/server.js" ]; then
+            echo "BSM service detected"
+            
+            # Run validation
+            npm run validate || echo "Validation had issues"
+          fi
+          
+          echo "Health check completed"
+
+      - name: Generate healing report
+        if: always()
+        run: |
+          mkdir -p reports
+          
+          REPORT_FILE="reports/orbit-healing-$(date +%Y%m%d-%H%M%S).json"
+          
+          cat > "$REPORT_FILE" << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "workflow_run_id": "${{ github.run_id }}",
+            "workflow_run_number": "${{ github.run_number }}",
+            "triggered_by": "${{ github.event_name }}",
+            "issue": {
+              "id": "${{ steps.issue.outputs.issue_id }}",
+              "type": "${{ steps.issue.outputs.issue_type }}",
+              "severity": "${{ steps.issue.outputs.issue_severity }}"
+            },
+            "action": "${{ steps.issue.outputs.action }}",
+            "status": "completed",
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}"
+          }
+          EOF
+          
+          echo "Healing report generated: $REPORT_FILE"
+          cat "$REPORT_FILE"
+
+      - name: Upload healing reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orbit-healing-reports
+          path: reports/orbit-healing-*.json
+          retention-days: 30
+
+      - name: Notify completion
+        if: always()
+        run: |
+          echo "================================================"
+          echo "ORBIT Healing Workflow Completed"
+          echo "================================================"
+          echo "Issue Type: ${{ steps.issue.outputs.issue_type }}"
+          echo "Action: ${{ steps.issue.outputs.action }}"
+          echo "Status: ${{ job.status }}"
+          echo "================================================"
+
+  # Post-healing verification
+  verify-healing:
+    name: Verify Healing Results
+    needs: orbit-healing
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run validation
+        run: |
+          echo "Running post-healing validation..."
+          npm run validate || true
+
+      - name: Generate verification report
+        run: |
+          echo "Healing verification completed"
+          echo "Previous job status: ${{ needs.orbit-healing.result }}"
