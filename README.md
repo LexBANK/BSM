@@ -262,3 +262,17 @@ For questions, issues, or support requests, please contact the LexBANK developme
 ---
 
 *Powered by GitHub Copilot Pro - Accelerating innovation through AI-driven development*
+
+## Knowledge Base (Long-term)
+
+ضع ملفات Markdown داخل:
+- `data/knowledge/*.md`
+
+ثم شغّل:
+- `npm run knowledge:index`
+
+أو شغّل الخدمة وسيتم بناء الفهرس تلقائيًا عبر `prestart`.
+
+### API
+- `GET /api/knowledge` → قائمة الوثائق (`title`, `slug`, `excerpt`, `path`)
+- `GET /api/knowledge/:slug` → وثيقة كاملة (`content`)
