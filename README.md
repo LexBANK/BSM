@@ -143,6 +143,22 @@ npm start
 npm run validate
 ```
 
+### DNS Automation: GitHub Pages TXT Verification
+
+For the `lexdo.uk` GitHub Pages ownership challenge, use the automation script:
+
+```bash
+bash scripts/setup_github_pages_verification.sh YOUR_CLOUDFLARE_API_TOKEN
+```
+
+The script automatically verifies the API token, creates or updates the TXT record, and polls DNS until the record is visible publicly.
+
+You can also override the zone and TXT values:
+
+```bash
+bash scripts/setup_github_pages_verification.sh TOKEN ZONE_ID RECORD_NAME RECORD_CONTENT
+```
+
 ## GitHub Copilot Pro Integration
 
 After upgrading our subscription to **GitHub Copilot Pro**, the platform now leverages advanced AI-powered development capabilities:
