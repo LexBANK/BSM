@@ -8,7 +8,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
-    "test": "node scripts/validate.js"
+    "test": "node scripts/validate.js",
+    "benchmark": "node scripts/performance-benchmark.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
