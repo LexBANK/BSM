@@ -45,12 +45,18 @@ BSM/
 ## API Endpoints
 
 ### Public Endpoints
-- `GET /api/health` - Health check endpoint
+- `GET /api/health` - Health check endpoint (includes ORBIT agent status)
 - `GET /api/agents` - List all available agents
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
 - `POST /api/chat/direct` - Direct GPT chat with conversation history
+
+### ORBIT Self-Healing Agent
+- `GET /api/orbit/status` - Get ORBIT agent status
+- `GET /api/orbit/history` - Get action history
+- `POST /api/orbit/actions/*` - Trigger self-healing actions
+- See [ORBIT Documentation](docs/ORBIT-AGENT.md) for full details
 
 ### Chat Interface
 - `/chat` - Professional Arabic/English GPT chat interface (Vue 3 + Tailwind)

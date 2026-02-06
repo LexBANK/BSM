@@ -10,6 +10,15 @@
   <input type="text" id="token" placeholder="Admin token">
   <button onclick="loadData()">Load Data</button>
   
+  <h2>ORBIT Agent Status</h2>
+  <div id="orbit-status" style="padding: 10px; background: #f5f5f5; border-radius: 4px;">
+    <p>Loading ORBIT status...</p>
+  </div>
+  <button onclick="loadOrbitStatus()" style="margin-top: 10px;">Refresh ORBIT Status</button>
+  
+  <h2>ORBIT Action History</h2>
+  <pre id="orbit-history" style="max-height: 300px; overflow-y: auto;"></pre>
+  
   <h2>Agents</h2>
   <pre id="agents"></pre>
   <h2>Knowledge</h2>
