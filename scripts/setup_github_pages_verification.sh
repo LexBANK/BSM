@@ -1,148 +1,161 @@
 #!/usr/bin/env bash
+
+# GitHub Pages Domain Verification for lexdo.uk
+# This script adds the required TXT record to Cloudflare DNS and verifies propagation.
+#
+# Usage:
+#   bash scripts/setup_github_pages_verification.sh YOUR_CLOUDFLARE_API_TOKEN
+
 set -euo pipefail
 
-CLOUDFLARE_API="https://api.cloudflare.com/client/v4"
-ZONE_ID_DEFAULT="1c32bc5010d8b0c4a501e8458fd2cc14"
-RECORD_TYPE="TXT"
-RECORD_NAME_DEFAULT="_github-pages-challenge-MOTEB1989.lexdo.uk"
-RECORD_CONTENT_DEFAULT="2807347ff93e933b27e52bb29e794c"
-RECORD_TTL=1
-GITHUB_VERIFY_URL_DEFAULT="https://github.com/LexBANK/BSM/settings/pages"
+# ─── Configuration ───────────────────────────────────────────────
+ZONE_ID="1c32bc5010d8b0c4a501e8458fd2cc14"
+RECORD_NAME="_github-pages-challenge-MOTEB1989.lexdo.uk"
+RECORD_CONTENT="2807347ff93e933b27e52bb29e794c"
+API_BASE="https://api.cloudflare.com/client/v4"
+# ─────────────────────────────────────────────────────────────────
 
-usage() {
-  cat <<USAGE
-Usage:
-  bash scripts/setup_github_pages_verification.sh <CLOUDFLARE_API_TOKEN> [zone_id] [record_name] [record_content]
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
-Optional environment variables:
-  GITHUB_VERIFY_URL   Override the GitHub Pages settings URL printed at the end.
-  DNS_POLL_ATTEMPTS   Number of DNS propagation checks (default: 18).
-  DNS_POLL_INTERVAL   Seconds between checks (default: 10).
-USAGE
-}
+echo ""
+echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}  GitHub Pages Domain Verification — lexdo.uk${NC}"
+echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+echo ""
 
-if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  usage
-  exit 0
-fi
-
-TOKEN="${1:-}"
-ZONE_ID="${2:-$ZONE_ID_DEFAULT}"
-RECORD_NAME="${3:-$RECORD_NAME_DEFAULT}"
-RECORD_CONTENT="${4:-$RECORD_CONTENT_DEFAULT}"
-GITHUB_VERIFY_URL="${GITHUB_VERIFY_URL:-$GITHUB_VERIFY_URL_DEFAULT}"
-DNS_POLL_ATTEMPTS="${DNS_POLL_ATTEMPTS:-18}"
-DNS_POLL_INTERVAL="${DNS_POLL_INTERVAL:-10}"
-
-if [[ -z "$TOKEN" ]]; then
-  echo "❌ Missing Cloudflare API token."
-  usage
+# ─── Step 0: Get API Token ───────────────────────────────────────
+if [ -z "${1:-}" ]; then
+  echo -e "${RED}✗ Error: API Token is required.${NC}"
+  echo ""
+  echo "  How to get your token (takes 1 minute):"
+  echo "  1. Go to: https://dash.cloudflare.com/profile/api-tokens"
+  echo "  2. Click 'Create Token'"
+  echo "  3. Select 'Edit zone DNS' template"
+  echo "  4. Under 'Zone Resources', select 'All zones' or 'lexdo.uk'"
+  echo "  5. Click 'Continue to summary' → 'Create Token'"
+  echo "  6. Copy the token and run:"
+  echo ""
+  echo -e "     ${GREEN}bash scripts/setup_github_pages_verification.sh YOUR_TOKEN_HERE${NC}"
+  echo ""
   exit 1
 fi
 
-require_cmd() {
-  if ! command -v "$1" >/dev/null 2>&1; then
-    echo "❌ Required command not found: $1"
+API_TOKEN="$1"
+
+# ─── Step 1: Verify API Token ───────────────────────────────────
+echo -e "${YELLOW}[1/4] Verifying API token…${NC}"
+VERIFY=$(curl -s -w "\n%{http_code}" \
+  "${API_BASE}/user/tokens/verify" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json")
+
+HTTP_CODE=$(echo "$VERIFY" | tail -1)
+BODY=$(echo "$VERIFY" | sed '$d')
+
+if [ "$HTTP_CODE" != "200" ]; then
+  echo -e "${RED}✗ Invalid API token. HTTP ${HTTP_CODE}${NC}"
+  echo "$BODY" | python3 -m json.tool 2>/dev/null || echo "$BODY"
+  exit 1
+fi
+echo -e "${GREEN}✓ API token is valid.${NC}"
+
+# ─── Step 2: Check for existing record ──────────────────────────
+echo -e "${YELLOW}[2/4] Checking for existing TXT record…${NC}"
+EXISTING=$(curl -s \
+  "${API_BASE}/zones/${ZONE_ID}/dns_records?type=TXT&name=${RECORD_NAME}" \
+  -H "Authorization: Bearer ${API_TOKEN}" \
+  -H "Content-Type: application/json")
+
+EXISTING_COUNT=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin).get('result_info',{}).get('count',0))" 2>/dev/null || echo "0")
+
+if [ "$EXISTING_COUNT" -gt "0" ]; then
+  EXISTING_ID=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['id'])" 2>/dev/null)
+  EXISTING_CONTENT=$(echo "$EXISTING" | python3 -c "import sys,json; print(json.load(sys.stdin)['result'][0]['content'])" 2>/dev/null)
+
+  if [ "$EXISTING_CONTENT" = "$RECORD_CONTENT" ]; then
+    echo -e "${GREEN}✓ TXT record already exists with correct value. Skipping creation.${NC}"
+  else
+    echo -e "${YELLOW}⚠ TXT record exists but with different value. Updating...${NC}"
+    UPDATE=$(curl -s \
+      "${API_BASE}/zones/${ZONE_ID}/dns_records/${EXISTING_ID}" \
+      --request PUT \
+      -H "Authorization: Bearer ${API_TOKEN}" \
+      -H "Content-Type: application/json" \
+      --data "{\"type\":\"TXT\",\"name\":\"${RECORD_NAME}\",\"content\":\"${RECORD_CONTENT}\",\"ttl\":1}")
+
+    SUCCESS=$(echo "$UPDATE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('success', False))" 2>/dev/null)
+    if [ "$SUCCESS" = "True" ]; then
+      echo -e "${GREEN}✓ TXT record updated successfully.${NC}"
+    else
+      echo -e "${RED}✗ Failed to update TXT record:${NC}"
+      echo "$UPDATE" | python3 -m json.tool 2>/dev/null || echo "$UPDATE"
+      exit 1
+    fi
+  fi
+else
+  # ─── Step 3: Create TXT record ──────────────────────────────
+  echo -e "${YELLOW}[3/4] Creating TXT record…${NC}"
+  echo "       Name:    ${RECORD_NAME}"
+  echo "       Content: ${RECORD_CONTENT}"
+  echo ""
+
+  CREATE=$(curl -s \
+    "${API_BASE}/zones/${ZONE_ID}/dns_records" \
+    --request POST \
+    -H "Authorization: Bearer ${API_TOKEN}" \
+    -H "Content-Type: application/json" \
+    --data "{\"type\":\"TXT\",\"name\":\"${RECORD_NAME}\",\"content\":\"${RECORD_CONTENT}\",\"ttl\":1,\"proxied\":false}")
+
+  SUCCESS=$(echo "$CREATE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('success', False))" 2>/dev/null)
+  if [ "$SUCCESS" = "True" ]; then
+    RECORD_ID=$(echo "$CREATE" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['id'])" 2>/dev/null)
+    echo -e "${GREEN}✓ TXT record created successfully!${NC}"
+    echo -e "  Record ID: ${RECORD_ID}"
+  else
+    echo -e "${RED}✗ Failed to create TXT record:${NC}"
+    echo "$CREATE" | python3 -m json.tool 2>/dev/null || echo "$CREATE"
     exit 1
   fi
-}
+fi
 
-require_cmd curl
-require_cmd python3
+# ─── Step 4: Verify DNS propagation ─────────────────────────────
+echo ""
+echo -e "${YELLOW}[4/4] Verifying DNS propagation…${NC}"
+echo "       (Cloudflare usually propagates within 1-2 minutes)"
+echo ""
 
-api_call() {
-  local method="$1"
-  local endpoint="$2"
-  local data="${3:-}"
+MAX_RETRIES=6
+RETRY_INTERVAL=10
 
-  if [[ -n "$data" ]]; then
-    curl -sS -X "$method" "$CLOUDFLARE_API$endpoint" \
-      -H "Authorization: Bearer $TOKEN" \
-      -H "Content-Type: application/json" \
-      --data "$data"
-  else
-    curl -sS -X "$method" "$CLOUDFLARE_API$endpoint" \
-      -H "Authorization: Bearer $TOKEN" \
-      -H "Content-Type: application/json"
+for i in $(seq 1 "$MAX_RETRIES"); do
+  RESULT=$(curl -s "https://dns.google/resolve?name=${RECORD_NAME}&type=TXT" 2>/dev/null)
+  ANSWER=$(echo "$RESULT" | python3 -c "import sys,json; data=json.load(sys.stdin); print('FOUND' if any('${RECORD_CONTENT}' in a.get('data','') for a in data.get('Answer', [])) else 'NOT_FOUND')" 2>/dev/null || echo "NOT_FOUND")
+
+  if [ "$ANSWER" = "FOUND" ]; then
+    echo -e "${GREEN}✓ DNS propagation confirmed! Record is live globally.${NC}"
+    echo ""
+    echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}  ✓ ALL DONE! Now go to GitHub and click 'Verify':${NC}"
+    echo -e "${CYAN}  https://github.com/settings/pages_verified_domains/lexdo.uk${NC}"
+    echo -e "${CYAN}══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    exit 0
   fi
-}
 
-parse_json() {
-  local key="$1"
-  python3 -c "import json,sys; d=json.load(sys.stdin); print($key)"
-}
+  echo "  Attempt ${i}/${MAX_RETRIES}: Not propagated yet. Waiting ${RETRY_INTERVAL}s..."
+  sleep "$RETRY_INTERVAL"
+done
 
-echo "🔐 Verifying Cloudflare API token..."
-VERIFY_RESPONSE="$(api_call GET "/user/tokens/verify")"
-VERIFY_SUCCESS="$(printf '%s' "$VERIFY_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
-
-if [[ "$VERIFY_SUCCESS" != "true" ]]; then
-  ERRORS="$(printf '%s' "$VERIFY_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
-  echo "❌ Token verification failed: ${ERRORS:-Unknown error}"
-  exit 1
-fi
-
-echo "✅ Token is valid."
-
-echo "🔎 Checking whether TXT record already exists..."
-EXISTING_RESPONSE="$(api_call GET "/zones/$ZONE_ID/dns_records?type=$RECORD_TYPE&name=$RECORD_NAME")"
-EXISTING_SUCCESS="$(printf '%s' "$EXISTING_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
-
-if [[ "$EXISTING_SUCCESS" != "true" ]]; then
-  ERRORS="$(printf '%s' "$EXISTING_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
-  echo "❌ Failed fetching DNS records: ${ERRORS:-Unknown error}"
-  exit 1
-fi
-
-RECORD_ID="$(printf '%s' "$EXISTING_RESPONSE" | parse_json 'd.get("result", [{}])[0].get("id", "") if d.get("result") else ""')"
-
-PAYLOAD="$(python3 - <<PY
-import json
-print(json.dumps({
-  "type": "$RECORD_TYPE",
-  "name": "$RECORD_NAME",
-  "content": "$RECORD_CONTENT",
-  "ttl": $RECORD_TTL,
-  "proxied": False,
-}))
-PY
-)"
-
-if [[ -n "$RECORD_ID" ]]; then
-  echo "✏️ Existing record found. Updating record..."
-  UPSERT_RESPONSE="$(api_call PUT "/zones/$ZONE_ID/dns_records/$RECORD_ID" "$PAYLOAD")"
-else
-  echo "➕ Creating TXT record..."
-  UPSERT_RESPONSE="$(api_call POST "/zones/$ZONE_ID/dns_records" "$PAYLOAD")"
-fi
-
-UPSERT_SUCCESS="$(printf '%s' "$UPSERT_RESPONSE" | parse_json 'str(d.get("success", False)).lower()')"
-if [[ "$UPSERT_SUCCESS" != "true" ]]; then
-  ERRORS="$(printf '%s' "$UPSERT_RESPONSE" | parse_json '"; ".join(e.get("message", "Unknown error") for e in d.get("errors", []))')"
-  echo "❌ Failed writing TXT record: ${ERRORS:-Unknown error}"
-  exit 1
-fi
-
-echo "✅ TXT record is set: $RECORD_NAME"
-echo "📡 Checking DNS propagation..."
-
-if command -v dig >/dev/null 2>&1; then
-  for ((i=1; i<=DNS_POLL_ATTEMPTS; i++)); do
-    DIG_OUTPUT="$(dig +short TXT "$RECORD_NAME" | tr -d '"')"
-    if printf '%s\n' "$DIG_OUTPUT" | grep -Fxq "$RECORD_CONTENT"; then
-      echo "✅ DNS propagated successfully on attempt $i/$DNS_POLL_ATTEMPTS."
-      echo "🔗 Open GitHub and click Verify: $GITHUB_VERIFY_URL"
-      exit 0
-    fi
-
-    echo "⏳ Attempt $i/$DNS_POLL_ATTEMPTS: record not visible yet. Waiting ${DNS_POLL_INTERVAL}s..."
-    sleep "$DNS_POLL_INTERVAL"
-  done
-
-  echo "⚠️ Record created but not visible yet in public DNS."
-  echo "   It may need more time to propagate. Re-run this script in a few minutes."
-  echo "🔗 Once visible, verify in GitHub: $GITHUB_VERIFY_URL"
-else
-  echo "⚠️ 'dig' command is not installed, so propagation check was skipped."
-  echo "🔗 Verify in GitHub after a short wait: $GITHUB_VERIFY_URL"
-fi
+echo ""
+echo -e "${YELLOW}⚠ Record was created but DNS hasn’t fully propagated yet.${NC}"
+echo "  This is normal — try clicking 'Verify' on GitHub in a few minutes:"
+echo "  https://github.com/settings/pages_verified_domains/lexdo.uk"
+echo ""
+echo "  You can also check manually:"
+echo "  https://dns.google/resolve?name=${RECORD_NAME}&type=TXT"
+echo ""
