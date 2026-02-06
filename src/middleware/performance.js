@@ -1,4 +1,5 @@
 import logger from "../utils/logger.js";
+import { agentsCache, knowledgeCache } from "../utils/cache.js";
 
 /**
  * Performance monitoring middleware
@@ -53,7 +54,6 @@ export const getMemoryUsage = () => {
  * Cache statistics
  */
 export const getCacheStats = () => {
-  const { agentsCache, knowledgeCache } = require("../utils/cache.js");
   return {
     agents: {
       size: agentsCache.size(),
