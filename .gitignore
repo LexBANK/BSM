@@ -25,3 +25,5 @@ secrets.json
 certs/
 certificates/
 ssl/
+
+__pycache__/
