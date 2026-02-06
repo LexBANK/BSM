@@ -172,9 +172,6 @@ jobs:
           sudo apt-get install -y jq
           npm install -g snyk || true
 
-      - name: Make scripts executable
-        run: chmod +x scripts/run_agents.sh
-
       - name: Run agents script
         run: ./scripts/run_agents.sh reports false
 
@@ -186,9 +183,6 @@ jobs:
 EOF
 
 # Main run script (already exists, skip)
-
-# Make bootstrap script executable
-chmod +x scripts/bootstrap_bsm_agents.sh || true
 
 # Commit all created files
 git add .github/agents .github/PULL_REQUEST_TEMPLATE .github/workflows
