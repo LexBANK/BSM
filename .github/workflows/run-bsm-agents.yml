@@ -3,21 +3,29 @@ name: Run BSM Agents
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: run-bsm-agents
+  cancel-in-progress: true
+
 jobs:
   run-agents:
     runs-on: ubuntu-latest
+
     env:
       KM_ENDPOINT: ${{ secrets.KM_ENDPOINT }}
       KM_TOKEN: ${{ secrets.KM_TOKEN }}
       SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: npm
 
       - name: Install tools
         run: |
@@ -25,14 +33,15 @@ jobs:
           sudo apt-get install -y jq
           npm install -g snyk || true
 
-      - name: Make scripts executable
-        run: chmod +x scripts/run_agents.sh
-
-      - name: Run agents script
-        run: ./scripts/run_agents.sh reports false
+      - name: Run agents
+        run: |
+          chmod +x scripts/run_agents.sh
+          ./scripts/run_agents.sh reports false
 
       - name: Upload report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agents-report
           path: reports/
+          if-no-files-found: warn
