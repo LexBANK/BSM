@@ -1,14 +1,3 @@
-# BSM Platform — Code Ownership
-# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-
-# Workflows require team review
-.github/workflows/ @LexBANK/platform-team
-
-# Published reports require review
-docs/reports/ @LexBANK/platform-team
-
-# Scripts require review
-scripts/ @LexBANK/platform-team
-
-# Security-sensitive files
-.gitleaks.toml @LexBANK/platform-team
+# مسؤول عن ملفات الـ workflows
+.github/workflows/* @Moteb
+scripts/* @Moteb
