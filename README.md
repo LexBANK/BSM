@@ -1,5 +1,12 @@
 # LexBANK / BSM Platform
 
+> **📋 PR MANAGEMENT UPDATE (2026-02-07):**  
+> A comprehensive analysis of 30 open PRs has been completed. Repository maintainers should start with:
+> - **[PR-MERGE-INSTRUCTIONS.md](PR-MERGE-INSTRUCTIONS.md)** - Step-by-step merge action plan
+> - **[TASK-COMPLETE-SUMMARY.md](TASK-COMPLETE-SUMMARY.md)** - Complete analysis summary
+> - **[scripts/check-pr-status.sh](scripts/check-pr-status.sh)** - Quick status checker
+> - **[reports/pr-merge-dashboard.html](reports/pr-merge-dashboard.html)** - Visual tracker
+
 ## Overview
 
 The **LexBANK and BSM Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
