@@ -1,0 +1,22 @@
+; Zone file for corehub.nexus
+; Cloudflare Pages + Email Protection
+; Import this to Cloudflare DNS
+
+; --- Cloudflare Pages Records ---
+; Apex domain using CNAME flattening
+corehub.nexus. 3600 IN CNAME bsm-8p4.pages.dev.
+
+; www subdomain
+www 3600 IN CNAME bsm-8p4.pages.dev.
+
+; --- Email Protection (Domains without email) ---
+; Prevents email spoofing for domains that don't send mail
+@ 3600 IN TXT "v=spf1 -all"
+_dmarc 3600 IN TXT "v=DMARC1; p=reject; sp=reject; adkim=s; aspf=s; rua=mailto:dmarc@corehub.nexus;"
+*._domainkey 3600 IN TXT "v=DKIM1; p="
+
+; --- Security ---
+; CAA Records - Allowed issuers
+@ 3600 IN CAA 0 issue "letsencrypt.org"
+@ 3600 IN CAA 0 issue "pki.goog"
+@ 3600 IN CAA 0 issuewild ";"
