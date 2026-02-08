@@ -232,17 +232,18 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      - name: Create GitHub Issue
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `🚨 AI Key Validation Failed - ${new Date().toISOString().split('T')[0]}`,
-              body: `## Key Validation Results\n\n| Provider | Status |\n|----------|--------|\n| OpenAI | ${{ needs.validate-keys.outputs.openai_status == 'true' && '✅' || '❌' }} |\n| Anthropic | ${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅' || '❌' }} |\n| Perplexity | ${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅' || '❌' }} |\n| Google | ${{ needs.validate-keys.outputs.google_status == 'true' && '✅' || '❌' }} |\n\nPlease check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.",
-              labels: ['urgent', 'keys', 'automation']
-            });
+      # Disabled to reduce email notification noise - Slack alert is sufficient
+      #       - name: Create GitHub Issue
+      #         uses: actions/github-script@v7
+      #         with:
+      #           script: |
+      #             github.rest.issues.create({
+      #               owner: context.repo.owner,
+      #               repo: context.repo.repo,
+      #               title: `🚨 AI Key Validation Failed - ${new Date().toISOString().split('T')[0]}`,
+      #               body: `## Key Validation Results\n\n| Provider | Status |\n|----------|--------|\n| OpenAI | ${{ needs.validate-keys.outputs.openai_status == 'true' && '✅' || '❌' }} |\n| Anthropic | ${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅' || '❌' }} |\n| Perplexity | ${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅' || '❌' }} |\n| Google | ${{ needs.validate-keys.outputs.google_status == 'true' && '✅' || '❌' }} |\n\nPlease check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.",
+      #               labels: ['urgent', 'keys', 'automation']
+      #             });
 
   deploy-if-valid:
     name: "Deploy with Valid Keys"

@@ -57,23 +57,24 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs
 
-      - name: Create notification issue
-        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
-        with:
-          script: |
-            const date = new Date().toISOString().slice(0, 10);
-            const trigger = '${{ github.event.workflow_run.name }}';
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `New Agents Report Published — ${date}`,
-              body: [
-                `A new agents report has been published to GitHub Pages.`,
-                '',
-                `**Triggered by:** ${trigger}`,
-                `**Date:** ${date}`,
-                '',
-                `View the reports index on your GitHub Pages site.`,
-              ].join('\n'),
-              labels: ['automation', 'report-published'],
-            });
+      # Disabled to reduce email notification noise
+      # - name: Create notification issue
+      #   uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+      #   with:
+      #     script: |
+      #       const date = new Date().toISOString().slice(0, 10);
+      #       const trigger = '${{ github.event.workflow_run.name }}';
+      #       await github.rest.issues.create({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         title: `New Agents Report Published — ${date}`,
+      #         body: [
+      #           `A new agents report has been published to GitHub Pages.`,
+      #           '',
+      #           `**Triggered by:** ${trigger}`,
+      #           `**Date:** ${date}`,
+      #           '',
+      #           `View the reports index on your GitHub Pages site.`,
+      #         ].join('\n'),
+      #         labels: ['automation', 'report-published'],
+      #       });
