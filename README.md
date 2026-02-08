@@ -1,6 +1,9 @@
 # LexBANK / BSM Platform
 
-> **🌐 Live Website:** [https://corehub.nexus](https://corehub.nexus) - BSM Nexus Control Interface
+[![Deploy to GitHub Pages](https://github.com/LexBANK/BSM/actions/workflows/pages.yml/badge.svg)](https://github.com/LexBANK/BSM/actions/workflows/pages.yml)
+
+> **🌐 Live Website:** [https://corehub.nexus](https://corehub.nexus) - BSM Nexus Control Interface  
+> **📖 Deployment Info:** [DEPLOYMENT-LINK.md](DEPLOYMENT-LINK.md) | **🔧 DNS Config:** [dns/](dns/)
 
 ## Overview
 
