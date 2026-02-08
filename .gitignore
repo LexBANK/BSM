@@ -1,6 +1,7 @@
 node_modules
 .env
 .DS_Store
+logs/
 
 # Reports - ignore most but keep security reports
 reports/*
