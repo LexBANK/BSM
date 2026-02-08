@@ -546,7 +546,7 @@ All errors are logged with:
 - Health check support
 
 **Frontend**: GitHub Pages
-- Hosted at `https://www.lexdo.uk`
+- Hosted at `https://corehub.nexus`
 - Static Vue 3 application
 - Connects to API backend
 - Custom domain with DNS configuration

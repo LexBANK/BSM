@@ -1,5 +1,10 @@
 # LexBANK / BSM Platform
 
+[![Deploy to GitHub Pages](https://github.com/LexBANK/BSM/actions/workflows/pages.yml/badge.svg)](https://github.com/LexBANK/BSM/actions/workflows/pages.yml)
+
+> **🌐 Live Website:** [https://corehub.nexus](https://corehub.nexus) - BSM Nexus Control Interface  
+> **📖 Deployment Info:** [DEPLOYMENT-LINK.md](DEPLOYMENT-LINK.md) | **🔧 DNS Config:** [dns/](dns/)
+
 ## Overview
 
 The **LexBANK and BSM Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
@@ -61,7 +66,8 @@ BSM/
 - `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
 
 ### Standalone Frontend (GitHub Pages)
-- Hosted at `https://www.lexdo.uk` via GitHub Pages
+- **Live Website:** [https://corehub.nexus](https://corehub.nexus) 🚀
+- Hosted via GitHub Pages with Cloudflare DNS
 - Connects to the API backend (configurable URL)
 - Same chat interface with API URL configuration
 - Automated DNS verification setup available (see `dns/GITHUB-PAGES-VERIFICATION.md`)
