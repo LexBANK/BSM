@@ -1,10 +1,28 @@
 import fetch from "node-fetch";
 import { AppError } from "../utils/errors.js";
+import { modelRouter } from "../config/modelRouter.js";
 
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
-export const runGPT = async ({ model, apiKey, system, user, messages }) => {
+export const runGPT = async ({ model, apiKey, system, user, messages, task, complexity, requiresSearch, searchQuery }) => {
+  const shouldUseRouter = Boolean(requiresSearch || task || model?.includes("sonar") || model?.includes("perplexity"));
+
+  if (shouldUseRouter) {
+    const routed = await modelRouter.execute(
+      { system, user, messages },
+      {
+        model,
+        task: task || "chat_response",
+        complexity: complexity || "medium",
+        requiresSearch: Boolean(requiresSearch),
+        searchQuery
+      }
+    );
+
+    return routed?.output || "";
+  }
+
   if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
 
   const controller = new AbortController();
