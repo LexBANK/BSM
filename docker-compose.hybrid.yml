@@ -1,0 +1,185 @@
+# ============================================
+# BSM Platform - Hybrid Architecture
+# Docker Compose configuration for Node.js + Go services
+# ============================================
+
+version: '3.8'
+
+services:
+  # ==========================================
+  # Node.js API Gateway
+  # ==========================================
+  node-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.example
+      target: development
+    container_name: bsm-node-api
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - LOG_LEVEL=debug
+      - OPENAI_BSM_KEY=${OPENAI_BSM_KEY}
+      - ADMIN_TOKEN=${ADMIN_TOKEN:-dev-token-change-me}
+      - GO_DOCUMENT_SERVICE=http://go-doc-processor:8080
+      - GO_SEARCH_SERVICE=http://go-search:8081
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql://bsm:secret@postgres:5432/bsm
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - node_modules:/app/node_modules
+    depends_on:
+      - redis
+      - postgres
+      - go-doc-processor
+    networks:
+      - bsm-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Go Document Processor Service
+  # ==========================================
+  go-doc-processor:
+    build:
+      context: ./services/document-processor
+      dockerfile: Dockerfile
+    container_name: bsm-go-doc-processor
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - LOG_LEVEL=debug
+      - MAX_FILE_SIZE=52428800
+      - WORKERS=10
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================
+  # Go Search Service (Placeholder)
+  # ==========================================
+  go-search:
+    image: alpine:3.19
+    container_name: bsm-go-search
+    command: sh -c "echo 'Search service coming soon' && sleep infinity"
+    ports:
+      - "8081:8080"
+    networks:
+      - bsm-network
+
+  # ==========================================
+  # Redis Cache
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: bsm-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: bsm-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=bsm
+      - POSTGRES_USER=bsm
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=en_US.utf8 --lc-ctype=en_US.utf8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - bsm-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bsm"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==========================================
+  # Prometheus Monitoring
+  # ==========================================
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    container_name: bsm-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    networks:
+      - bsm-network
+    restart: unless-stopped
+
+  # ==========================================
+  # Grafana Dashboard
+  # ==========================================
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: bsm-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - bsm-network
+    restart: unless-stopped
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  bsm-network:
+    driver: bridge
+    name: bsm-network
+
+# ==========================================
+# Volumes
+# ==========================================
+volumes:
+  node_modules:
+    name: bsm-node-modules
+  redis-data:
+    name: bsm-redis-data
+  postgres-data:
+    name: bsm-postgres-data
+  prometheus-data:
+    name: bsm-prometheus-data
+  grafana-data:
+    name: bsm-grafana-data

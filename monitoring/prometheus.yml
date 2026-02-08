@@ -1,0 +1,71 @@
+# Prometheus Configuration for BSM Platform
+# Monitors both Node.js and Go services
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'bsm-platform'
+    environment: 'development'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Load rules
+rule_files:
+  # - "alerts/*.yml"
+
+# Scrape configurations
+scrape_configs:
+  # ==========================================
+  # Go Document Processor Service
+  # ==========================================
+  - job_name: 'go-doc-processor'
+    static_configs:
+      - targets: ['go-doc-processor:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # ==========================================
+  # Go Search Service
+  # ==========================================
+  - job_name: 'go-search'
+    static_configs:
+      - targets: ['go-search:8080']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # ==========================================
+  # Node.js API Gateway
+  # ==========================================
+  - job_name: 'node-api'
+    static_configs:
+      - targets: ['node-api:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # ==========================================
+  # Redis
+  # ==========================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+
+  # ==========================================
+  # PostgreSQL
+  # ==========================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+
+  # ==========================================
+  # Prometheus self-monitoring
+  # ==========================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
