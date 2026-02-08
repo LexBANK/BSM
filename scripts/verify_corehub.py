@@ -20,7 +20,7 @@ except ImportError:
 class CoreHubVerificationAgent:
     def __init__(self):
         self.domain = "corehub.nexus"
-        self.pages_domain = "bsm-8p4.pages.dev"
+        self.pages_domain = "bsm-c3d.pages.dev"
         self.github_challenge = "213371599508681fa9e1d85a194aab"
         self.challenge_host = "_github-pages-challenge-LexBANK"
         self.zone_id = os.getenv("CF_ZONE_ID")
