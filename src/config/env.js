@@ -27,7 +27,9 @@ export const env = {
   fallbackEnabled: parseBoolean(process.env.FALLBACK_ENABLED, true),
   perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online",
   perplexityCitations: parseBoolean(process.env.PERPLEXITY_CITATIONS, true),
-  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7)
+  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7),
+  moonshotApiKey: process.env.MOONSHOT_API_KEY,
+  moonshotModel: process.env.MOONSHOT_MODEL || "moonshot-v1-8k"
 };
 
 // Validate admin token in production

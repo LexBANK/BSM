@@ -1,0 +1,9 @@
+id: kimi-agent
+name: Kimi Assistant
+role: AI chat assistant powered by Moonshot
+version: 1
+modelProvider: moonshot
+modelKey: moonshot
+modelName: moonshot-v1-8k
+actions:
+  - create_file
