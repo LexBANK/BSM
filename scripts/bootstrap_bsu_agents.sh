@@ -4,7 +4,7 @@ set -euo pipefail
 REMOTE=${1:-origin}
 OPEN_PR=${2:-true}
 TIMESTAMP=$(date +"%Y%m%dT%H%M%S")
-BRANCH="bsm-agents-bootstrap-${TIMESTAMP}"
+BRANCH="bsu-agents-bootstrap-${TIMESTAMP}"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
 if [ -z "$REPO_ROOT" ]; then
   echo "Run this script from inside a git repository."

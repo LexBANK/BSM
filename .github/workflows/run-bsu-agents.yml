@@ -1,4 +1,4 @@
-name: Run BSM Agents
+name: Run BSU Agents
 
 on:
   workflow_dispatch:

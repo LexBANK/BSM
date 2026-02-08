@@ -237,7 +237,7 @@ fi
 # ===========================================================================
 # 7. Optional: PR creation
 # ===========================================================================
-PR_BRANCH="bsm-agents-suggestions-${TIMESTAMP}"
+PR_BRANCH="bsu-agents-suggestions-${TIMESTAMP}"
 PR_TITLE="BSU Agents Suggestions — ${TIMESTAMP}"
 PR_BODY_FILE="${TMPDIR}/pr-body.md"
 cat > "${PR_BODY_FILE}" <<EOP

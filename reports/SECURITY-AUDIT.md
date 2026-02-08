@@ -114,7 +114,7 @@ POSTGRES_PASSWORD=CHANGE_ME_STRONG_PASSWORD
 ```javascript
 export const models = {
   openai: {
-    bsm: process.env.OPENAI_BSU_KEY,
+    bsu: process.env.OPENAI_BSU_KEY,
     brinder: process.env.OPENAI_BRINDER_KEY,
     lexnexus: process.env.OPENAI_LEXNEXUS_KEY,
     default: process.env.OPENAI_BSU_KEY
@@ -263,7 +263,7 @@ import { secretsManager } from './secrets.js';
 export const getModels = async () => {
   return {
     openai: {
-      bsm: await secretsManager.getSecret('BSU_OPENAI_KEY'),
+      bsu: await secretsManager.getSecret('BSU_OPENAI_KEY'),
       brinder: await secretsManager.getSecret('BRINDER_OPENAI_KEY'),
       lexnexus: await secretsManager.getSecret('LEXNEXUS_OPENAI_KEY'),
       default: await secretsManager.getSecret('BSU_OPENAI_KEY')
