@@ -1,5 +1,5 @@
 import { runOrchestration, generateReport, saveReport } from "../services/orchestratorService.js";
-import path from "path";
+import { runAgentOrchestration } from "../runners/orchestrator.js";
 import logger from "../utils/logger.js";
 
 /**
@@ -16,32 +16,45 @@ export const triggerOrchestration = async (req, res, next) => {
 
     logger.info("Starting agent orchestration sequence");
 
-    // Note: In a real implementation, this would use the task tool to invoke custom agents
-    // Since we cannot directly call the task tool from within code, 
-    // the orchestration should be triggered by the user or a workflow
-    // This endpoint prepares the structure and returns information for manual orchestration
-    
-    // For now, create a basic report structure
-    results.architect = "Orchestrator is ready. Use custom agents (bsm-autonomous-architect, runner, security) to execute the full orchestration.";
-    results.runner = "Awaiting runner agent execution.";
-    results.security = "Awaiting security agent execution.";
+    const runAgents = req.body?.runAgents === true;
 
-    // Generate and save report
+    if (runAgents) {
+      const orchestration = await runAgentOrchestration(req.body?.payload || {});
+      results.architect = "Code-review and merge workflow executed.";
+      results.runner = JSON.stringify(orchestration.results.merge, null, 2);
+      results.security = JSON.stringify(orchestration.results.security.summary, null, 2);
+
+      const report = generateReport(results);
+      saveReport(init.reportFile, report);
+
+      return res.json({
+        success: true,
+        message: "Agent orchestration executed successfully.",
+        reportFile: init.reportFile,
+        timestamp: init.timestamp,
+        orchestration,
+        correlationId: req.correlationId
+      });
+    }
+
+    results.architect = "Orchestrator is ready. Set runAgents=true with payload to execute specialized agents.";
+    results.runner = "Awaiting execution request.";
+    results.security = "Awaiting execution request.";
+
     const report = generateReport(results);
     saveReport(init.reportFile, report);
 
-    res.json({ 
+    res.json({
       success: true,
-      message: "Orchestration structure created. Use custom agents to complete orchestration.",
+      message: "Orchestration structure created. Set runAgents=true to execute agents.",
       reportFile: init.reportFile,
       timestamp: init.timestamp,
       instructions: {
-        step1: "Call custom agent 'bsm-autonomous-architect' to analyze repository",
-        step2: "Call custom agent 'runner' to run tests and build",
-        step3: "Call custom agent 'security' to check configurations",
-        step4: "Results will be consolidated in the report file"
+        step1: "POST /orchestrator/run with { runAgents: true, payload: {...} }",
+        step2: "Include codeReview/security/merge/integrity payload sections as needed",
+        step3: "Keep all API keys in external key management or environment secrets"
       },
-      correlationId: req.correlationId 
+      correlationId: req.correlationId
     });
   } catch (err) {
     next(err);
