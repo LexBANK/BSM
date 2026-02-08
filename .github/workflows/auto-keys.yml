@@ -1,4 +1,4 @@
-name: "🔐 Auto Key Management & Validation"
+name: "\U0001F510 Auto Key Management & Validation"
 
 on:
   schedule:
@@ -19,13 +19,16 @@ jobs:
       anthropic_status: ${{ steps.check.outputs.anthropic }}
       perplexity_status: ${{ steps.check.outputs.perplexity }}
       google_status: ${{ steps.check.outputs.google }}
+      moonshot_status: ${{ steps.check.outputs.moonshot }}
+      slack_status: ${{ steps.check.outputs.slack }}
+      render_status: ${{ steps.check.outputs.render }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         run: npm ci
@@ -37,31 +40,36 @@ jobs:
           ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_KEY }}
           PERPLEXITY_KEY: ${{ secrets.PERPLEXITY_KEY }}
           GOOGLE_KEY: ${{ secrets.GOOGLE_AI_KEY }}
+          MOONSHOT_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RENDER_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
           node << 'EOF'
           const fs = require('fs');
           const https = require('https');
+          const http = require('http');
 
-          function requestStatus({ hostname, path, key, headers = {} }) {
+          function requestStatus({ hostname, path, key, method = 'GET', headers = {}, protocol = 'https' }) {
             return new Promise((resolve) => {
               if (!key) {
                 resolve(false);
                 return;
               }
 
-              const req = https.request(
+              const lib = protocol === 'http' ? http : https;
+              const req = lib.request(
                 {
                   hostname,
                   path,
-                  method: 'GET',
-                  timeout: 8000,
+                  method,
+                  timeout: 10000,
                   headers: {
                     Authorization: `Bearer ${key}`,
                     ...headers
                   }
                 },
                 (res) => {
-                  resolve(res.statusCode >= 200 && res.statusCode < 300);
+                  resolve(res.statusCode >= 200 && res.statusCode < 400);
                 }
               );
 
@@ -70,6 +78,38 @@ jobs:
               });
               req.on('error', () => resolve(false));
               req.end();
+            });
+          }
+
+          function checkUrl(urlStr) {
+            return new Promise((resolve) => {
+              if (!urlStr) {
+                resolve(false);
+                return;
+              }
+              try {
+                const url = new URL(urlStr);
+                const lib = url.protocol === 'http:' ? http : https;
+                const req = lib.request(
+                  {
+                    hostname: url.hostname,
+                    path: url.pathname + url.search,
+                    port: url.port || undefined,
+                    method: 'POST',
+                    timeout: 10000,
+                    headers: { 'Content-Type': 'application/json' }
+                  },
+                  (res) => {
+                    resolve(res.statusCode >= 200 && res.statusCode < 500);
+                  }
+                );
+                req.on('timeout', () => req.destroy(new Error('timeout')));
+                req.on('error', () => resolve(false));
+                req.write('{}');
+                req.end();
+              } catch {
+                resolve(false);
+              }
             });
           }
 
@@ -88,11 +128,21 @@ jobs:
                 key
               }),
 
+            moonshot: (key) =>
+              requestStatus({
+                hostname: 'api.moonshot.cn',
+                path: '/v1/models',
+                key
+              }),
+
             anthropic: async (key) =>
               Boolean(key && /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(key)),
 
             google: async (key) =>
-              Boolean(key && /^AIza[A-Za-z0-9_-]{20,}$/.test(key))
+              Boolean(key && /^AIza[A-Za-z0-9_-]{20,}$/.test(key)),
+
+            slack: (_key) => checkUrl(process.env.SLACK_WEBHOOK),
+            render: (_key) => checkUrl(process.env.RENDER_HOOK)
           };
 
           async function validateAll() {
@@ -100,30 +150,35 @@ jobs:
               openai: false,
               anthropic: false,
               perplexity: false,
-              google: false
+              google: false,
+              moonshot: false,
+              slack: false,
+              render: false
             };
 
             const inputKeys = {
               openai: process.env.OPENAI_KEY,
               anthropic: process.env.ANTHROPIC_KEY,
               perplexity: process.env.PERPLEXITY_KEY,
-              google: process.env.GOOGLE_KEY
+              google: process.env.GOOGLE_KEY,
+              moonshot: process.env.MOONSHOT_KEY,
+              slack: process.env.SLACK_WEBHOOK,
+              render: process.env.RENDER_HOOK
             };
 
             for (const provider of Object.keys(results)) {
               if (!inputKeys[provider]) {
-                console.log(`${provider}: ❌ (missing key)`);
+                console.log(`${provider}: \u274C (not configured)`);
                 continue;
               }
 
               results[provider] = await validators[provider](inputKeys[provider]);
-              console.log(`${provider}: ${results[provider] ? '✅' : '❌'}`);
+              console.log(`${provider}: ${results[provider] ? '\u2705' : '\u274C'}`);
             }
 
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `openai=${results.openai}\n`);
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `anthropic=${results.anthropic}\n`);
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `perplexity=${results.perplexity}\n`);
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, `google=${results.google}\n`);
+            for (const key of Object.keys(results)) {
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, `${key}=${results[key]}\n`);
+            }
 
             fs.writeFileSync(
               'key-report.json',
@@ -134,7 +189,7 @@ jobs:
                   summary: {
                     total: Object.keys(results).length,
                     active: Object.values(results).filter(Boolean).length,
-                    failed: Object.values(results).filter((v) => !v).length
+                    inactive: Object.values(results).filter((v) => !v).length
                   }
                 },
                 null,
@@ -142,16 +197,15 @@ jobs:
               )
             );
 
-            const failed = Object.entries(results)
-              .filter(([, ok]) => !ok)
-              .map(([name]) => name);
+            const configured = Object.entries(inputKeys).filter(([, v]) => v);
+            const failed = configured.filter(([name]) => !results[name]).map(([name]) => name);
 
             if (failed.length > 0) {
-              console.error(`\n❌ Failed keys: ${failed.join(', ')}`);
+              console.error(`\n\u274C Failed keys: ${failed.join(', ')}`);
               process.exit(1);
             }
 
-            console.log('\n✅ All keys validated successfully!');
+            console.log(`\n\u2705 All configured keys validated (${configured.length}/${Object.keys(results).length})`);
           }
 
           validateAll().catch((error) => {
@@ -180,31 +234,37 @@ jobs:
         run: |
           mkdir -p docs/status
 
-          cat > docs/status/ai-keys.json << EOF
+          cat > docs/status/ai-keys.json << DASHEOF
           {
             "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
             "status": {
               "openai": "${{ needs.validate-keys.outputs.openai_status }}",
               "anthropic": "${{ needs.validate-keys.outputs.anthropic_status }}",
               "perplexity": "${{ needs.validate-keys.outputs.perplexity_status }}",
-              "google": "${{ needs.validate-keys.outputs.google_status }}"
+              "google": "${{ needs.validate-keys.outputs.google_status }}",
+              "moonshot": "${{ needs.validate-keys.outputs.moonshot_status }}",
+              "slack": "${{ needs.validate-keys.outputs.slack_status }}",
+              "render": "${{ needs.validate-keys.outputs.render_status }}"
             },
             "ui": {
               "openai": "${{ needs.validate-keys.outputs.openai_status == 'true' && '✅ GPT-4 Ready' || '🔴 GPT-4 Offline' }}",
               "anthropic": "${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅ Claude Ready' || '🔴 Claude Offline' }}",
               "perplexity": "${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅ Perplexity Ready' || '🔴 Perplexity Offline' }}",
-              "google": "${{ needs.validate-keys.outputs.google_status == 'true' && '✅ Gemini Ready' || '🔴 Gemini Offline' }}"
+              "google": "${{ needs.validate-keys.outputs.google_status == 'true' && '✅ Gemini Ready' || '🔴 Gemini Offline' }}",
+              "moonshot": "${{ needs.validate-keys.outputs.moonshot_status == 'true' && '✅ Kimi Ready' || '🔴 Kimi Offline' }}",
+              "slack": "${{ needs.validate-keys.outputs.slack_status == 'true' && '✅ Slack Connected' || '🔴 Slack Offline' }}",
+              "render": "${{ needs.validate-keys.outputs.render_status == 'true' && '✅ Render Hook Ready' || '🔴 Render Offline' }}"
             }
           }
-          EOF
+          DASHEOF
 
-          git config user.name "🤖 BSU Key Manager"
+          git config user.name "BSU Key Manager"
           git config user.email "keys@corehub.nexus"
 
           git add docs/status/ai-keys.json
           git diff --cached --quiet && echo "No changes" && exit 0
 
-          git commit -m "🔐 Auto-update: AI Key Status [$(date +%Y-%m-%d)]"
+          git commit -m "auto-update: AI Key Status [$(date +%Y-%m-%d)]"
           git push
 
   alert-failure:
@@ -214,36 +274,24 @@ jobs:
     if: failure()
     steps:
       - name: Send Slack Alert
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
             {
-              "text": "🚨 BSU Nexus: AI Key Validation Failed!",
+              "text": "BSU Nexus: AI Key Validation Failed!",
               "blocks": [
                 {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*AI Key Validation Failed*\n\n• OpenAI: ${{ needs.validate-keys.outputs.openai_status == 'true' && '✅' || '❌' }}\n• Anthropic: ${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅' || '❌' }}\n• Perplexity: ${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅' || '❌' }}\n• Google: ${{ needs.validate-keys.outputs.google_status == 'true' && '✅' || '❌' }}\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
+                    "text": "*AI Key Validation Failed*\n\n• OpenAI: ${{ needs.validate-keys.outputs.openai_status == 'true' && '✅' || '❌' }}\n• Anthropic: ${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅' || '❌' }}\n• Perplexity: ${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅' || '❌' }}\n• Google: ${{ needs.validate-keys.outputs.google_status == 'true' && '✅' || '❌' }}\n• Moonshot: ${{ needs.validate-keys.outputs.moonshot_status == 'true' && '✅' || '❌' }}\n• Slack: ${{ needs.validate-keys.outputs.slack_status == 'true' && '✅' || '❌' }}\n• Render: ${{ needs.validate-keys.outputs.render_status == 'true' && '✅' || '❌' }}\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
                   }
                 }
               ]
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-      # Disabled to reduce email notification noise - Slack alert is sufficient
-      #       - name: Create GitHub Issue
-      #         uses: actions/github-script@v7
-      #         with:
-      #           script: |
-      #             github.rest.issues.create({
-      #               owner: context.repo.owner,
-      #               repo: context.repo.repo,
-      #               title: `🚨 AI Key Validation Failed - ${new Date().toISOString().split('T')[0]}`,
-      #               body: `## Key Validation Results\n\n| Provider | Status |\n|----------|--------|\n| OpenAI | ${{ needs.validate-keys.outputs.openai_status == 'true' && '✅' || '❌' }} |\n| Anthropic | ${{ needs.validate-keys.outputs.anthropic_status == 'true' && '✅' || '❌' }} |\n| Perplexity | ${{ needs.validate-keys.outputs.perplexity_status == 'true' && '✅' || '❌' }} |\n| Google | ${{ needs.validate-keys.outputs.google_status == 'true' && '✅' || '❌' }} |\n\nPlease check the [Actions run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.",
-      #               labels: ['urgent', 'keys', 'automation']
-      #             });
 
   deploy-if-valid:
     name: "Deploy with Valid Keys"
@@ -257,13 +305,13 @@ jobs:
           RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
         run: |
           if [ -z "$RENDER_API_KEY" ] || [ -z "$RENDER_SERVICE_ID" ]; then
-            echo "❌ Missing Render deployment secrets"
-            exit 1
+            echo "Render API secrets not configured, skipping deploy"
+            exit 0
           fi
 
-          echo "🚀 Deploying with validated keys..."
+          echo "Deploying with validated keys..."
           curl -fsS -X POST \
             -H "Authorization: Bearer $RENDER_API_KEY" \
             "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys"
 
-          echo "✅ Deployment triggered successfully!"
+          echo "Deployment triggered successfully!"

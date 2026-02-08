@@ -128,6 +128,22 @@ jobs:
           }
           "
 
+      # Test KimiAgent (requires Moonshot API key)
+      - name: Test KimiAgent
+        env:
+          MOONSHOT_API_KEY: ${{ secrets.MOONSHOT_API_KEY }}
+        run: |
+          node --input-type=module -e "
+          import { kimiAgent } from './src/agents/KimiAgent.js';
+          try {
+            const r = await kimiAgent.chat('Say hello in one word');
+            console.log('KimiAgent: Working (model: ' + r.modelUsed + ')');
+          } catch (e) {
+            console.error('KimiAgent failed:', e.message);
+            process.exit(1);
+          }
+          "
+
       - name: Run validation suite
         run: npm test
 
