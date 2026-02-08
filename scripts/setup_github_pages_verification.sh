@@ -4,10 +4,10 @@ set -euo pipefail
 # Cloudflare zone and GitHub Pages challenge details for LexBANK/BSM.
 # Note: Zone ID is not highly sensitive and is also present in dns/lexdo-uk-zone.txt
 # For additional security, you can set this via CLOUDFLARE_ZONE_ID environment variable
-ZONE_ID="${CLOUDFLARE_ZONE_ID:-1c32bc5010d8b0c4a501e8458fd2cc14}"
+ZONE_ID="${CLOUDFLARE_ZONE_ID:-47f901b97bf4724266f6a0e7c1006a1d}"
 RECORD_TYPE="TXT"
-RECORD_NAME="_github-pages-challenge-LexBANK.lexdo.uk"
-RECORD_CONTENT=""  # To be filled with actual challenge value from GitHub
+RECORD_NAME="_github-pages-challenge-LexBANK.corehub.nexus"
+RECORD_CONTENT="213371599508681fa9e1d85a194aab"  # GitHub Pages challenge value
 TTL=1
 
 # DNS propagation polling configuration
@@ -186,7 +186,7 @@ main() {
 
   echo "GitHub Pages Verification Setup for LexBANK/BSM"
   echo "==============================================="
-  echo "Domain: lexdo.uk"
+  echo "Domain: corehub.nexus"
   echo "Record Name: ${RECORD_NAME}"
   echo "Challenge Value: ${RECORD_CONTENT}"
   echo
