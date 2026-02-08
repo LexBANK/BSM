@@ -2,9 +2,11 @@ node_modules
 .env
 .DS_Store
 
-# Reports - ignore most but keep security reports
+# Reports - ignore most but keep security reports and readiness documents
 reports/*
 !reports/SECURITY-*.md
+!reports/READINESS-*.md
+!reports/TASK-*.md
 
 # Sensitive files - Security
 *.key
