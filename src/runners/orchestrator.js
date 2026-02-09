@@ -6,6 +6,7 @@ import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import logger from "../utils/logger.js";
+import { prMergeAgent } from "../agents/PRMergeAgent.js";
 
 export const agentEvents = new EventEmitter();
 const agentStates = new Map();
@@ -16,8 +17,39 @@ export const orchestrator = async ({ event, payload, context = {} }) => {
 
   try {
     const selectedAgents = await selectAgentsForEvent(event, payload);
-    const results = await executeAgentsParallel(selectedAgents, payload, context, jobId);
-    const decision = makeOrchestrationDecision(results);
+    
+    // Check if PR merge agent is in the list
+    const prMergeAgentIndex = selectedAgents.findIndex(agent => agent.id === "pr-merge-agent");
+    const hasPRMergeAgent = prMergeAgentIndex !== -1;
+    
+    let results;
+    let decision;
+    
+    if (hasPRMergeAgent && selectedAgents.length > 1) {
+      // If we have PR merge agent plus other agents, run in two phases:
+      // Phase 1: Run all agents except PR merge agent
+      const otherAgents = selectedAgents.filter(agent => agent.id !== "pr-merge-agent");
+      results = await executeAgentsParallel(otherAgents, payload, context, jobId);
+      
+      // Phase 2: Use PR merge agent to evaluate the results
+      decision = makePRMergeDecision(results, payload);
+      
+      // Add PR merge agent result to the results array
+      results.push({
+        agentId: "pr-merge-agent",
+        agentName: "Auto-Merge Orchestrator",
+        status: "success",
+        result: JSON.stringify(decision),
+        metadata: { isPRMergeAgent: true },
+        executionTime: 0
+      });
+    } else {
+      // Normal execution - run all agents in parallel
+      results = await executeAgentsParallel(selectedAgents, payload, context, jobId);
+      decision = hasPRMergeAgent 
+        ? makePRMergeDecision(results, payload)
+        : makeOrchestrationDecision(results);
+    }
 
     notifyWebSocket({ jobId, status: "completed", event, decision, results });
 
@@ -34,11 +66,16 @@ export async function selectAgentsForEvent(event) {
   const byId = new Map(allAgents.map(agent => [agent.id, agent]));
 
   if (event === "pull_request.opened" || event === "pull_request.synchronize") {
-    return ["code-review-agent", "security-agent", "integrity-agent"].map(id => byId.get(id)).filter(Boolean);
+    // Include PR merge agent to evaluate results after code review and security checks
+    return ["code-review-agent", "security-agent", "integrity-agent", "pr-merge-agent"]
+      .map(id => byId.get(id))
+      .filter(Boolean);
   }
 
   if (event === "pull_request.ready_for_review") {
-    return ["code-review-agent", "security-agent"].map(id => byId.get(id)).filter(Boolean);
+    return ["code-review-agent", "security-agent", "pr-merge-agent"]
+      .map(id => byId.get(id))
+      .filter(Boolean);
   }
 
   if (event === "check_suite.completed") {
@@ -148,6 +185,59 @@ function makeOrchestrationDecision(results) {
   }
 
   return { action: "manual_review", reason: "Inconclusive results from agents" };
+}
+
+function makePRMergeDecision(results, payload) {
+  logger.info("Making PR merge decision using PRMergeAgent");
+  
+  // Extract agent results for evaluation
+  const otherResults = results
+    .filter(r => r.agentId !== "pr-merge-agent")
+    .map(r => {
+      // Try to parse result as JSON if it contains score/summary
+      try {
+        const parsed = typeof r.result === "string" ? JSON.parse(r.result) : r.result;
+        return {
+          agentId: r.agentId,
+          status: r.status,
+          score: parsed.score,
+          summary: parsed.summary,
+          ...parsed
+        };
+      } catch {
+        // If not parseable, extract score/summary from text
+        const scoreMatch = String(r.result || "").match(/score[:\s]+(\d+)/i);
+        const criticalMatch = String(r.result || "").match(/critical[:\s]+(\d+)/i);
+        
+        return {
+          agentId: r.agentId,
+          status: r.status,
+          score: scoreMatch ? Number(scoreMatch[1]) : undefined,
+          summary: criticalMatch ? { critical: Number(criticalMatch[1]) } : undefined
+        };
+      }
+    });
+
+  // Call the PRMergeAgent evaluate method
+  const evaluation = prMergeAgent.evaluate(payload, otherResults);
+  
+  logger.info({ evaluation }, "PR merge evaluation completed");
+
+  // Convert PRMergeAgent action to orchestrator decision format
+  if (evaluation.action === "approve") {
+    return {
+      action: "approve_and_merge",
+      reason: evaluation.reason,
+      automated: true,
+      conditions: evaluation.conditions
+    };
+  } else {
+    return {
+      action: "request_changes",
+      reason: evaluation.reason,
+      conditions: evaluation.conditions
+    };
+  }
 }
 
 function updateAgentState(agentId, jobId, status, result = null, error = null) {
