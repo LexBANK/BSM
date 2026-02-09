@@ -5,6 +5,7 @@
 class KeyStatusDisplay {
   constructor() {
     this.container = null;
+    this.updateInterval = null;
     this.init();
   }
 
@@ -90,10 +91,27 @@ class KeyStatusDisplay {
 
   startAutoUpdate() {
     this.update();
-    setInterval(() => this.update(), 30000);
+    this.updateInterval = setInterval(() => this.update(), 30000);
+  }
+
+  /**
+   * Stop auto-updates and cleanup (call on page unload)
+   */
+  stop() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval);
+      this.updateInterval = null;
+    }
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   window.keyStatusDisplay = new KeyStatusDisplay();
+  
+  // Cleanup on page unload to prevent memory leaks
+  window.addEventListener("beforeunload", () => {
+    if (window.keyStatusDisplay) {
+      window.keyStatusDisplay.stop();
+    }
+  });
 });
