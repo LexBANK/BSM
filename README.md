@@ -25,8 +25,8 @@ BSU/
 │   ├── lexdo-uk-zone.txt   # Cloudflare DNS zone file
 │   ├── DNS-RECORD-TYPES.md # DNS record types reference
 │   └── GITHUB-PAGES-VERIFICATION.md # GitHub Pages verification guide
-├── docs/                   # Documentation and GitHub Pages frontend
-│   ├── index.html          # Standalone chat interface
+├── docs/                   # Documentation (includes optional static frontend assets)
+│   ├── index.html          # Optional standalone chat interface
 │   ├── app.js              # Vue 3 chat application
 │   ├── styles.css          # Custom styles
 │   ├── CNAME               # Domain configuration
@@ -70,11 +70,21 @@ BSU/
 - `GET /api/admin/knowledge` - Get knowledge documents
 - `/admin` - Admin UI dashboard (requires admin token via Basic Auth, `x-admin-token`, or `?token=...`)
 
-### Standalone Frontend (GitHub Pages)
-- Hosted at `https://www.lexdo.uk` via GitHub Pages
-- Connects to the API backend (configurable URL)
-- Same chat interface with API URL configuration
-- Automated DNS verification setup available (see `dns/GITHUB-PAGES-VERIFICATION.md`)
+### Single-service deployment
+
+For production deployment, the application can run as a **single Node.js service**.
+
+- `src/app.js` handles `GET /` by redirecting to `/chat`.
+- `src/app.js` serves the chat frontend statically on `/chat` from `src/chat`.
+- No separate frontend service is required unless you intentionally split the architecture.
+
+After deployment, verify these URLs:
+
+- `/`
+- `/chat`
+- `/api/health`
+
+> Note: `docs/index.html` can still be used as an optional standalone static frontend (for example GitHub Pages), but it is not required for the default single-service deployment flow.
 
 ## DNS Management
 
