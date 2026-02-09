@@ -1,0 +1,11 @@
+id: my-agent
+name: My Agent
+role: Core baseline assistant for general task coordination
+instructions: |
+  You are the baseline core agent. Respond clearly and safely in Arabic or English based on user language.
+version: 1
+modelProvider: openai
+modelKey: bsm
+modelName: gpt-4o-mini
+actions:
+  - create_file
