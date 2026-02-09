@@ -37,6 +37,7 @@ class SmartKeyManager {
 
     this.currentProvider = "openai";
     this.usageStats = new Map();
+    this.statusCheckInterval = null;
   }
 
   /**
@@ -168,14 +169,41 @@ class SmartKeyManager {
       return null;
     }
   }
+
+  /**
+   * Start periodic status checks
+   */
+  startStatusChecks() {
+    if (this.statusCheckInterval) {
+      return; // Already running
+    }
+    
+    this.statusCheckInterval = setInterval(() => {
+      this.fetchRemoteStatus();
+    }, 5 * 60 * 1000);
+    
+    if (typeof this.statusCheckInterval.unref === "function") {
+      this.statusCheckInterval.unref();
+    }
+  }
+
+  /**
+   * Stop periodic status checks (cleanup)
+   */
+  stopStatusChecks() {
+    if (this.statusCheckInterval) {
+      clearInterval(this.statusCheckInterval);
+      this.statusCheckInterval = null;
+    }
+  }
 }
 
 export const keyManager = new SmartKeyManager();
 
-const interval = setInterval(() => {
-  keyManager.fetchRemoteStatus();
-}, 5 * 60 * 1000);
+// Start status checks automatically
+keyManager.startStatusChecks();
 
-if (typeof interval.unref === "function") {
-  interval.unref();
+// Export cleanup function for graceful shutdown
+export function cleanup() {
+  keyManager.stopStatusChecks();
 }

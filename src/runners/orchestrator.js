@@ -8,7 +8,11 @@ import { extractIntent, intentToAction } from "../utils/intent.js";
 import logger from "../utils/logger.js";
 
 export const agentEvents = new EventEmitter();
+agentEvents.setMaxListeners(50); // Prevent memory leak warning
+
 const agentStates = new Map();
+const MAX_STATE_ENTRIES = 1000; // Prevent unbounded growth
+const STATE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export const orchestrator = async ({ event, payload, context = {} }) => {
   const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
@@ -157,10 +161,39 @@ function updateAgentState(agentId, jobId, status, result = null, error = null) {
     status,
     result,
     error,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    expiresAt: Date.now() + STATE_TTL_MS
   };
   agentStates.set(`${agentId}_${jobId}`, state);
   agentEvents.emit("stateChange", state);
+  
+  // Clean up old states to prevent memory leak
+  cleanupExpiredStates();
+}
+
+function cleanupExpiredStates() {
+  const now = Date.now();
+  const entriesToDelete = [];
+  
+  // Remove expired entries
+  for (const [key, state] of agentStates.entries()) {
+    if (state.expiresAt && state.expiresAt < now) {
+      entriesToDelete.push(key);
+    }
+  }
+  
+  entriesToDelete.forEach(key => agentStates.delete(key));
+  
+  // If still too large, remove oldest entries
+  if (agentStates.size > MAX_STATE_ENTRIES) {
+    const sortedEntries = Array.from(agentStates.entries())
+      .sort((a, b) => (a[1].expiresAt || 0) - (b[1].expiresAt || 0));
+    
+    const toRemove = sortedEntries.slice(0, agentStates.size - MAX_STATE_ENTRIES);
+    toRemove.forEach(([key]) => agentStates.delete(key));
+    
+    logger.info({ removed: toRemove.length }, 'Cleaned up old agent states');
+  }
 }
 
 function notifyWebSocket(data) {
