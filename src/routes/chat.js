@@ -11,6 +11,19 @@ const router = Router();
 router.post("/", async (req, res, next) => {
   try {
     const { agentId, input } = req.body;
+
+    if (!agentId || typeof agentId !== "string") {
+      throw new AppError("Invalid or missing agentId", 400, "INVALID_AGENT_ID");
+    }
+
+    if (!input || typeof input !== "string") {
+      throw new AppError("Invalid or missing input", 400, "INVALID_INPUT");
+    }
+
+    if (input.length > env.maxAgentInputLength) {
+      throw new AppError(`Input too long. Max length is ${env.maxAgentInputLength}`, 400, "INPUT_TOO_LONG");
+    }
+
     const result = await runAgent({ agentId, input });
     res.json({ output: result.output });
   } catch (err) {

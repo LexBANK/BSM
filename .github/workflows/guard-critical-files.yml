@@ -1,0 +1,61 @@
+name: 🛡️ Critical Files Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '.github/agents/**'
+      - 'src/services/audit.js'
+      - 'src/config/**'
+      - 'tests/**'
+      - 'data/agents/**'
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for Critical File Deletion
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for critical file deletions..."
+
+          CRITICAL_FILES=(
+            ".github/agents/my-agent.agent.md"
+            "src/services/audit.js"
+            "src/config/index.js"
+            "tests/integration.test.js"
+          )
+
+          git fetch origin "${{ github.base_ref }}" --depth=1
+          DELETED_FILES=$(git diff --name-only --diff-filter=D "origin/${{ github.base_ref }}"...HEAD)
+
+          for file in "${CRITICAL_FILES[@]}"; do
+            if echo "$DELETED_FILES" | grep -qx "$file"; then
+              echo "🚨 CRITICAL ERROR: Attempting to delete protected file: $file"
+              exit 1
+            fi
+          done
+
+          echo "✅ No critical files deleted"
+
+      - name: Validate Config Structure
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -q "src/config/"; then
+            npm ci
+            node --input-type=module -e "import('./src/config/index.js').then(({ validateConfig }) => { try { validateConfig(); console.log('config ok'); } catch (e) { console.error(e.errors || e.message); process.exit(1); } });"
+          else
+            echo 'No config changes detected'
+          fi
+        env:
+          ADMIN_TOKEN: test-admin-token-1234
+          OPENAI_BSM_KEY: sk-placeholder
+
+      - name: Audit Log Check
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}"...HEAD | grep -q "data/agents/"; then
+            echo "📋 Agent files modified - ensure audit logging remains enabled"
+          fi

@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { env } from "../config/env.js";
+import audit from "../services/audit.js";
 
 // Constant-time string comparison to prevent timing attacks
 const timingSafeEqual = (a, b) => {
@@ -23,6 +24,12 @@ const tokenFromBasicAuth = (headerValue) => {
 export const adminAuth = (req, res, next) => {
   const token = req.headers["x-admin-token"];
   if (!token || !env.adminToken || !timingSafeEqual(token, env.adminToken)) {
+    audit.log("UNAUTHORIZED_ADMIN_ACCESS", {
+      user: "unknown",
+      ip: req.ip,
+      userAgent: req.get("user-agent"),
+      path: req.originalUrl
+    }).catch(() => {});
     return res.status(401).json({ error: "Unauthorized" });
   }
   next();
