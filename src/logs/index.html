@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BSU - Log Analyzer</title>
+  <meta name="description" content="Upload and analyze log files for error frequencies and trends" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+
+  <div id="app" class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-900/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-lg font-bold shadow-lg shadow-blue-600/20">
+            📊
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-white">BSU Log Analyzer</h1>
+            <p class="text-xs text-gray-400">Upload and analyze log files</p>
+          </div>
+        </div>
+        
+        <a href="/chat" class="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors border border-gray-700">
+          Back to Chat
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4">
+      <div class="max-w-6xl mx-auto">
+
+        <!-- Upload Section -->
+        <div v-if="!uploadId" class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+          <h2 class="text-xl font-bold mb-4">Upload Log File</h2>
+          
+          <div class="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+            <input 
+              type="file" 
+              ref="fileInput"
+              @change="handleFileSelect"
+              accept=".log,.txt,.json"
+              class="hidden"
+            />
+            
+            <div v-if="!selectedFile">
+              <svg class="w-16 h-16 mx-auto mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <button 
+                @click="$refs.fileInput.click()"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors"
+              >
+                Select Log File
+              </button>
+              <p class="mt-2 text-sm text-gray-400">Supports .log, .txt, .json files (max 10MB)</p>
+            </div>
+            
+            <div v-else class="space-y-3">
+              <div class="flex items-center justify-center gap-2">
+                <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="font-medium">{{ selectedFile.name }}</span>
+                <span class="text-sm text-gray-400">({{ formatBytes(selectedFile.size) }})</span>
+              </div>
+              
+              <div class="flex gap-2 justify-center">
+                <button 
+                  @click="uploadFile"
+                  :disabled="uploading"
+                  class="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {{ uploading ? 'Uploading...' : 'Upload & Analyze' }}
+                </button>
+                <button 
+                  @click="clearFile"
+                  class="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div v-if="error" class="mt-4 p-4 bg-red-900/30 border border-red-500/50 rounded-lg text-red-200">
+            {{ error }}
+          </div>
+        </div>
+
+        <!-- Analysis Results -->
+        <div v-if="analysis" class="space-y-6">
+          
+          <!-- Actions Bar -->
+          <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold">Analysis Results</h2>
+            <button 
+              @click="reset"
+              class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+            >
+              Analyze New File
+            </button>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+              <div class="text-sm text-gray-400 mb-1">Total Lines</div>
+              <div class="text-3xl font-bold">{{ analysis.summary.totalLines.toLocaleString() }}</div>
+            </div>
+            <div class="bg-red-900/20 rounded-xl p-4 border border-red-500/30">
+              <div class="text-sm text-red-300 mb-1">Errors</div>
+              <div class="text-3xl font-bold text-red-400">{{ analysis.summary.errorCount.toLocaleString() }}</div>
+            </div>
+            <div class="bg-yellow-900/20 rounded-xl p-4 border border-yellow-500/30">
+              <div class="text-sm text-yellow-300 mb-1">Warnings</div>
+              <div class="text-3xl font-bold text-yellow-400">{{ analysis.summary.warningCount.toLocaleString() }}</div>
+            </div>
+            <div class="bg-blue-900/20 rounded-xl p-4 border border-blue-500/30">
+              <div class="text-sm text-blue-300 mb-1">Format</div>
+              <div class="text-xl font-bold text-blue-400 uppercase">{{ analysis.summary.detectedFormat }}</div>
+            </div>
+          </div>
+
+          <!-- Time Range -->
+          <div v-if="analysis.summary.timeRange" class="bg-gray-900 rounded-xl p-4 border border-gray-800">
+            <h3 class="text-lg font-bold mb-2">Time Range</h3>
+            <div class="flex gap-6 text-sm">
+              <div>
+                <span class="text-gray-400">Start:</span>
+                <span class="ml-2 font-mono">{{ formatTimestamp(analysis.summary.timeRange.start) }}</span>
+              </div>
+              <div>
+                <span class="text-gray-400">End:</span>
+                <span class="ml-2 font-mono">{{ formatTimestamp(analysis.summary.timeRange.end) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trends Chart -->
+          <div v-if="analysis.trends.available" class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="text-lg font-bold mb-4">Error Trends Over Time</h3>
+            <canvas ref="trendsChart"></canvas>
+          </div>
+
+          <!-- Error Frequencies -->
+          <div v-if="analysis.errorFrequencies.length > 0" class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="text-lg font-bold mb-4">Error Frequencies ({{ analysis.errorFrequencies.length }} patterns)</h3>
+            <div class="space-y-4">
+              <div 
+                v-for="(error, index) in analysis.errorFrequencies" 
+                :key="index"
+                class="p-4 bg-gray-800 rounded-lg border border-gray-700"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <div class="font-mono text-sm text-red-300 mb-1">{{ error.pattern }}</div>
+                    <div class="flex gap-4 text-xs text-gray-400">
+                      <span>Count: <strong class="text-white">{{ error.count }}</strong></span>
+                      <span>{{ error.percentage }}% of all errors</span>
+                      <span v-if="error.firstOccurrence">First: {{ formatTimestamp(error.firstOccurrence) }}</span>
+                      <span v-if="error.lastOccurrence">Last: {{ formatTimestamp(error.lastOccurrence) }}</span>
+                    </div>
+                  </div>
+                  <div class="px-3 py-1 bg-red-900/30 text-red-300 rounded text-sm font-medium">
+                    {{ error.count }}
+                  </div>
+                </div>
+                <details class="mt-2">
+                  <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-300">Show examples ({{ error.examples.length }})</summary>
+                  <div class="mt-2 space-y-1">
+                    <div 
+                      v-for="(example, i) in error.examples" 
+                      :key="i"
+                      class="text-xs font-mono text-gray-300 p-2 bg-gray-900 rounded"
+                    >
+                      {{ example }}
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <!-- Warning Frequencies -->
+          <div v-if="analysis.warningFrequencies.length > 0" class="bg-gray-900 rounded-xl p-6 border border-gray-800">
+            <h3 class="text-lg font-bold mb-4">Warning Frequencies ({{ analysis.warningFrequencies.length }} patterns)</h3>
+            <div class="space-y-4">
+              <div 
+                v-for="(warning, index) in analysis.warningFrequencies.slice(0, 5)" 
+                :key="index"
+                class="p-4 bg-gray-800 rounded-lg border border-gray-700"
+              >
+                <div class="flex justify-between items-start mb-2">
+                  <div class="flex-1">
+                    <div class="font-mono text-sm text-yellow-300 mb-1">{{ warning.pattern }}</div>
+                    <div class="flex gap-4 text-xs text-gray-400">
+                      <span>Count: <strong class="text-white">{{ warning.count }}</strong></span>
+                      <span>{{ warning.percentage }}% of all warnings</span>
+                    </div>
+                  </div>
+                  <div class="px-3 py-1 bg-yellow-900/30 text-yellow-300 rounded text-sm font-medium">
+                    {{ warning.count }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div v-if="analysis.warningFrequencies.length > 5" class="mt-4 text-center text-sm text-gray-400">
+              Showing top 5 of {{ analysis.warningFrequencies.length }} warning patterns
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-4 mt-8">
+      <div class="max-w-6xl mx-auto px-4 text-center text-sm text-gray-400">
+        BSU Log Analyzer &copy; 2024 | Files are stored in memory for 1 hour
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
