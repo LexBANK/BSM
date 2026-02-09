@@ -261,6 +261,7 @@ The project includes GitHub Actions workflows:
 
 ### Architecture and Design
 - [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
+- [ADR-001: Database Responsibilities](docs/adr/ADR-001-database-responsibilities.md) - Decision record for data store boundaries and ownership
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
