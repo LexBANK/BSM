@@ -8,7 +8,7 @@ API_BASE="https://api.github.com"
 PER_PAGE=100
 DRY_RUN="${DRY_RUN:-false}"
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
-RESP_TMP_FILE="$(mktemp /tmp/gh-subscription-response.XXXXXX)"
+RESP_TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/gh-subscription-response.XXXXXX")"
 
 trap 'rm -f "$RESP_TMP_FILE"' EXIT INT TERM
 
