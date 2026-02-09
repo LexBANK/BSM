@@ -146,6 +146,9 @@ PORT=3000
 LOG_LEVEL=info
 
 # OpenAI / model providers
+# Primary key used by chat/direct by default
+OPENAI_BSM_KEY=your_key_here
+# Optional fallback key
 OPENAI_BSU_KEY=your_key_here
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
@@ -177,6 +180,27 @@ npm start
 # Validate data structure
 npm run validate
 ```
+
+
+### Render Deployment (Single Service)
+
+This project deploys as a **single Render web service** (API + chat UI together):
+
+- `GET /` redirects to `/chat`
+- `/chat` is served from `src/chat` by the same Express app
+- Health check endpoint is `GET /api/health`
+
+Use the root `Dockerfile` with `render.yaml` (`env: docker`) and configure these environment variables in Render:
+
+- `ADMIN_TOKEN` (strong value in production)
+- `OPENAI_BSM_KEY` (primary)
+- `OPENAI_BSU_KEY` (fallback, optional)
+- `OPENAI_BRINDER_KEY`
+- `OPENAI_LEXNEXUS_KEY`
+- `CORS_ORIGINS` (for example: `https://sr-bsm.onrender.com`)
+- Ensure OpenAI keys are pasted without quotes/spaces/new lines (for example: `sk-...` not `"sk-..."`).
+
+`buildFilter.paths` includes both `src/**` and `data/**` so updates to agents/knowledge data can trigger a new deploy.
 
 ## GitHub Copilot Pro Integration
 

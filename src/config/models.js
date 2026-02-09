@@ -1,3 +1,6 @@
+// OpenAI key priority:
+// 1) OPENAI_BSM_KEY (primary platform key)
+// 2) OPENAI_BSU_KEY (fallback key when BSM is unavailable)
 export const models = {
   openai: {
     bsm: process.env.OPENAI_BSM_KEY,
