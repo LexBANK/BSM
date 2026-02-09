@@ -78,7 +78,7 @@ function generateReport(prs) {
   // Calculate health score
   const healthScore = Math.max(0, 100 - (stats.stale * 5) - (stats.aging * 2) - (stats.blocked * 10));
 
-  console.log('\n=== BSU Repository Health Report ===\n');
+  console.log('\n=== BSM Repository Health Report ===\n');
   console.log(`Total Open PRs: ${stats.total}`);
   console.log(`Health Score: ${healthScore}/100 ${getHealthEmoji(healthScore)}\n`);
   

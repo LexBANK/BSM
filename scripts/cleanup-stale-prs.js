@@ -24,7 +24,7 @@ async function getStalePRs() {
     }).map(pr => ({
       ...pr,
       daysSinceUpdate: Math.floor((Date.now() - new Date(pr.updatedAt).getTime()) / (24 * 60 * 60 * 1000)),
-      isVeryStal: new Date(pr.updatedAt) < SIXTY_DAYS_AGO
+      isVeryStale: new Date(pr.updatedAt) < SIXTY_DAYS_AGO
     }));
   } catch (error) {
     console.error('Error fetching PRs:', error.message);
