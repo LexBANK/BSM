@@ -74,18 +74,35 @@ class KeyStatusDisplay {
       const data = await response.json();
       const html = Object.entries(data.ui || {})
         .map(([provider, text]) => {
-          const isActive = String(data.status?.[provider]) === "true";
+          const isActive = this.isProviderActive(data.status?.[provider]);
           return `<span class="provider ${isActive ? "active" : "failed"}">${text}</span>`;
         })
         .join("");
 
+      const timestamp = data.timestamp ? new Date(data.timestamp) : null;
+      const lastUpdatedText = timestamp && !Number.isNaN(timestamp.getTime())
+        ? timestamp.toLocaleTimeString("ar-SA")
+        : "--";
+
       this.container.innerHTML = `
         ${html}
-        <span class="last-check">Updated: ${new Date(data.timestamp).toLocaleTimeString("ar-SA")}</span>
+        <span class="last-check">Updated: ${lastUpdatedText}</span>
       `;
     } catch (error) {
       this.container.innerHTML = '<span class="provider failed">⚠️ Could not load key status</span>';
     }
+  }
+
+  isProviderActive(statusValue) {
+    if (typeof statusValue === "boolean") {
+      return statusValue;
+    }
+
+    if (typeof statusValue === "number") {
+      return statusValue === 1;
+    }
+
+    return String(statusValue).toLowerCase() === "true";
   }
 
   startAutoUpdate() {
