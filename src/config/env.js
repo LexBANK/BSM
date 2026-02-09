@@ -11,6 +11,11 @@ const parseBoolean = (value, fallback) => {
   return fallback;
 };
 
+const parsePositiveInt = (value, fallback) => {
+  const parsed = parseNumber(value, fallback);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 export const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: parseNumber(process.env.PORT, 3000),
@@ -27,7 +32,8 @@ export const env = {
   fallbackEnabled: parseBoolean(process.env.FALLBACK_ENABLED, true),
   perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online",
   perplexityCitations: parseBoolean(process.env.PERPLEXITY_CITATIONS, true),
-  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7)
+  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7),
+  searchToolMaxResults: parsePositiveInt(process.env.SEARCH_TOOL_MAX_RESULTS, 5)
 };
 
 // Validate admin token in production
