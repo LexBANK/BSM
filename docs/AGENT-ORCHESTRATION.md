@@ -890,3 +890,34 @@ describe("Agent Load Test", () => {
 **Document Owner**: BSM Autonomous Architect  
 **Version**: 1.0.0  
 **Last Updated**: 2026-02-06
+
+---
+
+## Agent Deletion Protection Policy (Pull Requests)
+
+لحماية الوكلاء الأساسيين من الحذف غير المقصود، يوجد Workflow باسم `agents-deletion-guard.yml` يعمل على أحداث `pull_request` عند تعديل:
+
+- `data/agents/*.yaml`
+- `data/agents/index.json`
+
+### ما الذي يتم فحصه؟
+
+1. **حذف ملفات الوكلاء (`*.yaml`)** عبر مقارنة `git diff` بين فرع الـ PR والـ base branch.
+2. **إزالة عناصر من `data/agents/index.json`** بدون بديل واضح (heuristic يعتمد على اسم الملف/الـ stem).
+3. **حذف الوكلاء المحميين** (مثل `legal-agent.yaml` افتراضياً) عبر المتغير `PROTECTED_AGENT_FILES`.
+
+### متى يفشل الـ Job؟
+
+يفشل الـ job برسالة واضحة إذا تم اكتشاف:
+
+- حذف وكيل محمي.
+- إزالة entry من `index.json` بدون إضافة بديل واضح.
+
+### الاستثناءات (Allowlist)
+
+يمكن تجاوز الحظر فقط بموافقة صريحة عبر:
+
+- **Label على الـ PR**: `agents-deletion-approved` (أو labels مخصصة عبر `AGENTS_DELETION_ALLOWLIST_LABELS`).
+- **متغير Repository**: `AGENTS_DELETION_ALLOWLIST_OVERRIDE=true`.
+
+> يوصى باستخدام الـ label كإجراء تشغيلي مع مراجعة بشرية، واستخدام override كحل استثنائي محدود.
