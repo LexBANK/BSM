@@ -6,12 +6,15 @@ import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
 import logger from "../utils/logger.js";
+import audit from "../services/audit.js";
 
 export const runAgent = async ({ agentId, input }) => {
   try {
     const agents = await loadAgents();
     const agent = agents.find(a => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
+
+    await audit.logAgentActivity(agentId, "run_requested", { inputLength: input?.length || 0 });
 
     const knowledge = await loadKnowledgeIndex();
 
@@ -53,9 +56,16 @@ export const runAgent = async ({ agentId, input }) => {
     const output =
       (result !== null && result !== undefined && result !== "") ? result : "لم يصل رد من الوكيل.";
 
+    await audit.logAgentActivity(agentId, "run_completed", { success: true });
+
     return { output };
   } catch (err) {
     logger.error({ err, agentId }, "Agent execution failed");
-    return { output: "حدث خطأ أثناء تشغيل الوكيل." };
+    await audit.logAgentActivity(agentId || "unknown", "run_failed", {
+      error: err.message,
+      code: err.code || "UNKNOWN"
+    });
+    if (err instanceof AppError) throw err;
+    throw new AppError("حدث خطأ أثناء تشغيل الوكيل.", 500, "AGENT_RUN_FAILED");
   }
 };
