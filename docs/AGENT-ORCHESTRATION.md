@@ -890,3 +890,7 @@ describe("Agent Load Test", () => {
 **Document Owner**: BSM Autonomous Architect  
 **Version**: 1.0.0  
 **Last Updated**: 2026-02-06
+
+
+## Deletion Protection
+- Pull Requests now run `.github/workflows/agents-deletion-guard.yml` to block deleting `data/agents/*.yaml` and to ensure `data/agents/index.json` keeps `my-agent.yaml`.

@@ -27,7 +27,7 @@ const corsOptions = env.corsOrigins.length
   : { origin: true };
 
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: '1mb' }));
 
 app.use(correlationMiddleware);

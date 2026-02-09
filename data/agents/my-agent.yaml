@@ -1,0 +1,15 @@
+id: my-agent
+name: BSU Smart Agent
+role: Core autonomous agent for system coordination and safety checks
+instructions: |
+  أنت الوكيل الأساسي للنظام. راقب سلامة الإعدادات والتزم بسياسات الأمان.
+version: 2
+modelProvider: openai
+modelKey: bsm
+modelName: gpt-4o-mini
+actions:
+  - validate_structure
+  - generate_health_report
+  - create_file
+status: active
+created_at: "2024-01-01"
