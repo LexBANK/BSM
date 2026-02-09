@@ -93,7 +93,7 @@
                   <div class="flex gap-2">
                       <input type="text" id="input" placeholder="اكتب رسالتك هنا..."
                           class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
-                      <button onclick="send()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
+                      <button id="send-btn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
                           إرسال
                       </button>
                   </div>
@@ -183,12 +183,18 @@
       // Add Enter key listener
       document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send-btn');
+        
         if (input) {
           input.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
               send();
             }
           });
+        }
+        
+        if (sendBtn) {
+          sendBtn.addEventListener('click', send);
         }
       });
   </script>
