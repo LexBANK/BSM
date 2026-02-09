@@ -105,5 +105,3 @@ process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
 
 export default cache;
-
-export default cache;
