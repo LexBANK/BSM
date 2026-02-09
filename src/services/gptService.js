@@ -1,9 +1,9 @@
 import fetch from "node-fetch";
 import { AppError } from "../utils/errors.js";
 import { modelRouter } from "../config/modelRouter.js";
+import { env } from "../config/env.js";
 
 const API_URL = "https://api.openai.com/v1/chat/completions";
-const REQUEST_TIMEOUT_MS = 30000; // 30 seconds
 
 export const runGPT = async ({ model, apiKey, system, user, messages, task, complexity, requiresSearch, searchQuery }) => {
   const shouldUseRouter = Boolean(requiresSearch || task || model?.includes("sonar") || model?.includes("perplexity"));
@@ -26,7 +26,7 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
   if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), env.apiRequestTimeoutMs);
 
   // Use full messages array if provided, otherwise build from system+user
   const chatMessages = messages || [
@@ -42,9 +42,9 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: model || process.env.OPENAI_MODEL || "gpt-4o-mini",
+        model: model || env.defaultModel,
         messages: chatMessages,
-        max_tokens: 1200
+        max_tokens: env.maxTokens
       }),
       signal: controller.signal
     });

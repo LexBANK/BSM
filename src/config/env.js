@@ -27,7 +27,11 @@ export const env = {
   fallbackEnabled: parseBoolean(process.env.FALLBACK_ENABLED, true),
   perplexityModel: process.env.PERPLEXITY_MODEL || "llama-3.1-sonar-large-128k-online",
   perplexityCitations: parseBoolean(process.env.PERPLEXITY_CITATIONS, true),
-  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7)
+  perplexityRecencyDays: parseNumber(process.env.PERPLEXITY_RECENCY_DAYS, 7),
+  // API request timeouts
+  apiRequestTimeoutMs: parseNumber(process.env.API_REQUEST_TIMEOUT_MS, 30000),
+  // LLM token limits
+  maxTokens: parseNumber(process.env.MAX_TOKENS, 1200)
 };
 
 // Validate admin token in production

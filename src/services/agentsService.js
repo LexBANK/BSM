@@ -1,4 +1,4 @@
-import fs from "fs";
+import { readFile } from "fs/promises";
 import path from "path";
 import YAML from "yaml";
 import { mustExistDir } from "../utils/fsSafe.js";
@@ -10,18 +10,21 @@ export const loadAgents = async () => {
     mustExistDir(dir);
 
     const indexPath = path.join(dir, "index.json");
-    const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+    const indexContent = await readFile(indexPath, "utf8");
+    const index = JSON.parse(indexContent);
 
     if (!Array.isArray(index.agents)) {
       throw new AppError("Invalid agents index.json", 500, "AGENTS_INDEX_INVALID");
     }
 
-    const agents = index.agents.map((file) => {
-      const content = fs.readFileSync(path.join(dir, file), "utf8");
-      const parsed = YAML.parse(content);
-      if (!parsed?.id) throw new AppError(`Agent file missing id: ${file}`, 500, "AGENT_INVALID");
-      return parsed;
-    });
+    const agents = await Promise.all(
+      index.agents.map(async (file) => {
+        const content = await readFile(path.join(dir, file), "utf8");
+        const parsed = YAML.parse(content);
+        if (!parsed?.id) throw new AppError(`Agent file missing id: ${file}`, 500, "AGENT_INVALID");
+        return parsed;
+      })
+    );
 
     return agents;
   } catch (err) {

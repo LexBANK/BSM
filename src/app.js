@@ -57,7 +57,6 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
-          "'unsafe-eval'",
           "https://unpkg.com",
           "https://cdn.tailwindcss.com",
           "https://cdn.jsdelivr.net"
