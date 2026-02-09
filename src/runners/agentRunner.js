@@ -1,5 +1,5 @@
 import { loadAgents } from "../services/agentsService.js";
-import { loadKnowledgeIndex } from "../services/knowledgeService.js";
+import { formatKnowledgeForPrompt, loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
@@ -20,7 +20,8 @@ export const runAgent = async ({ agentId, input }) => {
     const apiKey = models[provider]?.[keyName] || models[provider]?.default;
 
     const systemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
-    const userPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
+    const knowledgeSummary = formatKnowledgeForPrompt(knowledge);
+    const userPrompt = `Knowledge:\n${knowledgeSummary}\n\nUser Input:\n${input}`;
 
     const result = await runGPT({
       model: agent.modelName || process.env.OPENAI_MODEL,
