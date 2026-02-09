@@ -107,7 +107,9 @@ async function main() {
     for (const pr of moderatelyStale) {
       try {
         const comment = generateWarningComment(pr);
-        execSync(`gh pr comment ${pr.number} --body "${comment.replace(/"/g, '\\"')}"`, {
+        // Properly escape for shell: backslashes first, then quotes
+        const escapedComment = comment.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        execSync(`gh pr comment ${pr.number} --body "${escapedComment}"`, {
           stdio: 'inherit'
         });
         console.log(`✅ Posted warning to #${pr.number}`);
@@ -125,7 +127,9 @@ async function main() {
     for (const pr of veryStale) {
       try {
         const comment = generateCloseComment(pr);
-        execSync(`gh pr close ${pr.number} --comment "${comment.replace(/"/g, '\\"')}"`, {
+        // Properly escape for shell: backslashes first, then quotes
+        const escapedComment = comment.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        execSync(`gh pr close ${pr.number} --comment "${escapedComment}"`, {
           stdio: 'inherit'
         });
         console.log(`✅ Closed #${pr.number}`);
