@@ -1,0 +1,76 @@
+{
+  "runnerVersion": "1.0.0",
+  "timestamp": "2026-02-09T22:43:30Z",
+  "environment": {
+    "nodeVersion": "v24.13.0",
+    "npmVersion": "11.6.2",
+    "goVersion": "go1.24.12",
+    "platform": "linux",
+    "cwd": "/home/runner/work/BSM/BSM"
+  },
+  "summary": {
+    "totalTests": 7,
+    "passed": 5,
+    "failed": 2,
+    "skipped": 0,
+    "duration": "23s",
+    "status": "failed"
+  },
+  "tasks": [    {
+      "id": "node-dependencies",
+      "name": "Install Node.js Dependencies",
+      "command": "npm ci",
+      "status": "success",
+      "duration": "2s",
+      "exitCode": 0,
+      "output": "npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead\n\nadded 144 packages, and audited 145 packages in 2s\n\n31 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n"
+    },    {
+      "id": "node-validation",
+      "name": "Run Node.js Validation Tests",
+      "command": "npm test",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "\n> bsu@1.0.0 test\n> node scripts/validate.js\n\nOK: validation passed\n"
+    },    {
+      "id": "node-server-startup",
+      "name": "Test Node.js Server Startup (10s timeout)",
+      "command": "timeout 10 npm start || true",
+      "status": "success",
+      "duration": "10s",
+      "exitCode": 0,
+      "output": "\n> bsu@1.0.0 start\n> node src/server.js\n\n[2026-02-09 22:43:33.038 +0000] \u001b[32mINFO\u001b[39m: \u001b[36mBSU API started\u001b[39m\n    port: 3000\n    env: \"development\"\n"
+    },    {
+      "id": "go-dependencies",
+      "name": "Download Go Dependencies",
+      "command": "go mod download",
+      "status": "success",
+      "duration": "2s",
+      "exitCode": 0,
+      "output": "\n"
+    },    {
+      "id": "go-build",
+      "name": "Build Go Document Processor",
+      "command": "go build -o bin/server cmd/server/main.go",
+      "status": "failed",
+      "duration": "3s",
+      "exitCode": 1,
+      "output": "internal/api/router.go:4:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5 (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/middleware.go:7:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5/middleware (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/metrics.go:4:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/metrics.go:5:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promauto (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/router.go:7:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promhttp (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/handlers.go:8:2: missing go.sum entry for module providing package github.com/rs/zerolog/log; to add:\n\tgo mod download github.com/rs/zerolog\ncmd/server/main.go:14:2: missing go.sum entry for module providing package github.com/rs/zerolog; to add:\n\tgo mod download github.com/rs/zerolog\n"
+    },    {
+      "id": "go-test",
+      "name": "Run Go Tests",
+      "command": "go test ./...",
+      "status": "failed",
+      "duration": "6s",
+      "exitCode": 1,
+      "output": "# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/router.go:4:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5 (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/middleware.go:7:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5/middleware (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/metrics.go:4:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/metrics.go:5:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promauto (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/router.go:7:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promhttp (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ninternal/api/handlers.go:8:2: missing go.sum entry for module providing package github.com/rs/zerolog/log (imported by github.com/lexbank/bsm/services/document-processor/cmd/server); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/cmd/server\n# github.com/lexbank/bsm/services/document-processor/cmd/server\ncmd/server/main.go:14:2: missing go.sum entry for module providing package github.com/rs/zerolog (imported by github.com/lexbank/bsm/services/document-processor/cmd/server); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/cmd/server\nFAIL\tgithub.com/lexbank/bsm/services/document-processor/cmd/server [setup failed]\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/router.go:4:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5 (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/middleware.go:7:2: missing go.sum entry for module providing package github.com/go-chi/chi/v5/middleware (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/metrics.go:4:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/metrics.go:5:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promauto (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/router.go:7:2: missing go.sum entry for module providing package github.com/prometheus/client_golang/prometheus/promhttp (imported by github.com/lexbank/bsm/services/document-processor/internal/api); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/internal/api\n# github.com/lexbank/bsm/services/document-processor/internal/api\ninternal/api/handlers.go:8:2: missing go.sum entry for module providing package github.com/rs/zerolog/log (imported by github.com/lexbank/bsm/services/document-processor/cmd/server); to add:\n\tgo get github.com/lexbank/bsm/services/document-processor/cmd/server\nFAIL\tgithub.com/lexbank/bsm/services/document-processor/internal/api [setup failed]\n?   \tgithub.com/lexbank/bsm/services/document-processor/internal/config\t[no test files]\nFAIL\n"
+    },    {
+      "id": "npm-audit",
+      "name": "Run npm Security Audit",
+      "command": "npm audit --audit-level=high || true",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "found 0 vulnerabilities\n"
+    }]
+}

@@ -29,3 +29,9 @@ certificates/
 ssl/
 
 __pycache__/
+
+# Go binaries
+bin/
+*.exe
+*.test
+*.out
