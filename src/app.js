@@ -70,6 +70,28 @@ app.use(
   }),
   express.static(path.join(process.cwd(), "src/chat"))
 );
+app.use(
+  "/logs",
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-eval'",
+          "https://unpkg.com",
+          "https://cdn.tailwindcss.com",
+          "https://cdn.jsdelivr.net",
+          "https://cdn.jsdelivr.net/npm/chart.js"
+        ],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", ...env.corsOrigins]
+      }
+    }
+  }),
+  express.static(path.join(process.cwd(), "src/logs"))
+);
 
 app.use(notFound);
 app.use(errorHandler);
