@@ -3,6 +3,23 @@ const { createApp, ref, computed, nextTick, onMounted } = Vue;
 // Standalone version - API URL stored in localStorage
 const STORAGE_KEY = 'lexbank_api_url';
 
+const DEFAULT_CHAT_CONFIG = {
+  agents: [
+    { id: 'direct', labels: { ar: 'دردشة مباشرة', en: 'Direct Chat' } },
+    { id: 'legal-agent', labels: { ar: 'الوكيل القانوني', en: 'Legal Agent' } },
+    { id: 'governance-agent', labels: { ar: 'وكيل الحوكمة', en: 'Governance Agent' } }
+  ],
+  models: ['gpt-4o-mini']
+};
+
+const CHAT_CONFIG = window.LEXBANK_CONFIG || DEFAULT_CHAT_CONFIG;
+const getModeLabel = (modeId, language) => {
+  const mode = CHAT_CONFIG.agents.find((agent) => agent.id === modeId);
+  if (!mode) return language === 'ar' ? 'دردشة مباشرة' : 'Direct Chat';
+  return mode.labels?.[language] || mode.labels?.ar || mode.labels?.en || modeId;
+};
+
+
 createApp({
   setup() {
     const messages = ref([]);
@@ -34,14 +51,7 @@ createApp({
       ];
     });
 
-    const currentModeLabel = computed(() => {
-      const labels = {
-        direct: lang.value === 'ar' ? '\u062F\u0631\u062F\u0634\u0629 \u0645\u0628\u0627\u0634\u0631\u0629' : 'Direct Chat',
-        'legal-agent': lang.value === 'ar' ? '\u0627\u0644\u0648\u0643\u064A\u0644 \u0627\u0644\u0642\u0627\u0646\u0648\u0646\u064A' : 'Legal Agent',
-        'governance-agent': lang.value === 'ar' ? '\u0648\u0643\u064A\u0644 \u0627\u0644\u062D\u0648\u0643\u0645\u0629' : 'Governance Agent'
-      };
-      return labels[mode.value] || labels.direct;
-    });
+    const currentModeLabel = computed(() => getModeLabel(mode.value, lang.value));
 
     function toggleLang() {
       lang.value = lang.value === 'ar' ? 'en' : 'ar';

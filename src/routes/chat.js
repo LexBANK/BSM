@@ -4,14 +4,19 @@ import { runGPT } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
 import { env } from "../config/env.js";
+import { logChatAudit } from "../services/audit.js";
 
 const router = Router();
+
+const API_VERSION = "v1";
 
 // Agent-based chat
 router.post("/", async (req, res, next) => {
   try {
     const { agentId, input } = req.body;
+    logChatAudit({ traceId: req.correlationId, agent: agentId || "unknown" });
     const result = await runAgent({ agentId, input });
+    res.set("X-API-Version", API_VERSION);
     res.json({ output: result.output });
   } catch (err) {
     next(err);
@@ -22,6 +27,7 @@ router.post("/", async (req, res, next) => {
 router.post("/direct", async (req, res, next) => {
   try {
     const { message, history = [], language = "ar" } = req.body;
+    logChatAudit({ traceId: req.correlationId, agent: "direct" });
 
     if (!message || typeof message !== "string" || !message.trim()) {
       throw new AppError("Message is required", 400, "INVALID_INPUT");
@@ -78,6 +84,7 @@ router.post("/direct", async (req, res, next) => {
       ? result
       : (language === "ar" ? "لم يتم استلام رد." : "No response received.");
 
+    res.set("X-API-Version", API_VERSION);
     res.json({ output });
   } catch (err) {
     next(err);
