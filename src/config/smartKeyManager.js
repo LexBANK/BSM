@@ -178,6 +178,9 @@ class SmartKeyManager {
       return; // Already running
     }
     
+    // Fetch status immediately on startup
+    this.fetchRemoteStatus();
+    
     this.statusCheckInterval = setInterval(() => {
       this.fetchRemoteStatus();
     }, 5 * 60 * 1000);

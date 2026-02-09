@@ -8,6 +8,8 @@ const server = app.listen(env.port, () => {
 });
 
 // Graceful shutdown handler to prevent memory leaks
+let shutdownTimeout;
+
 function gracefulShutdown(signal) {
   logger.info({ signal }, "Received shutdown signal, cleaning up...");
   
@@ -17,12 +19,17 @@ function gracefulShutdown(signal) {
     // Cleanup resources
     cleanupKeyManager();
     
+    // Clear the force exit timeout since we shut down gracefully
+    if (shutdownTimeout) {
+      clearTimeout(shutdownTimeout);
+    }
+    
     logger.info("Cleanup complete, exiting");
     process.exit(0);
   });
   
   // Force exit after 10 seconds if graceful shutdown fails
-  setTimeout(() => {
+  shutdownTimeout = setTimeout(() => {
     logger.error("Forced shutdown after timeout");
     process.exit(1);
   }, 10000);

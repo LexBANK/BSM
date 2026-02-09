@@ -14,6 +14,16 @@ const agentStates = new Map();
 const MAX_STATE_ENTRIES = 1000; // Prevent unbounded growth
 const STATE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+// Periodic cleanup to avoid performance impact on every state change
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+let cleanupInterval = setInterval(() => {
+  cleanupExpiredStates();
+}, CLEANUP_INTERVAL_MS);
+
+if (typeof cleanupInterval.unref === "function") {
+  cleanupInterval.unref();
+}
+
 export const orchestrator = async ({ event, payload, context = {} }) => {
   const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   logger.info({ jobId, event }, "Orchestrator started workflow");
@@ -166,9 +176,6 @@ function updateAgentState(agentId, jobId, status, result = null, error = null) {
   };
   agentStates.set(`${agentId}_${jobId}`, state);
   agentEvents.emit("stateChange", state);
-  
-  // Clean up old states to prevent memory leak
-  cleanupExpiredStates();
 }
 
 function cleanupExpiredStates() {
@@ -193,6 +200,10 @@ function cleanupExpiredStates() {
     toRemove.forEach(([key]) => agentStates.delete(key));
     
     logger.info({ removed: toRemove.length }, 'Cleaned up old agent states');
+  }
+  
+  if (entriesToDelete.length > 0) {
+    logger.debug({ removed: entriesToDelete.length }, 'Cleaned up expired agent states');
   }
 }
 
