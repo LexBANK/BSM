@@ -12,6 +12,7 @@ import { adminUiAuth } from "./middleware/auth.js";
 import { env } from "./config/env.js";
 
 import routes from "./routes/index.js";
+import chatRouter from "./routes/chat.js";
 
 const app = express();
 
@@ -42,6 +43,7 @@ app.use(
     legacyHeaders: false
   })
 );
+app.use("/api", chatRouter);
 app.use("/api", routes);
 
 // root path redirects to chat UI
