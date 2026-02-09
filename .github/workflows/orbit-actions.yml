@@ -4,9 +4,16 @@ on:
   repository_dispatch:
     types: [orbit_actions]
 
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   orbit:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,30 +24,45 @@ jobs:
           echo "actions=${{ toJson(github.event.client_payload.actions) }}" >> "$GITHUB_OUTPUT"
 
       - name: Execute ORBIT actions
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ACTIONS='${{ steps.parse.outputs.actions }}'
           echo "ORBIT actions: $ACTIONS"
 
+          trigger_with_logging() {
+            local trigger_name="$1"
+            shift
+
+            echo "[ORBIT] Triggering: ${trigger_name}"
+
+            if "$@"; then
+              echo "[ORBIT] ✅ Trigger succeeded: ${trigger_name}"
+              return 0
+            fi
+
+            local exit_code=$?
+            echo "[ORBIT] ❌ Trigger failed: ${trigger_name} (exit=${exit_code})"
+            echo "[ORBIT] Command: $*"
+            return $exit_code
+          }
+
           if echo "$ACTIONS" | grep -q "trigger:deploy"; then
-            gh workflow run cf-deploy.yml
+            trigger_with_logging "deploy" gh workflow run cf-deploy.yml
           fi
 
           if echo "$ACTIONS" | grep -q "trigger:purge-cache"; then
-            gh workflow run cf-purge-cache.yml -f mode=full
+            trigger_with_logging "purge-cache" gh workflow run cf-purge-cache.yml -f mode=full
           fi
 
           if echo "$ACTIONS" | grep -q "trigger:cleanup-branches"; then
-            bash ./cleanup-branches.sh
+            trigger_with_logging "cleanup-branches" bash ./cleanup-branches.sh
           fi
 
           if echo "$ACTIONS" | grep -q "trigger:dedupe-files"; then
-            bash ./scripts/dedupe-files.sh
+            trigger_with_logging "dedupe-files" bash ./scripts/dedupe-files.sh
           fi
 
           if echo "$ACTIONS" | grep -q "trigger:dedupe-code"; then
-            bash ./scripts/dedupe-code.sh
+            trigger_with_logging "dedupe-code" bash ./scripts/dedupe-code.sh
           fi
 
       - name: Commit changes if any
