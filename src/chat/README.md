@@ -221,6 +221,21 @@ const quickActions = computed(() => {
 2. تحقق من المتغيرات البيئية
 3. راجع logs: `pm2 logs` أو `docker logs`
 
+### المشكلة: `GET /api/health` لا يعمل (خصوصًا على Render)
+**تشخيص أدق (بدون افتراض أن route مفقود):**
+1. تحقّق من **base path** الفعلي على Render (بعض الإعدادات تمرر الخدمة تحت مسار مختلف).
+2. تحقّق من إعدادات **reverse proxy** أو أي ingress أمام التطبيق (قد يعيد كتابة المسار).
+3. تأكد من عدم وجود **mismatch** بين المسار المتوقع `/api/health` والمسار النهائي بعد إعادة الكتابة.
+
+**أوامر سريعة للتحقق:**
+```bash
+# اختبر endpoint كما تراه الخدمة داخليًا
+curl http://localhost:3000/api/health
+
+# اختبر endpoint الخارجي بعد النشر
+curl https://your-app.onrender.com/api/health
+```
+
 ## الأداء (Performance)
 
 ### تحسينات مطبقة
