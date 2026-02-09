@@ -1,7 +1,9 @@
 id: code-review-agent
 name: Code Review Agent
-role: Senior Software Engineer specializing in automated code review, quality analysis, and best practices enforcement
-description: Reviews pull requests, analyzes code quality, detects bugs, and enforces coding standards
+role: Senior Software Engineer specializing in automated code review, quality
+  analysis, and best practices enforcement
+description: Reviews pull requests, analyzes code quality, detects bugs, and
+  enforces coding standards
 version: 2
 modelProvider: openai
 modelKey: bsm
@@ -25,3 +27,12 @@ instructions: |
   4. قدم اقتراحات تحسين محددة مع أمثلة كود.
   5. استخدم لغة احترافية وكون بناءً في النقد.
   6. قم بتقييم الكود من 10 مع تبرير.
+contexts:
+  chat: true
+  api: true
+  github: false
+  ci: false
+expose:
+  selectable: true
+  callable: true
+  internal_only: false
