@@ -1,4 +1,4 @@
-name: "Auto-Merge — BSU Agent Pipeline"
+name: "Auto-Merge — BSM Agent Pipeline"
 
 on:
   pull_request:
@@ -135,7 +135,7 @@ jobs:
               manual_review: '👀'
             };
 
-            const body = `## ${icons[decision] || '🤖'} BSU Agent Pipeline Report
+            const body = `## ${icons[decision] || '🤖'} BSM Agent Pipeline Report
 
             | Agent | Result |
             |-------|--------|
@@ -147,7 +147,7 @@ jobs:
             **Reason:** ${reason}
 
             ---
-            *Automated by BSU Agent Orchestrator*`;
+            *Automated by BSM Agent Orchestrator*`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -172,7 +172,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
               event: 'APPROVE',
-              body: 'All BSU quality gates passed. Auto-approved.'
+              body: 'All BSM quality gates passed. Auto-approved.'
             });
 
       - name: Add labels
@@ -197,7 +197,7 @@ jobs:
                 pull_number: context.issue.number,
                 merge_method: 'squash',
                 commit_title: `auto-merge: ${{ github.event.pull_request.title }} (#${{ github.event.pull_request.number }})`,
-                commit_message: 'Automated merge by BSU agents. All quality gates passed.'
+                commit_message: 'Automated merge by BSM agents. All quality gates passed.'
               });
               console.log('PR merged successfully');
             } catch (error) {

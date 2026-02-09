@@ -198,7 +198,7 @@ jobs:
           }
           EOF
 
-          git config user.name "🤖 BSU Key Manager"
+          git config user.name "🤖 BSM Key Manager"
           git config user.email "keys@corehub.nexus"
 
           git add docs/status/ai-keys.json
@@ -218,7 +218,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "🚨 BSU Nexus: AI Key Validation Failed!",
+              "text": "🚨 BSM: AI Key Validation Failed!",
               "blocks": [
                 {
                   "type": "section",

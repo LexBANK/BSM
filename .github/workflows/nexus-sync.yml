@@ -1,4 +1,4 @@
-name: BSU Nexus Autonomous Sync
+name: BSM Autonomous Sync
 
 on:
   push:

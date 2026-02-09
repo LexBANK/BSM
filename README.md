@@ -1,4 +1,9 @@
-# LexBANK / BSU Platform
+# LexBANK / core-hub (BSM) Platform
+
+> ⚠️ **Repository naming governance update:** the legacy "BSU" naming is being retired.
+> The active codebase should be referenced as **`LexBANK/BSM`** (runtime services) and
+> **`LexBANK/core-hub`** (organizational hub). If you landed here from an older repo link,
+> update your remotes and automation references accordingly.
 
 ## Overview
 
@@ -101,10 +106,10 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 
 ```bash
 # Clone the repository
-git clone https://github.com/LexBANK/BSU.git
+git clone https://github.com/LexBANK/BSM.git
 
 # Navigate to the project directory
-cd BSU
+cd BSM
 
 # Install dependencies
 npm install
