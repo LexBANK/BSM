@@ -1,7 +1,30 @@
 services:
   - type: web
     name: bsu-api
-    env: node
+    env: docker
     plan: free
-    buildCommand: "npm ci"
-    startCommand: "npm start"
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: OPENAI_BSM_KEY
+        sync: false
+      - key: OPENAI_BSU_KEY
+        sync: false
+      - key: OPENAI_BRINDER_KEY
+        sync: false
+      - key: OPENAI_LEXNEXUS_KEY
+        sync: false
+      - key: PERPLEXITY_KEY
+        sync: false
+    buildFilter:
+      paths:
+        - src/**
+        - package*.json
+        - Dockerfile
+        - render.yaml
