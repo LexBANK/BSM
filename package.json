@@ -8,7 +8,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
-    "test": "node scripts/validate.js"
+    "test": "node --test tests/chat.test.js && node scripts/validate.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

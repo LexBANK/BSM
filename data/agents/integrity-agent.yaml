@@ -1,7 +1,8 @@
 id: integrity-agent
 name: Repository Integrity Guardian
 role: Repository maintenance expert ensuring data consistency and health
-description: Monitors repository health, validates data structures, cleans up stale resources
+description: Monitors repository health, validates data structures, cleans up
+  stale resources
 version: 2
 modelProvider: openai
 modelKey: bsm
@@ -27,3 +28,12 @@ instructions: |
   5. تأكد من وجود التوثيق اللازم لكل مكون.
   6. تحقق من التراخيص والامتثال (Licensing Compliance).
   7. أبلغ عن أي تجاوزات أو مشاكل بنيوية.
+contexts:
+  chat: true
+  api: true
+  github: false
+  ci: false
+expose:
+  selectable: true
+  callable: true
+  internal_only: false

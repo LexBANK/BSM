@@ -9,3 +9,13 @@ modelKey: bsm
 modelName: gpt-4o-mini
 actions:
   - create_file
+description: Analyze governance policies
+contexts:
+  chat: true
+  api: true
+  github: false
+  ci: false
+expose:
+  selectable: true
+  callable: true
+  internal_only: false

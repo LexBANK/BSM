@@ -890,3 +890,28 @@ describe("Agent Load Test", () => {
 **Document Owner**: BSM Autonomous Architect  
 **Version**: 1.0.0  
 **Last Updated**: 2026-02-06
+
+---
+
+## Runtime Manifest Contract (Production)
+
+The BSM runtime uses `data/agents/index.json` as the source of truth for loadable agents and validates each YAML entry against a minimum manifest contract.
+
+### Required Agent Fields
+
+Each `data/agents/*.yaml` file must define:
+
+- `id`
+- `name`
+- `version`
+- `contexts` (object)
+- `expose` (object)
+
+### Context-Based Listing
+
+For chat-facing listings (`GET /api/agents?context=chat`), only agents matching the following rule are returned:
+
+- `contexts.chat === true`
+- `expose.selectable === true`
+
+This prevents internal-only agents from being accidentally exposed to end users.

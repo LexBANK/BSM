@@ -41,6 +41,10 @@ idx.agents.forEach((file) => {
   must(fs.existsSync(p), `Missing agent file: ${file}`);
   const parsed = YAML.parse(fs.readFileSync(p, "utf8"));
   must(parsed?.id, `Agent missing id in: ${file}`);
+  must(parsed?.name, `Agent missing name in: ${file}`);
+  must(parsed?.version !== undefined, `Agent missing version in: ${file}`);
+  must(parsed?.contexts && typeof parsed.contexts === "object" && !Array.isArray(parsed.contexts), `Agent missing/invalid contexts in: ${file}`);
+  must(parsed?.expose && typeof parsed.expose === "object" && !Array.isArray(parsed.expose), `Agent missing/invalid expose in: ${file}`);
   if (parsed.actions) {
     must(Array.isArray(parsed.actions), `Agent actions must be an array in: ${file}`);
     parsed.actions.forEach((action) => {

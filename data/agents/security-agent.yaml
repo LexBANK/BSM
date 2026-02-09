@@ -1,6 +1,7 @@
 id: security-agent
 name: Security Vulnerability Scanner
-role: Cybersecurity expert specializing in vulnerability detection and penetration testing
+role: Cybersecurity expert specializing in vulnerability detection and
+  penetration testing
 description: Scans code for security vulnerabilities, secrets, and compliance issues
 version: 2
 modelProvider: openai
@@ -25,3 +26,12 @@ instructions: |
   4. تحقق من compliance (OWASP Top 10, PCI-DSS, GDPR).
   5. صنف الخطورة: Critical, High, Medium, Low.
   6. قدم تقريراً مفصلاً مع أدوات الاستغلال (Proof of Concept).
+contexts:
+  chat: true
+  api: true
+  github: false
+  ci: false
+expose:
+  selectable: true
+  callable: true
+  internal_only: false

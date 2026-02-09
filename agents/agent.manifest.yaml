@@ -1,31 +1,26 @@
-# Agent Manifest Standard – BSM Platform
-
-id: ""
-name: ""
-description: ""
-
-category: conversational   # conversational | system | infra
+id: bsm-agent-manifest
+name: BSM Agent Manifest Standard
+description: Canonical manifest contract used by BSM runtime to validate agent metadata.
+category: system
 version: "1.0.0"
 owner: bsm-core
-
-capabilities: []
-
+capabilities:
+  - validation
+  - routing
+  - audit
 contexts:
   chat: false
-  api: false
-  github: false
-  ci: false
-
+  api: true
+  github: true
+  ci: true
 expose:
-  selectable: false        # يظهر في واجهة الدردشة
-  callable: true           # يمكن استدعاؤه برمجيًا
-  internal_only: true      # محجوب عن المستخدم النهائي
-
-triggers: {}               # github / ci / manual
-
+  selectable: false
+  callable: true
+  internal_only: true
+triggers:
+  manual: true
 limits:
-  max_tokens: 0
+  max_tokens: 4096
   timeout_ms: 30000
-
 audit:
-  level: full              # none | basic | full
+  level: full
