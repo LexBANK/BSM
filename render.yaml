@@ -5,3 +5,6 @@ services:
     plan: free
     buildCommand: "npm ci"
     startCommand: "npm start"
+    envVars:
+      - key: OPENAI_BSM_KEY
+        sync: false
