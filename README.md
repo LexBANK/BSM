@@ -1,5 +1,10 @@
 # LexBANK / BSU Platform
 
+## Canonical Repository
+
+> The official canonical repository for this project is **`LexBANK/BSM`**.
+> Use this repository as the single source of truth for all code, issues, and documentation updates.
+
 ## Overview
 
 The **LexBANK and BSU Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
@@ -101,7 +106,7 @@ See [DNS Documentation](dns/GITHUB-PAGES-VERIFICATION.md) for detailed instructi
 
 ```bash
 # Clone the repository
-git clone https://github.com/LexBANK/BSU.git
+git clone https://github.com/LexBANK/BSM.git
 
 # Navigate to the project directory
 cd BSU

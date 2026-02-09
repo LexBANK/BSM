@@ -233,8 +233,8 @@ To contribute to documentation:
 - DevOps Team: [Contact Info]
 
 ### External Resources
-- GitHub Repository: https://github.com/LexBANK/BSU
-- Issue Tracker: https://github.com/LexBANK/BSU/issues
+- GitHub Repository: https://github.com/LexBANK/BSM
+- Issue Tracker: https://github.com/LexBANK/BSM/issues
 - Documentation Source: `/docs` directory
 
 ### Feedback
