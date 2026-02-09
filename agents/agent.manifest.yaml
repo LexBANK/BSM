@@ -1,0 +1,31 @@
+# Agent Manifest Standard – BSM Platform
+
+id: ""
+name: ""
+description: ""
+
+category: conversational   # conversational | system | infra
+version: "1.0.0"
+owner: bsm-core
+
+capabilities: []
+
+contexts:
+  chat: false
+  api: false
+  github: false
+  ci: false
+
+expose:
+  selectable: false        # يظهر في واجهة الدردشة
+  callable: true           # يمكن استدعاؤه برمجيًا
+  internal_only: true      # محجوب عن المستخدم النهائي
+
+triggers: {}               # github / ci / manual
+
+limits:
+  max_tokens: 0
+  timeout_ms: 30000
+
+audit:
+  level: full              # none | basic | full

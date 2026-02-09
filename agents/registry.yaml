@@ -1,0 +1,58 @@
+agents:
+
+  - id: agent-auto
+    name: Auto Router
+    category: conversational
+    contexts:
+      chat: true
+    expose:
+      selectable: true
+      internal_only: false
+
+  - id: agent-legal
+    name: Legal Expert
+    category: conversational
+    contexts:
+      chat: true
+    expose:
+      selectable: true
+      internal_only: false
+
+  - id: bsu-architect
+    name: BSU Autonomous Architect
+    category: infra
+    contexts:
+      github: true
+      ci: true
+    expose:
+      selectable: false
+      internal_only: true
+
+  - id: bsu-orchestrator
+    name: BSU Orchestrator
+    category: system
+    contexts:
+      api: true
+      github: true
+    expose:
+      selectable: false
+      internal_only: true
+
+  - id: bsu-runner
+    name: BSU Runner
+    category: system
+    contexts:
+      ci: true
+    expose:
+      selectable: false
+      internal_only: true
+
+  - id: bsu-security
+    name: BSU Security Agent
+    category: system
+    contexts:
+      github: true
+      ci: true
+    expose:
+      selectable: false
+      internal_only: true

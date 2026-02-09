@@ -1,0 +1,14 @@
+{
+  "context": "chat",
+  "rule": "only agents with contexts.chat=true and expose.selectable=true are returned",
+  "response_example": [
+    {
+      "id": "agent-auto",
+      "name": "Auto (Smart Routing)"
+    },
+    {
+      "id": "agent-legal",
+      "name": "Legal Expert"
+    }
+  ]
+}
