@@ -62,7 +62,8 @@ docs/                # Documentation and GitHub Pages frontend (lexdo.uk)
 
 See `.env.example` for the full list. Key variables:
 - `PORT` - Server port (default: 3000)
-- `OPENAI_BSU_KEY` - OpenAI API key
+- `OPENAI_BSM_KEY` - OpenAI API key (required primary)
+- `OPENAI_BSU_KEY` - OpenAI API key (optional fallback)
 - `ADMIN_TOKEN` - Admin authentication token (16+ chars in production)
 - `CORS_ORIGINS` - Allowed CORS origins
 - `NODE_ENV` - Environment (development/production)

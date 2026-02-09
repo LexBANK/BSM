@@ -115,6 +115,8 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+> **Note**: `OPENAI_BSM_KEY` is required as the primary OpenAI key. `OPENAI_BSU_KEY` remains optional as a fallback key when needed.
+
 ### ORBIT Self-Healing Agent Setup
 
 Set up automated monitoring, health checks, and self-healing capabilities:
@@ -146,7 +148,8 @@ PORT=3000
 LOG_LEVEL=info
 
 # OpenAI / model providers
-OPENAI_BSU_KEY=your_key_here
+OPENAI_BSM_KEY=your_key_here
+OPENAI_BSU_KEY=your_key_here  # Optional fallback
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini

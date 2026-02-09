@@ -207,7 +207,8 @@
    ```bash
    cp .env.example .env
    # ثم عدّل .env وأضف:
-   OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   OPENAI_BSM_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  # اختياري
    ```
 
 3. **تشغيل الخادم**
@@ -231,7 +232,8 @@
 
 2. **في لوحة Render**
    - اذهب إلى Environment Variables
-   - أضف: `OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+   - أضف: `OPENAI_BSM_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`
+   - (اختياري) أضف: `OPENAI_BSU_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx` كمفتاح احتياطي
    - أضف: `CORS_ORIGINS=https://your-domain.com`
    - احفظ التغييرات
 
@@ -329,7 +331,8 @@
 ### للبدء فوراً
 ```bash
 # 1. أضف مفتاح OpenAI (استبدل القيمة بمفتاحك الحقيقي)
-echo 'OPENAI_BSU_KEY=sk-your-openai-api-key-here' >> .env
+echo 'OPENAI_BSM_KEY=sk-your-openai-api-key-here' >> .env
+echo 'OPENAI_BSU_KEY=sk-your-openai-fallback-key-here' >> .env
 
 # 2. شغّل الخادم
 npm start

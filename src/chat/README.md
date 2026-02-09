@@ -115,8 +115,9 @@ async function sendMessage(text) {
 ### متغيرات البيئة المطلوبة
 
 ```env
-# OpenAI API Key
-OPENAI_BSU_KEY=sk-xxxxxxxxxxxxx
+# OpenAI API Keys
+OPENAI_BSM_KEY=sk-xxxxxxxxxxxxx
+OPENAI_BSU_KEY=sk-xxxxxxxxxxxxx  # اختياري كمفتاح احتياطي
 
 # Server Settings
 PORT=3000
@@ -207,7 +208,7 @@ const quickActions = computed(() => {
 ## استكشاف الأخطاء (Troubleshooting)
 
 ### المشكلة: "API key not configured"
-**الحل**: أضف `OPENAI_BSU_KEY` إلى ملف `.env`
+**الحل**: أضف `OPENAI_BSM_KEY` إلى ملف `.env` (ويمكن إضافة `OPENAI_BSU_KEY` كمفتاح احتياطي)
 
 ### المشكلة: "CORS error"
 **الحل**: أضف أصل الطلب إلى `CORS_ORIGINS` في `.env`
@@ -294,8 +295,10 @@ services:
     buildCommand: npm ci
     startCommand: npm start
     envVars:
-      - key: OPENAI_BSU_KEY
+      - key: OPENAI_BSM_KEY
         sync: false
+      - key: OPENAI_BSU_KEY
+        sync: false  # optional fallback
       - key: NODE_ENV
         value: production
 ```
@@ -307,6 +310,7 @@ docker build -t lexbank-chat .
 
 # تشغيل
 docker run -p 3000:3000 \
+  -e OPENAI_BSM_KEY=sk-xxx \
   -e OPENAI_BSU_KEY=sk-xxx \
   -e NODE_ENV=production \
   lexbank-chat
