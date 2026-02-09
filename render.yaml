@@ -5,3 +5,11 @@ services:
     plan: free
     buildCommand: "npm ci"
     startCommand: "npm start"
+    buildFilter:
+      paths:
+        - src/**
+        - data/**
+        - bsm-config/**
+        - package.json
+        - package-lock.json
+        - render.yaml
