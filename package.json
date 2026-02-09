@@ -9,7 +9,8 @@
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
     "test": "node scripts/validate.js",
-    "pr-health": "node scripts/analyze-pr-health.js"
+    "pr-health": "node scripts/analyze-pr-health.js",
+    "pr-cleanup": "node scripts/cleanup-stale-prs.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
