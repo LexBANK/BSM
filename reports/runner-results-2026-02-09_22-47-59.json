@@ -1,0 +1,76 @@
+{
+  "runnerVersion": "1.0.0",
+  "timestamp": "2026-02-09T22:47:59Z",
+  "environment": {
+    "nodeVersion": "v24.13.0",
+    "npmVersion": "11.6.2",
+    "goVersion": "go1.24.12",
+    "platform": "linux",
+    "cwd": "/home/runner/work/BSM/BSM"
+  },
+  "summary": {
+    "totalTests": 7,
+    "passed": 7,
+    "failed": 0,
+    "skipped": 0,
+    "duration": "12s",
+    "status": "success"
+  },
+  "tasks": [    {
+      "id": "node-dependencies",
+      "name": "Install Node.js Dependencies",
+      "command": "npm ci",
+      "status": "success",
+      "duration": "1s",
+      "exitCode": 0,
+      "output": "npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead\n\nadded 144 packages, and audited 145 packages in 868ms\n\n31 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n"
+    },    {
+      "id": "node-validation",
+      "name": "Run Node.js Validation Tests",
+      "command": "npm test",
+      "status": "success",
+      "duration": "1s",
+      "exitCode": 0,
+      "output": "\n> bsu@1.0.0 test\n> node scripts/validate.js\n\nOK: validation passed\n"
+    },    {
+      "id": "node-server-startup",
+      "name": "Test Node.js Server Startup (10s timeout)",
+      "command": "timeout 10 npm start || true",
+      "status": "success",
+      "duration": "10s",
+      "exitCode": 0,
+      "output": "\n> bsu@1.0.0 start\n> node src/server.js\n\n[2026-02-09 22:48:01.367 +0000] \u001b[32mINFO\u001b[39m: \u001b[36mBSU API started\u001b[39m\n    port: 3000\n    env: \"development\"\n"
+    },    {
+      "id": "go-dependencies",
+      "name": "Download Go Dependencies",
+      "command": "go mod download",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "\n"
+    },    {
+      "id": "go-build",
+      "name": "Build Go Document Processor",
+      "command": "go build -o bin/server cmd/server/main.go",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "\n"
+    },    {
+      "id": "go-test",
+      "name": "Run Go Tests",
+      "command": "go test ./...",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "?   \tgithub.com/lexbank/bsm/services/document-processor/cmd/server\t[no test files]\n?   \tgithub.com/lexbank/bsm/services/document-processor/internal/api\t[no test files]\n?   \tgithub.com/lexbank/bsm/services/document-processor/internal/config\t[no test files]\n"
+    },    {
+      "id": "npm-audit",
+      "name": "Run npm Security Audit",
+      "command": "npm audit --audit-level=high || true",
+      "status": "success",
+      "duration": "0s",
+      "exitCode": 0,
+      "output": "found 0 vulnerabilities\n"
+    }]
+}
