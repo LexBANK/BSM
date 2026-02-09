@@ -176,7 +176,21 @@ npm start
 
 # Validate data structure
 npm run validate
+
+# Run all build and test tasks (comprehensive runner)
+npm run run-all
+# Or directly:
+./scripts/run-all.sh
 ```
+
+The `run-all` script executes a comprehensive test suite including:
+- Node.js dependency installation
+- Validation tests
+- Server startup verification
+- Go document-processor build and tests
+- Security audit
+
+Reports are generated in `reports/` directory in both JSON and Markdown formats.
 
 ## GitHub Copilot Pro Integration
 
