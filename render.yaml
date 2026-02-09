@@ -1,7 +1,6 @@
 services:
   - type: web
     name: bsu-api
-    env: node
+    env: docker
     plan: free
-    buildCommand: "npm ci"
-    startCommand: "npm start"
+    dockerfilePath: ./Dockerfile
