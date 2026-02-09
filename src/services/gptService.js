@@ -23,7 +23,15 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
     return routed?.output || "";
   }
 
-  if (!apiKey) throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
+  const normalizedApiKey = typeof apiKey === "string" ? apiKey.trim() : "";
+  if (!normalizedApiKey) {
+    throw new AppError("Missing API key for model provider", 500, "MISSING_API_KEY");
+  }
+
+  // Guard against malformed keys copied with quotes/new lines/spaces
+  if (/\s/.test(normalizedApiKey) || /["'`]/.test(normalizedApiKey)) {
+    throw new AppError("Invalid API key format", 500, "INVALID_API_KEY_FORMAT");
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -38,7 +46,7 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
     const res = await fetch(API_URL, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${normalizedApiKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -62,6 +70,9 @@ export const runGPT = async ({ model, apiKey, system, user, messages, task, comp
     clearTimeout(timeoutId);
     if (err.name === 'AbortError') {
       throw new AppError("GPT request timeout", 500, "GPT_TIMEOUT");
+    }
+    if (err?.code === "ERR_INVALID_CHAR") {
+      throw new AppError("Invalid API key format", 500, "INVALID_API_KEY_FORMAT");
     }
     throw err;
   }

@@ -115,8 +115,9 @@ async function sendMessage(text) {
 ### متغيرات البيئة المطلوبة
 
 ```env
-# OpenAI API Key
-OPENAI_BSU_KEY=sk-xxxxxxxxxxxxx
+# OpenAI API Keys
+OPENAI_BSM_KEY=sk-primary-xxxxxxxx
+OPENAI_BSU_KEY=sk-fallback-xxxxxxxx
 
 # Server Settings
 PORT=3000
@@ -207,7 +208,10 @@ const quickActions = computed(() => {
 ## استكشاف الأخطاء (Troubleshooting)
 
 ### المشكلة: "API key not configured"
-**الحل**: أضف `OPENAI_BSU_KEY` إلى ملف `.env`
+**الحل**: أضف `OPENAI_BSM_KEY` (أساسي) أو `OPENAI_BSU_KEY` (احتياطي) إلى ملف `.env`
+
+### المشكلة: `INVALID_API_KEY_FORMAT` أو `ERR_INVALID_CHAR`
+**الحل**: تأكد أن قيمة المفتاح في Render/.env بلا علامات اقتباس أو مسافات أو أسطر جديدة (مثال صحيح: `sk-...`).
 
 ### المشكلة: "CORS error"
 **الحل**: أضف أصل الطلب إلى `CORS_ORIGINS` في `.env`
@@ -290,10 +294,12 @@ curl -X POST http://localhost:3000/api/chat \
 services:
   - type: web
     name: bsu-api
-    env: node
-    buildCommand: npm ci
-    startCommand: npm start
+    env: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
     envVars:
+      - key: OPENAI_BSM_KEY
+        sync: false
       - key: OPENAI_BSU_KEY
         sync: false
       - key: NODE_ENV
@@ -307,7 +313,8 @@ docker build -t lexbank-chat .
 
 # تشغيل
 docker run -p 3000:3000 \
-  -e OPENAI_BSU_KEY=sk-xxx \
+  -e OPENAI_BSM_KEY=sk-primary \
+  -e OPENAI_BSU_KEY=sk-fallback \
   -e NODE_ENV=production \
   lexbank-chat
 ```
