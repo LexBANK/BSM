@@ -25,7 +25,9 @@ jobs:
     if: "!github.event.pull_request.draft"
     outputs:
       code_score: ${{ steps.code-review.outputs.score }}
+      code_review_error: ${{ steps.code-review.outputs.execution_error }}
       security_passed: ${{ steps.security.outputs.passed }}
+      security_error: ${{ steps.security.outputs.execution_error }}
       integrity_score: ${{ steps.integrity.outputs.score }}
       decision: ${{ steps.decision.outputs.action }}
     steps:
@@ -49,7 +51,8 @@ jobs:
         env:
           OPENAI_BSM_KEY: ${{ secrets.OPENAI_BSM_KEY }}
         run: |
-          score=$(node --input-type=module -e "
+          set -euo pipefail
+          output=$(node --input-type=module -e "
           import { codeReviewAgent } from './src/agents/CodeReviewAgent.js';
           try {
             const r = await codeReviewAgent.review({
@@ -58,31 +61,48 @@ jobs:
               diff: '',
               author: '${{ github.event.pull_request.user.login }}'
             });
-            console.log(r.score || 8);
+            console.log(`score=${r.score ?? 8}`);
+            console.log('execution_error=false');
           } catch (e) {
-            console.log(8);
+            console.log('score=0');
+            console.log('execution_error=true');
           }
-          " 2>/dev/null || echo 8)
+          " 2>/dev/null || printf 'score=0\nexecution_error=true\n')
+          score=$(printf '%s\n' "$output" | awk -F= '/^score=/{print $2}' | tail -n1)
+          execution_error=$(printf '%s\n' "$output" | awk -F= '/^execution_error=/{print $2}' | tail -n1)
+          score=${score:-0}
+          execution_error=${execution_error:-true}
           echo "score=$score" >> $GITHUB_OUTPUT
+          echo "execution_error=$execution_error" >> $GITHUB_OUTPUT
           echo "Code review score: $score"
+          echo "Code review execution error: $execution_error"
 
       - name: Security Agent
         id: security
         env:
           PERPLEXITY_KEY: ${{ secrets.PERPLEXITY_KEY }}
         run: |
-          passed=$(node --input-type=module -e "
+          set -euo pipefail
+          output=$(node --input-type=module -e "
           import { scanForCVEs } from './src/agents/securityScanner.js';
           try {
             const r = await scanForCVEs([{name: 'lodash', version: '4.17.21'}]);
             const critical = r.vulnerabilities.filter(v => v.severity === 'critical').length;
-            console.log(critical === 0 ? 'true' : 'false');
+            console.log(`passed=${critical === 0 ? 'true' : 'false'}`);
+            console.log('execution_error=false');
           } catch (e) {
-            console.log('true');
+            console.log('passed=false');
+            console.log('execution_error=true');
           }
-          " 2>/dev/null || echo "true")
+          " 2>/dev/null || printf 'passed=false\nexecution_error=true\n')
+          passed=$(printf '%s\n' "$output" | awk -F= '/^passed=/{print $2}' | tail -n1)
+          execution_error=$(printf '%s\n' "$output" | awk -F= '/^execution_error=/{print $2}' | tail -n1)
+          passed=${passed:-false}
+          execution_error=${execution_error:-true}
           echo "passed=$passed" >> $GITHUB_OUTPUT
+          echo "execution_error=$execution_error" >> $GITHUB_OUTPUT
           echo "Security passed: $passed"
+          echo "Security execution error: $execution_error"
 
       - name: Integrity Agent
         id: integrity
@@ -98,16 +118,23 @@ jobs:
       - name: PR Merge Decision
         id: decision
         run: |
-          code_score=${{ steps.code-review.outputs.score || 8 }}
-          security_passed=${{ steps.security.outputs.passed || 'true' }}
+          code_score=${{ steps.code-review.outputs.score || 0 }}
+          security_passed=${{ steps.security.outputs.passed || 'false' }}
           integrity_score=${{ steps.integrity.outputs.score || 100 }}
+          code_review_error=${{ steps.code-review.outputs.execution_error || 'true' }}
+          security_error=${{ steps.security.outputs.execution_error || 'true' }}
 
           echo "=== Agent Results ==="
           echo "Code Review: $code_score/10"
           echo "Security: $security_passed"
           echo "Integrity: $integrity_score/100"
+          echo "Code Review Execution Error: $code_review_error"
+          echo "Security Execution Error: $security_error"
 
-          if [ "$security_passed" != "true" ]; then
+          if [ "$code_review_error" = "true" ] || [ "$security_error" = "true" ]; then
+            echo "action=manual_review" >> $GITHUB_OUTPUT
+            echo "reason=Agent execution error detected; auto-merge disabled and human review required" >> $GITHUB_OUTPUT
+          elif [ "$security_passed" != "true" ]; then
             echo "action=block_pr" >> $GITHUB_OUTPUT
             echo "reason=Security vulnerabilities detected" >> $GITHUB_OUTPUT
           elif [ "$code_score" -lt 7 ] 2>/dev/null; then
@@ -124,9 +151,11 @@ jobs:
           script: |
             const decision = '${{ steps.decision.outputs.action }}';
             const reason = '${{ steps.decision.outputs.reason }}';
-            const codeScore = '${{ steps.code-review.outputs.score || "8" }}';
-            const securityPassed = '${{ steps.security.outputs.passed || "true" }}';
+            const codeScore = '${{ steps.code-review.outputs.score || "0" }}';
+            const securityPassed = '${{ steps.security.outputs.passed || "false" }}';
             const integrityScore = '${{ steps.integrity.outputs.score || "100" }}';
+            const codeReviewError = '${{ steps.code-review.outputs.execution_error || "true" }}';
+            const securityError = '${{ steps.security.outputs.execution_error || "true" }}';
 
             const icons = {
               approve_and_merge: '✅',
@@ -142,6 +171,8 @@ jobs:
             | Code Review | ${codeScore}/10 |
             | Security Scan | ${securityPassed === 'true' ? '✅ Passed' : '❌ Failed'} |
             | Integrity Check | ${integrityScore}/100 |
+            | Code Review Agent Execution | ${codeReviewError === 'true' ? '⚠️ Error' : '✅ OK'} |
+            | Security Agent Execution | ${securityError === 'true' ? '⚠️ Error' : '✅ OK'} |
 
             **Decision:** \`${decision}\`
             **Reason:** ${reason}
@@ -225,7 +256,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Handle Rejection"
     needs: agent-review
-    if: needs.agent-review.outputs.decision == 'block_pr' || needs.agent-review.outputs.decision == 'request_changes'
+    if: needs.agent-review.outputs.decision == 'block_pr' || needs.agent-review.outputs.decision == 'request_changes' || needs.agent-review.outputs.decision == 'manual_review'
     steps:
       - name: Request changes
         uses: actions/github-script@v7
@@ -234,7 +265,9 @@ jobs:
             const decision = '${{ needs.agent-review.outputs.decision }}';
             const labels = decision === 'block_pr'
               ? ['blocked', 'security-issue']
-              : ['changes-requested'];
+              : decision === 'manual_review'
+                ? ['manual-review-required', 'agent-execution-error']
+                : ['changes-requested'];
 
             await github.rest.issues.addLabels({
               issue_number: context.issue.number,
@@ -248,5 +281,5 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number,
               event: 'REQUEST_CHANGES',
-              body: '${{ needs.agent-review.outputs.decision == "block_pr" && "Blocked: Security vulnerabilities detected" || "Code quality issues found, please address the feedback" }}'
+              body: '${{ needs.agent-review.outputs.decision == "block_pr" && "Blocked: Security vulnerabilities detected" || needs.agent-review.outputs.decision == "manual_review" && "Manual review required: one or more agents failed to execute" || "Code quality issues found, please address the feedback" }}'
             });
