@@ -265,6 +265,7 @@ nano .env
 2. Add environment variables
 3. Click "Save Changes"
 4. Service will auto-redeploy
+5. Keep `render.yaml` `buildFilter.paths` in sync with runtime dependencies; updates in `data/**` should trigger a new build automatically.
 
 #### GitHub Actions
 1. Repository Settings → Secrets and variables → Actions
