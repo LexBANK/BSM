@@ -31,7 +31,9 @@ export const env = {
   // API request timeouts
   apiRequestTimeoutMs: parseNumber(process.env.API_REQUEST_TIMEOUT_MS, 30000),
   // LLM token limits
-  maxTokens: parseNumber(process.env.MAX_TOKENS, 1200)
+  maxTokens: parseNumber(process.env.MAX_TOKENS, 1200),
+  // Input validation
+  maxInputLength: parseNumber(process.env.MAX_INPUT_LENGTH, 10000)
 };
 
 // Validate admin token in production

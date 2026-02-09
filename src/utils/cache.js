@@ -5,6 +5,7 @@ class SimpleCache {
   constructor(ttlMs = 60000) {
     this.cache = new Map();
     this.ttl = ttlMs;
+    this.cleanupInterval = null;
   }
 
   /**
@@ -67,23 +68,42 @@ class SimpleCache {
       }
     }
   }
+
+  /**
+   * Start periodic cleanup
+   * @param {number} intervalMs - Cleanup interval in milliseconds
+   */
+  startCleanup(intervalMs = 60000) {
+    if (this.cleanupInterval) return;
+    this.cleanupInterval = setInterval(() => this.cleanup(), intervalMs);
+  }
+
+  /**
+   * Stop periodic cleanup
+   */
+  stopCleanup() {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+  }
 }
 
 // Create a shared cache instance with 5 minute TTL
 export const cache = new SimpleCache(5 * 60 * 1000);
 
-// Periodic cleanup every minute
-const cleanupInterval = setInterval(() => cache.cleanup(), 60000);
+// Start periodic cleanup every minute
+cache.startCleanup(60000);
 
 // Clean up on shutdown
-process.on('SIGTERM', () => {
-  clearInterval(cleanupInterval);
+const shutdown = () => {
+  cache.stopCleanup();
   cache.clear();
-});
+};
 
-process.on('SIGINT', () => {
-  clearInterval(cleanupInterval);
-  cache.clear();
-});
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
+export default cache;
 
 export default cache;

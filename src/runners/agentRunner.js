@@ -5,15 +5,15 @@ import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
 import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
+import { env } from "../config/env.js";
 import logger from "../utils/logger.js";
 
 // Basic input sanitization to prevent prompt injection
 const sanitizeInput = (input) => {
   if (typeof input !== 'string') return '';
   
-  // Limit input length
-  const maxLength = 10000;
-  const sanitized = input.slice(0, maxLength);
+  // Limit input length from configuration
+  const sanitized = input.slice(0, env.maxInputLength);
   
   // Log if input contains suspicious patterns
   const suspiciousPatterns = [
