@@ -5,3 +5,8 @@ services:
     plan: free
     buildCommand: "npm ci"
     startCommand: "npm start"
+    # Environment variables should be set in Render dashboard:
+    # - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
+    # - ADMIN_TOKEN (admin authentication token)
+    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk)
+    # - NODE_ENV (production)

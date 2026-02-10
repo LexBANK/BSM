@@ -173,9 +173,26 @@ createApp({
         });
       } catch (err) {
         console.error('Chat error:', err);
+        
+        // Provide clearer error messages based on error code
+        let errorMessage = err.message;
+        if (err.message.includes('MISSING_API_KEY') || err.message.includes('not configured')) {
+          errorMessage = lang.value === 'ar'
+            ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
+            : 'AI service is not currently available. Please contact the administrator.';
+        } else if (err.message.includes('HTTP 503')) {
+          errorMessage = lang.value === 'ar'
+            ? 'الخدمة غير متاحة مؤقتاً. يرجى المحاولة لاحقاً.'
+            : 'Service temporarily unavailable. Please try again later.';
+        } else if (err.message.includes('HTTP 500')) {
+          errorMessage = lang.value === 'ar'
+            ? 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.'
+            : 'Server error occurred. Please try again later.';
+        }
+        
         error.value = lang.value === 'ar'
-          ? `\u062D\u062F\u062B \u062E\u0637\u0623: ${err.message}`
-          : `Error: ${err.message}`;
+          ? `\u062D\u062F\u062B \u062E\u0637\u0623: ${errorMessage}`
+          : `Error: ${errorMessage}`;
       } finally {
         loading.value = false;
         scrollToBottom();

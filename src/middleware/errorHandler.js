@@ -10,8 +10,16 @@ export const errorHandler = (err, req, res, next) => {
     stack: err.stack
   });
 
+  // Provide clearer client-facing error messages
+  let clientMessage = err.message;
+  if (status === 500 && !err.code) {
+    clientMessage = "Internal Server Error";
+  } else if (err.code === "MISSING_API_KEY") {
+    clientMessage = "AI service is not configured. Please contact the administrator.";
+  }
+
   res.status(status).json({
-    error: status === 500 ? "Internal Server Error" : err.message,
+    error: clientMessage,
     code: err.code || "INTERNAL_ERROR",
     correlationId: req.correlationId
   });
