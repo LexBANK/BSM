@@ -101,9 +101,13 @@ export class MultiModelRouter {
   }
 
   async callOpenAI(model, prompt, options) {
-    const apiKey = process.env.OPENAI_BSM_KEY || process.env.OPENAI_BSU_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_BSM_KEY || process.env.OPENAI_BSU_KEY;
     if (!apiKey) {
-      throw new AppError("Missing OpenAI API key", 500, "MISSING_API_KEY");
+      throw new AppError(
+        "OpenAI API key not configured. Please set OPENAI_API_KEY, OPENAI_BSM_KEY, or OPENAI_BSU_KEY environment variable.",
+        503,
+        "MISSING_API_KEY"
+      );
     }
 
     const response = await this.postChat(OPENAI_URL, apiKey, {

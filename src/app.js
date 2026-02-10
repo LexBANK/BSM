@@ -47,6 +47,11 @@ app.use("/api", routes);
 // root path redirects to chat UI
 app.get("/", (req, res) => res.redirect("/chat"));
 
+// redirect /docs to GitHub Pages documentation
+app.get("/docs", (req, res) => {
+  res.redirect("https://lexdo.uk");
+});
+
 // serve admin UI static
 app.use("/admin", adminUiAuth, express.static(path.join(process.cwd(), "src/admin")));
 app.use(

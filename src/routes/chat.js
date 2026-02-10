@@ -12,7 +12,12 @@ router.get("/key-status", (req, res) => {
   res.json({
     timestamp: Date.now(),
     status: {
-      openai: Boolean(models.openai?.default || models.openai?.bsm || models.openai?.bsu),
+      openai: Boolean(
+        models.openai?.default ||
+        models.openai?.bsm ||
+        models.openai?.bsu ||
+        process.env.OPENAI_API_KEY
+      ),
       perplexity: Boolean(models.perplexity?.default)
     },
     ui: {
@@ -56,7 +61,11 @@ router.post("/direct", async (req, res, next) => {
 
     const apiKey = models.openai?.bsm || models.openai?.default;
     if (!apiKey) {
-      throw new AppError("AI service is not configured", 503, "MISSING_API_KEY");
+      throw new AppError(
+        "OpenAI API key not configured. Please set OPENAI_API_KEY, OPENAI_BSM_KEY, or OPENAI_BSU_KEY environment variable.",
+        503,
+        "MISSING_API_KEY"
+      );
     }
 
     const systemPrompt = language === "ar"
