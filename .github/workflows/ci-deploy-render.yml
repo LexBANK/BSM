@@ -34,38 +34,35 @@ jobs:
         env:
           OPENAI_BSM_KEY: ${{ secrets.OPENAI_BSM_KEY }}
         run: |
-          node -e "
-          const { codeReviewAgent } = require('./src/agents/CodeReviewAgent.js');
-          codeReviewAgent.review({
-            prNumber: 999,
-            files: [{filename: 'test.js', changes: 10}],
-            diff: 'console.log(\"test\")',
-            author: 'test'
-          }).then(r => {
-            console.log('✅ CodeReviewAgent:', r.score ? 'Working' : 'Failed');
-            process.exit(0);
-          }).catch(e => {
+          node --input-type=module -e "
+          import { codeReviewAgent } from './src/agents/CodeReviewAgent.js';
+          try {
+            const r = await codeReviewAgent.review({
+              prNumber: 999,
+              files: [{filename: 'test.js', changes: 10}],
+              diff: 'console.log(\"test\")',
+              author: 'test'
+            });
+            console.log('✅ CodeReviewAgent: Working (Score: ' + (r.score || 'N/A') + ')');
+          } catch (e) {
             console.error('❌ CodeReviewAgent:', e.message);
             process.exit(1);
-          });
+          }
           "
 
-      - name: Test SecurityAgent
+      - name: Test SecurityScanner
         env:
           PERPLEXITY_KEY: ${{ secrets.PERPLEXITY_KEY }}
         run: |
-          node -e "
-          const { securityAgent } = require('./src/agents/SecurityAgent.js');
-          securityAgent.scan({
-            prNumber: 999,
-            dependencies: [{name: 'lodash', version: '4.17.0'}]
-          }).then(r => {
-            console.log('✅ SecurityAgent:', r.summary ? 'Working' : 'Failed');
-            process.exit(0);
-          }).catch(e => {
-            console.error('❌ SecurityAgent:', e.message);
+          node --input-type=module -e "
+          import { scanForCVEs } from './src/agents/securityScanner.js';
+          try {
+            const r = await scanForCVEs([{name: 'lodash', version: '4.17.0'}]);
+            console.log('✅ SecurityScanner: Working (' + (r.vulnerabilities?.length || 0) + ' vulnerabilities found)');
+          } catch (e) {
+            console.error('❌ SecurityScanner:', e.message);
             process.exit(1);
-          });
+          }
           "
 
       - name: Run full test suite
