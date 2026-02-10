@@ -146,7 +146,11 @@ PORT=3000
 LOG_LEVEL=info
 
 # OpenAI / model providers
+# Provide ONE of: OPENAI_BSM_KEY, OPENAI_BSU_KEY, or OPENAI_API_KEY
+# Priority: OPENAI_BSM_KEY > OPENAI_BSU_KEY > OPENAI_API_KEY
 OPENAI_BSU_KEY=your_key_here
+OPENAI_BSM_KEY=your_key_here
+OPENAI_API_KEY=your_key_here
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
 OPENAI_MODEL=gpt-4o-mini

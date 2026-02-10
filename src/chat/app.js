@@ -161,7 +161,10 @@ createApp({
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || errData.error || `HTTP ${res.status}`);
+          const error = new Error(errData.message || errData.error || `HTTP ${res.status}`);
+          error.status = res.status;
+          error.code = errData.code;
+          throw error;
         }
 
         const data = await res.json();
@@ -173,9 +176,26 @@ createApp({
         });
       } catch (err) {
         console.error('Chat error:', err);
+        
+        // Provide clearer error messages based on error code or status
+        let errorMessage = err.message;
+        if (err.code === 'MISSING_API_KEY' || err.status === 503) {
+          errorMessage = lang.value === 'ar'
+            ? 'خدمة الذكاء الاصطناعي غير متاحة حالياً. يرجى الاتصال بالمسؤول.'
+            : 'AI service is not currently available. Please contact the administrator.';
+        } else if (err.status === 500) {
+          errorMessage = lang.value === 'ar'
+            ? 'حدث خطأ في الخادم. يرجى المحاولة لاحقاً.'
+            : 'Server error occurred. Please try again later.';
+        } else if (err.status === 429) {
+          errorMessage = lang.value === 'ar'
+            ? 'تم تجاوز الحد المسموح. يرجى المحاولة لاحقاً.'
+            : 'Rate limit exceeded. Please try again later.';
+        }
+        
         error.value = lang.value === 'ar'
-          ? `\u062D\u062F\u062B \u062E\u0637\u0623: ${err.message}`
-          : `Error: ${err.message}`;
+          ? `\u062D\u062F\u062B \u062E\u0637\u0623: ${errorMessage}`
+          : `Error: ${errorMessage}`;
       } finally {
         loading.value = false;
         scrollToBottom();
