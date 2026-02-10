@@ -173,9 +173,24 @@ createApp({
         });
       } catch (err) {
         console.error('Chat error:', err);
-        error.value = lang.value === 'ar'
-          ? `\u062D\u062F\u062B \u062E\u0637\u0623: ${err.message}`
-          : `Error: ${err.message}`;
+        
+        // Provide clearer error messages for configuration issues
+        let errorMessage = err.message;
+        if (err.message.includes('MISSING_API_KEY') || err.message.includes('not configured')) {
+          errorMessage = lang.value === 'ar'
+            ? '⚠️ لم يتم تكوين مفتاح OpenAI API. يرجى الاتصال بمسؤول النظام.'
+            : '⚠️ OpenAI API key not configured. Please contact system administrator.';
+        } else if (err.message.includes('503') || err.message.includes('Service')) {
+          errorMessage = lang.value === 'ar'
+            ? '⚠️ الخدمة غير متاحة حاليًا. يرجى المحاولة لاحقًا.'
+            : '⚠️ Service unavailable. Please try again later.';
+        } else {
+          errorMessage = lang.value === 'ar'
+            ? `حدث خطأ: ${err.message}`
+            : `Error: ${err.message}`;
+        }
+        
+        error.value = errorMessage;
       } finally {
         loading.value = false;
         scrollToBottom();
