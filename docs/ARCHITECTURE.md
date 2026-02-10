@@ -158,7 +158,8 @@ data/
 │   ├── pages.yml          # GitHub Pages deployment
 │   └── validate.yml       # Data validation
 └── PULL_REQUEST_TEMPLATE/
-    └── agents-suggestions.md # PR template
+    ├── agents-suggestions.md       # PR template for agent suggestions
+    └── governance-operations.md    # PR template for governance & operations
 ```
 
 ---
