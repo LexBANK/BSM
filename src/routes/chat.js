@@ -84,4 +84,21 @@ router.post("/direct", async (req, res, next) => {
   }
 });
 
+// Key status endpoint for Vue.js frontend
+router.get("/key-status", async (req, res) => {
+  try {
+    const apiKey = models.openai?.bsm || models.openai?.default;
+    res.json({ 
+      configured: !!apiKey,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({ 
+      configured: false, 
+      error: "Internal error",
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 export default router;
