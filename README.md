@@ -146,6 +146,7 @@ PORT=3000
 LOG_LEVEL=info
 
 # OpenAI / model providers
+OPENAI_API_KEY=your_key_here
 OPENAI_BSU_KEY=your_key_here
 OPENAI_BRINDER_KEY=your_key_here
 OPENAI_LEXNEXUS_KEY=your_key_here
