@@ -7,6 +7,43 @@ const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 const PERPLEXITY_URL = "https://api.perplexity.ai/chat/completions";
 const REQUEST_TIMEOUT_MS = 45000;
 
+function flattenRelatedTopics(topics, acc = []) {
+  if (!Array.isArray(topics)) return acc;
+
+  for (const topic of topics) {
+    if (!topic || typeof topic !== "object") continue;
+
+    if (typeof topic.Text === "string" && topic.Text.trim()) {
+      acc.push(topic.Text.trim());
+    }
+
+    if (Array.isArray(topic.Topics)) {
+      flattenRelatedTopics(topic.Topics, acc);
+    }
+  }
+
+  return acc;
+}
+
+function extractSearchTexts(response, maxResults) {
+  const related = flattenRelatedTopics(response?.RelatedTopics);
+  if (related.length > 0) {
+    return related.slice(0, maxResults);
+  }
+
+  const fallback = [];
+  if (typeof response?.AbstractText === "string" && response.AbstractText.trim()) {
+    fallback.push(response.AbstractText.trim());
+  }
+
+  if (typeof response?.Heading === "string" && response.Heading.trim()) {
+    fallback.push(response.Heading.trim());
+  }
+
+  return fallback.slice(0, maxResults);
+}
+
+
 export class MultiModelRouter {
   constructor() {
     this.capabilities = {
@@ -149,10 +186,12 @@ export class MultiModelRouter {
     });
 
     const choice = response.choices?.[0] || {};
+    const searchHighlights = extractSearchTexts(response, env.searchToolMaxResults);
 
     return {
       output: choice.message?.content || "",
       citations: choice.citations || response.citations || [],
+      searchHighlights,
       usage: response.usage,
       modelUsed: model,
       searchPerformed: true,
