@@ -29,3 +29,6 @@ certificates/
 ssl/
 
 __pycache__/
+
+# Test files
+test-pr-merge-agent.js
