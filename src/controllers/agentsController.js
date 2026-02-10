@@ -1,9 +1,16 @@
 import { loadAgents } from "../services/agentsService.js";
 import { runAgent } from "../runners/agentRunner.js";
 import { env } from "../config/env.js";
+import { listAgentsByContext, normalizeContext } from "../services/agents/registry.js";
 
 export const listAgents = async (req, res, next) => {
   try {
+    if (req.query.context !== undefined) {
+      const context = normalizeContext(req.query.context);
+      const agents = listAgentsByContext(context);
+      return res.json(agents);
+    }
+
     const agents = await loadAgents();
     res.json({ agents, correlationId: req.correlationId });
   } catch (err) {
