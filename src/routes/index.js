@@ -7,6 +7,7 @@ import admin from "./admin.js";
 import chat from "./chat.js";
 import orchestrator from "./orchestrator.js";
 import webhooks from "./webhooks.js";
+import emergency from "./emergency.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/admin", admin);
 router.use("/chat", chat);
 router.use("/orchestrator", orchestrator);
 router.use("/webhooks", webhooks);
+router.use("/emergency", emergency);
 
 export default router;
