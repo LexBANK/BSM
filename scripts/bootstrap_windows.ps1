@@ -5,7 +5,7 @@
 
 .DESCRIPTION
   - Installs Node.js LTS, Git, and GitHub CLI via winget when missing.
-  - Clones (or updates) LexBANK/BSU into a target folder.
+  - Clones (or updates) LexBANK/BSM into a target folder.
   - Generates .env.example when absent and creates .env.
   - Installs dependencies, runs validation, and starts the dev server.
 
@@ -16,7 +16,7 @@
 
 $ErrorActionPreference = 'Stop'
 
-$Repo = 'LexBANK/BSU'
+$Repo = 'LexBANK/BSM'
 $BaseDir = Join-Path $env:USERPROFILE 'Desktop'
 $ProjDir = Join-Path $BaseDir 'BSU'
 
