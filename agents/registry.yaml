@@ -1,58 +1,283 @@
+# yaml-language-server: $schema=./registry.schema.json
+version: "1.2"
+
+defaults:
+  runtime:
+    type: node
+    version: "22"
+  startup:
+    auto_start: false
+    allowed_profiles: [local, mobile, safe]
+  network:
+    egress_policy:
+      deny_by_default: true
+      log_all: true
+
 agents:
 
-  - id: agent-auto
-    name: Auto Router
-    category: conversational
-    contexts:
-      chat: true
-    expose:
-      selectable: true
-      internal_only: false
+# =========================================================
+# Conversational Agents
+# =========================================================
 
-  - id: agent-legal
-    name: Legal Expert
-    category: conversational
-    contexts:
-      chat: true
-    expose:
-      selectable: true
-      internal_only: false
+- id: agent-auto
+  name: Auto Router
+  description: Automatically routes user queries to appropriate agents
+  category: conversational
+  role: assistant
 
-  - id: bsu-architect
-    name: BSU Autonomous Architect
-    category: infra
-    contexts:
-      github: true
-      ci: true
-    expose:
-      selectable: false
-      internal_only: true
+  capabilities:
+    - query-routing
+    - intent-classification
 
-  - id: bsu-orchestrator
-    name: BSU Orchestrator
-    category: system
-    contexts:
-      api: true
-      github: true
-    expose:
-      selectable: false
-      internal_only: true
+  contexts:
+    allowed: [chat, api]
 
-  - id: bsu-runner
-    name: BSU Runner
-    category: system
-    contexts:
-      ci: true
-    expose:
-      selectable: false
-      internal_only: true
+  expose:
+    selectable: true
+    internal_only: false
 
-  - id: bsu-security
-    name: BSU Security Agent
-    category: system
-    contexts:
-      github: true
-      ci: true
-    expose:
-      selectable: false
-      internal_only: true
+  execution:
+    entrypoint: src/agents/AutoRouter.js
+
+  permissions:
+    filesystem:
+      read: [src/agents/**, docs/**]
+      write: []
+    network:
+      outbound: [api.openai.com]
+    secrets:
+      read:
+        dev: [OPENAI_API_KEY_DEV]
+        prod: [OPENAI_API_KEY_PROD]
+
+  resources:
+    cpu: { max_cores: 0.5 }
+    memory: { max_mb: 256 }
+    timeout: { max_seconds: 30 }
+
+  rate_limit:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    burst_allowance: 5
+
+  safety:
+    mode: safe
+    additive_only: true
+
+  risk:
+    level: low
+    rationale: Routing and classification only
+
+  lifecycle:
+    status: active
+    since: "2024-01-01"
+    review_by: "2025-01-01"
+
+  ownership:
+    team: platform
+    owner: platform-lead@lexbank.io
+    escalation: cto@lexbank.io
+
+  healthcheck:
+    endpoint: /health
+    interval_seconds: 30
+    failure_threshold: 3
+
+
+# =========================================================
+# Legal / Research Agent
+# =========================================================
+
+- id: agent-research
+  name: Research Assistant
+  description: Unified research agent for legal, governance, and compliance queries
+  category: governance
+  role: assistant
+
+  capabilities:
+    - legal-research
+    - governance-research
+    - compliance-research
+    - general-research
+    - batch-processing
+
+  contexts:
+    allowed: [chat, api]
+
+  expose:
+    selectable: true
+    internal_only: false
+
+  execution:
+    entrypoint: src/agents/ResearchAgent.js
+
+  permissions:
+    filesystem:
+      read: [docs/**, data/**]
+      write: [reports/research/**]
+    network:
+      outbound: [api.openai.com]
+    secrets:
+      read:
+        dev: [OPENAI_API_KEY_DEV]
+        prod: [OPENAI_API_KEY_PROD]
+
+  resources:
+    cpu: { max_cores: 1 }
+    memory: { max_mb: 512 }
+    timeout: { max_seconds: 120 }
+
+  rate_limit:
+    requests_per_minute: 20
+    requests_per_hour: 300
+    burst_allowance: 3
+
+  safety:
+    mode: safe
+    additive_only: true
+
+  risk:
+    level: medium
+    rationale: Produces advisory content used in compliance decisions
+
+  lifecycle:
+    status: active
+    since: "2024-02-11"
+    review_by: "2024-08-11"
+
+  ownership:
+    team: compliance
+    owner: compliance-lead@lexbank.io
+    escalation: legal@lexbank.io
+
+  healthcheck:
+    endpoint: /health
+    interval_seconds: 60
+    failure_threshold: 2
+
+
+# =========================================================
+# System Orchestrator
+# =========================================================
+
+- id: bsu-orchestrator
+  name: BSU Orchestrator
+  description: Coordinates agent execution and workflow management
+  category: system
+  role: orchestrator
+
+  capabilities:
+    - workflow-orchestration
+    - agent-coordination
+
+  contexts:
+    allowed: [api, github, ci, cron]
+
+  expose:
+    selectable: false
+    internal_only: true
+
+  execution:
+    entrypoint: src/agents/Orchestrator.js
+
+  permissions:
+    filesystem:
+      read: [src/**, agents/**, config/**]
+      write: [logs/**, tmp/**]
+    network:
+      outbound: [api.github.com]
+    secrets:
+      read: [GITHUB_TOKEN]
+
+  resources:
+    cpu: { max_cores: 2 }
+    memory: { max_mb: 1024 }
+    timeout: { max_seconds: 300 }
+
+  safety:
+    mode: restricted
+    additive_only: false
+
+  approval:
+    required: true
+    type: dual
+    approvers:
+      - role: platform-lead
+      - role: cto
+
+  risk:
+    level: high
+    rationale: Controls execution of multiple agents
+
+  lifecycle:
+    status: active
+    since: "2024-01-01"
+    review_by: "2024-07-01"
+
+  ownership:
+    team: platform
+    owner: platform-lead@lexbank.io
+    escalation: cto@lexbank.io
+
+
+# =========================================================
+# Infrastructure Architect (Highest Risk)
+# =========================================================
+
+- id: bsu-architect
+  name: BSU Autonomous Architect
+  description: Manages infrastructure and deployment configuration
+  category: infra
+  role: executor
+
+  capabilities:
+    - infrastructure-management
+    - deployment-automation
+
+  contexts:
+    allowed: [api, github, ci]
+
+  expose:
+    selectable: false
+    internal_only: true
+
+  execution:
+    entrypoint: src/agents/Architect.js
+
+  permissions:
+    filesystem:
+      read: [src/**, .github/**, config/**]
+      write: [.github/workflows/**, wrangler.jsonc, render.yaml]
+    network:
+      outbound: [api.github.com, api.cloudflare.com]
+    secrets:
+      read: [GITHUB_TOKEN, CLOUDFLARE_API_TOKEN]
+
+  resources:
+    cpu: { max_cores: 1 }
+    memory: { max_mb: 512 }
+    timeout: { max_seconds: 300 }
+
+  safety:
+    mode: destructive
+    additive_only: false
+
+  approval:
+    required: true
+    type: human
+    approvers:
+      - role: cto
+
+  risk:
+    level: critical
+    rationale: Can modify deployment and infrastructure state
+
+  lifecycle:
+    status: active
+    since: "2024-01-01"
+    review_by: "2024-06-01"
+
+  ownership:
+    team: platform
+    owner: platform-lead@lexbank.io
+    escalation: cto@lexbank.io
