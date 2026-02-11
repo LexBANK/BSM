@@ -240,12 +240,9 @@ This project includes Telegram webhook integration for automation and system mon
 
 **Important Note**: Currently, there is no official public Telegram channel or group for this project. For official communications, please use GitHub Issues and Discussions.
 
-### Internal Resources
-- Technical Lead: [Contact Info]
-- Security Team: [Contact Info]
-- DevOps Team: [Contact Info]
+---
 
-### Feedback
+## Feedback
 To provide feedback on documentation:
 1. Open an issue on GitHub
 2. Tag with `documentation` label

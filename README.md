@@ -374,7 +374,7 @@ Copyright © 2026 LexBANK. All rights reserved.
 
 For questions, issues, or support requests:
 
-- **GitHub Issues**: [Open an issue](https://github.com/LexBANK/BSM/issues) for bug reports and feature requests
+- **GitHub Issues**: [LexBANK/BSM/issues](https://github.com/LexBANK/BSM/issues) - Bug reports and feature requests
 - **Documentation**: Check our comprehensive [docs/](./docs) directory
 - **Security Issues**: Report security vulnerabilities via [GitHub Security Advisories](https://github.com/LexBANK/BSM/security/advisories/new)
 
@@ -382,7 +382,7 @@ For questions, issues, or support requests:
 
 This project includes Telegram webhook integration for automation and system monitoring. See [docs/TELEGRAM_WEBHOOK.md](./docs/TELEGRAM_WEBHOOK.md) for setup instructions.
 
-**Note**: Currently, there is no public Telegram community channel or group for this project. For official communications, please use GitHub Issues and Discussions.
+**Note**: Currently, there is no public Telegram community channel or group for this project. For official communications, please use [GitHub Issues](https://github.com/LexBANK/BSM/issues) and [GitHub Discussions](https://github.com/LexBANK/BSM/discussions).
 
 ---
 
