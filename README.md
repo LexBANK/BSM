@@ -375,8 +375,9 @@ Copyright © 2026 LexBANK. All rights reserved.
 For questions, issues, or support requests:
 
 - **GitHub Issues**: [LexBANK/BSM/issues](https://github.com/LexBANK/BSM/issues) - Bug reports and feature requests
-- **Documentation**: Check our comprehensive [docs/](./docs) directory
-- **Security Issues**: Report security vulnerabilities via [GitHub Security Advisories](https://github.com/LexBANK/BSM/security/advisories/new)
+- **GitHub Discussions**: [LexBANK/BSM/discussions](https://github.com/LexBANK/BSM/discussions) - Questions and community discussions
+- **Documentation**: Check our comprehensive [documentation](./docs) directory
+- **Security Issues**: [GitHub Security Advisories](https://github.com/LexBANK/BSM/security/advisories/new) - Report security vulnerabilities
 
 ### Telegram Integration
 
