@@ -60,7 +60,7 @@ export function isAdminChatId(chatId) {
  * Extract message text from Telegram update
  * @param {object} update - Telegram update object or body
  * @param {boolean} includeEdited - Whether to include edited_message (default: false)
- * @returns {{ chatId: string, text: string } | null} Parsed message or null
+ * @returns {{ chatId: string, text: string } | null} Object with chatId and text, or null if no valid message
  */
 export function extractTelegramMessage(update, includeEdited = false) {
   let message;

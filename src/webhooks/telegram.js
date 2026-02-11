@@ -21,7 +21,7 @@ export async function telegramWebhook(req, res) {
       return; // Response already sent by verifyTelegramSecret
     }
 
-    // Only handle new messages, not edited ones
+    // Only handle new messages, not edited ones (main webhook behavior)
     const parsed = extractTelegramMessage(req.body, false);
     if (!parsed) return res.sendStatus(200);
     
