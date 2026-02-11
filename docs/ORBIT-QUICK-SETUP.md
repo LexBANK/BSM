@@ -1,5 +1,8 @@
 # ORBIT Quick Setup Guide
 
+> **⚠️ Admin Tool**: This guide is for setting up the **ORBIT admin bot** (private).  
+> **For public community channels**, see [COMMUNITY.md](./COMMUNITY.md).
+
 **⚡ Get ORBIT running in 10 minutes**
 
 ## What You'll Get

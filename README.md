@@ -1,5 +1,7 @@
 # LexBANK / BSU Platform
 
+> 📱 **Looking for Telegram community?** See [Community & Support](#community--support) section below or [docs/COMMUNITY.md](docs/COMMUNITY.md)
+
 ## Overview
 
 The **LexBANK and BSU Platform** represent the next generation of intelligent infrastructure for knowledge management and legal services, powered by advanced AI technologies. Our platform combines cutting-edge artificial intelligence with robust legal and business service management capabilities to deliver unparalleled efficiency and accuracy.
@@ -341,6 +343,12 @@ The project includes GitHub Actions workflows:
 
 ## Documentation
 
+### Community & Support
+- [Community Channels](docs/COMMUNITY.md) - Telegram, GitHub, and support resources
+- [GOVERNANCE.md](./GOVERNANCE.md) - Governance policies and approval rules
+- [SECURITY.md](./SECURITY.md) - Security policies and requirements
+- [MOBILE_MODE.md](./MOBILE_MODE.md) - Mobile mode restrictions
+
 ### Architecture and Design
 - [System Architecture](docs/ARCHITECTURE.md) - Comprehensive architectural overview
 - [Agent Orchestration Patterns](docs/AGENT-ORCHESTRATION.md) - Multi-agent design patterns and workflows
@@ -368,9 +376,39 @@ Contributions are welcome! Please ensure that:
 
 Copyright © 2026 LexBANK. All rights reserved.
 
-## Support
+## Community & Support
 
-For questions, issues, or support requests, please contact the LexBANK development team.
+### 📱 Join Our Telegram Community
+
+We maintain active Telegram channels for community support and announcements:
+
+- **📢 Official Announcements Channel** - For project updates, releases, and official announcements
+  - *Coming soon - Will be announced when available*
+  
+- **💬 Community Support Group** - For questions, discussions, and community help
+  - *Coming soon - Will be announced when available*
+
+- **🤖 ORBIT Admin Bot** - Private bot for repository management (admins only)
+  - For administrators: See [ORBIT Quick Setup Guide](docs/ORBIT-QUICK-SETUP.md)
+  - Not for general community support
+
+**Note**: We are currently setting up our public Telegram community channels. Once available, links will be posted here and in our documentation.
+
+### 🐛 Report Issues
+
+For bug reports and feature requests, please use:
+- **GitHub Issues**: https://github.com/LexBANK/BSM/issues
+
+### 📚 Documentation
+
+- **Main Documentation**: [docs/](./docs/)
+- **Architecture Guide**: [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+- **Security Guide**: [SECURITY.md](./SECURITY.md)
+- **Governance**: [GOVERNANCE.md](./GOVERNANCE.md)
+
+### 📧 Contact
+
+For business inquiries or partnership opportunities, please contact the LexBANK team through our official channels.
 
 ---
 
