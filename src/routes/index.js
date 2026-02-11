@@ -1,5 +1,6 @@
 import { Router } from "express";
 import health from "./health.js";
+import ready from "./ready.js";
 import status from "./status.js";
 import agents from "./agents.js";
 import knowledge from "./knowledge.js";
@@ -14,7 +15,7 @@ import research from "./research.js";
 const router = Router();
 
 router.use("/health", health);
-router.use("/ready", health); // /ready uses same route as /health
+router.use("/ready", ready);
 router.use("/", status); // Mount status at root for /api/status
 router.use("/agents", agents);
 router.use("/knowledge", knowledge);

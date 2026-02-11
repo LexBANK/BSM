@@ -59,9 +59,13 @@ export const getStats = async (req, res, next) => {
       audit: auditStats,
       agents: {
         activeStates: agentStates.size,
+        // Sanitize agent states - only include safe fields
         states: Array.from(agentStates.entries()).map(([key, value]) => ({
           key,
-          ...value
+          agentId: value.agentId,
+          jobId: value.jobId,
+          status: value.status,
+          // Exclude potentially sensitive fields like full results or errors
         }))
       }
     };
