@@ -1,25 +1,57 @@
-import fs from "fs";
+import { readFile, access } from "fs/promises";
 import path from "path";
 import { mustExistDir } from "../utils/fsSafe.js";
 import { AppError } from "../utils/errors.js";
 
+// Cache for loaded knowledge with TTL
+let knowledgeCache = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 60000; // 1 minute
+
 export const loadKnowledgeIndex = async () => {
   try {
+    // Return cached knowledge if still valid
+    const now = Date.now();
+    if (knowledgeCache && (now - cacheTimestamp) < CACHE_TTL) {
+      return knowledgeCache;
+    }
+
     const dir = path.join(process.cwd(), "data", "knowledge");
     mustExistDir(dir);
 
     const indexPath = path.join(dir, "index.json");
-    const index = JSON.parse(fs.readFileSync(indexPath, "utf8"));
+    const indexContent = await readFile(indexPath, "utf8");
+    const index = JSON.parse(indexContent);
 
     if (!Array.isArray(index.documents)) {
       throw new AppError("Invalid knowledge index.json", 500, "KNOWLEDGE_INDEX_INVALID");
     }
 
-    return index.documents.map((f) => {
+    // Read all knowledge documents in parallel
+    const documentPromises = index.documents.map(async (f) => {
       const p = path.join(dir, f);
-      return fs.existsSync(p) ? fs.readFileSync(p, "utf8") : "";
+      try {
+        await access(p);
+        return await readFile(p, "utf8");
+      } catch {
+        return "";
+      }
     });
+
+    const documents = await Promise.all(documentPromises);
+    
+    // Update cache
+    knowledgeCache = documents;
+    cacheTimestamp = now;
+
+    return documents;
   } catch (err) {
     throw new AppError(`Failed to load knowledge: ${err.message}`, 500, err.code || "KNOWLEDGE_LOAD_FAILED");
   }
+};
+
+// Clear cache (useful for testing or manual cache invalidation)
+export const clearKnowledgeCache = () => {
+  knowledgeCache = null;
+  cacheTimestamp = 0;
 };
