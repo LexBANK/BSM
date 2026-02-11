@@ -4,6 +4,20 @@ import { getSystemStatus } from "../../status/systemStatus.js";
 
 const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
 
+// User-facing messages (Arabic for target audience)
+const MESSAGES = {
+  UNAUTHORIZED: "🚫 ليس لديك صلاحية تنفيذ هذا الأمر.",
+  RUN_USAGE: "❗ استخدم: /run <السؤال أو الأمر>",
+  RUN_PROCESSING: (query) => `⏳ جاري تنفيذ: ${query}...`,
+  RUN_RECEIVED: (query) => `✅ تم استلام الطلب: ${query}`,
+  HELP: 
+    "مرحبًا! الأوامر المتاحة:\n\n" +
+    "🔹 /status - حالة النظام (للمشرفين فقط)\n" +
+    "🔹 /run <سؤالك> - تنفيذ أمر (للمشرفين فقط)\n" +
+    "🔹 /help - عرض هذه الرسالة",
+  DEFAULT: "تم استلام رسالتك. استخدم /help للمساعدة."
+};
+
 export async function handleTelegramWebhook(req, res) {
   try {
     // التحقق من secret token
@@ -31,10 +45,10 @@ export async function handleTelegramWebhook(req, res) {
 
     const isAdmin = admins.includes(String(chatId));
 
-    // أمر /status (للمشرفين فقط)
+    // /status command (admins only)
     if (text === "/status") {
       if (!isAdmin) {
-        await telegramAgent.sendMessage(chatId, "🚫 ليس لديك صلاحية تنفيذ هذا الأمر.");
+        await telegramAgent.sendMessage(chatId, MESSAGES.UNAUTHORIZED);
         return res.sendStatus(200);
       }
 
@@ -54,39 +68,33 @@ export async function handleTelegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    // أمر /run (للمشرفين فقط)
+    // /run command (admins only)
     if (text.startsWith("/run")) {
       if (!isAdmin) {
-        await telegramAgent.sendMessage(chatId, "🚫 ليس لديك صلاحية تنفيذ هذا الأمر.");
+        await telegramAgent.sendMessage(chatId, MESSAGES.UNAUTHORIZED);
         return res.sendStatus(200);
       }
 
       const query = text.replace("/run", "").trim();
       if (!query) {
-        await telegramAgent.sendMessage(chatId, "❗ استخدم: /run <السؤال أو الأمر>");
+        await telegramAgent.sendMessage(chatId, MESSAGES.RUN_USAGE);
         return res.sendStatus(200);
       }
 
-      await telegramAgent.sendMessage(chatId, `⏳ جاري تنفيذ: ${query}...`);
+      await telegramAgent.sendMessage(chatId, MESSAGES.RUN_PROCESSING(query));
       // TODO: ربط بـ research agent
-      await telegramAgent.sendMessage(chatId, `✅ تم استلام الطلب: ${query}`);
+      await telegramAgent.sendMessage(chatId, MESSAGES.RUN_RECEIVED(query));
       return res.sendStatus(200);
     }
 
-    // أوامر عامة
+    // General commands
     if (text === "/help" || text === "/start") {
-      const helpMessage = 
-        "مرحبًا! الأوامر المتاحة:\n\n" +
-        "🔹 /status - حالة النظام (للمشرفين فقط)\n" +
-        "🔹 /run <سؤالك> - تنفيذ أمر (للمشرفين فقط)\n" +
-        "🔹 /help - عرض هذه الرسالة";
-      
-      await telegramAgent.sendMessage(chatId, helpMessage);
+      await telegramAgent.sendMessage(chatId, MESSAGES.HELP);
       return res.sendStatus(200);
     }
 
-    // رد افتراضي
-    await telegramAgent.sendMessage(chatId, "تم استلام رسالتك. استخدم /help للمساعدة.");
+    // Default response
+    await telegramAgent.sendMessage(chatId, MESSAGES.DEFAULT);
     return res.sendStatus(200);
   } catch (err) {
     console.error("Webhook error:", err);
