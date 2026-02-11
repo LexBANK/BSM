@@ -16,6 +16,20 @@ export const loadAgents = async () => {
       throw new AppError("Invalid agents index.json", 500, "AGENTS_INDEX_INVALID");
     }
 
+    const indexedFiles = new Set(index.agents);
+    const yamlFiles = fs
+      .readdirSync(dir)
+      .filter((file) => file.endsWith(".yaml"));
+
+    const missingFromIndex = yamlFiles.filter((file) => !indexedFiles.has(file));
+    if (missingFromIndex.length > 0) {
+      throw new AppError(
+        `Agent files missing from index.json: ${missingFromIndex.join(", ")}`,
+        500,
+        "AGENTS_INDEX_OUT_OF_SYNC"
+      );
+    }
+
     const agents = index.agents.map((file) => {
       const content = fs.readFileSync(path.join(dir, file), "utf8");
       const parsed = YAML.parse(content);
