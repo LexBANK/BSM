@@ -2,6 +2,7 @@ import { orchestrator } from "../runners/orchestrator.js";
 import { auditLogger } from "../utils/auditLogger.js";
 import { telegramAgent } from "../orbit/agents/TelegramAgent.js";
 import { buildTelegramStatusMessage } from "../services/telegramStatusService.js";
+import { guardTelegramAgent, getAvailableTelegramAgents } from "../guards/telegramGuard.js";
 import logger from "../utils/logger.js";
 
 const ADMIN_IDS = (process.env.ORBIT_ADMIN_CHAT_IDS || "")
@@ -53,6 +54,7 @@ export async function telegramWebhook(req, res) {
     if (text === "/start" || text === "/help") {
       await reply(chatId,
         "🤖 BSM Bot\n\n" +
+        "/agents - List available agents\n" +
         "/run <agent> (admin only)\n" +
         "/status (admin only)"
       );
@@ -61,7 +63,26 @@ export async function telegramWebhook(req, res) {
 
     const isAdmin = ADMIN_IDS.includes(chatId);
 
-    // 3️⃣ /status (admin only)
+    // 3️⃣ /agents - List available agents
+    if (text === "/agents") {
+      try {
+        const agents = getAvailableTelegramAgents(isAdmin);
+        if (agents.length === 0) {
+          await reply(chatId, "ℹ️ No agents available in mobile context");
+        } else {
+          const agentList = agents
+            .map(a => `• ${a.id} - ${a.name} (${a.risk} risk)`)
+            .join("\n");
+          await reply(chatId, `📱 Available Agents:\n\n${agentList}\n\nUse /run <agent-id>`);
+        }
+      } catch (error) {
+        logger.error({ error, chatId }, "Failed to list agents");
+        await reply(chatId, "❌ Failed to list agents");
+      }
+      return res.sendStatus(200);
+    }
+
+    // 4️⃣ /status (admin only)
     if (text === "/status") {
       if (!isAdmin) {
         auditLogger.logAccessDenied({
@@ -81,7 +102,7 @@ export async function telegramWebhook(req, res) {
       return res.sendStatus(200);
     }
 
-    // 4️⃣ /run <agent> (admin only)
+    // 5️⃣ /run <agent> (admin only)
     if (text.startsWith("/run")) {
       if (!isAdmin) {
         auditLogger.logAccessDenied({
@@ -99,6 +120,30 @@ export async function telegramWebhook(req, res) {
       const [, agentId] = text.split(" ");
       if (!agentId) {
         await reply(chatId, "❗ Usage: /run <agent-id>");
+        return res.sendStatus(200);
+      }
+
+      // Apply Telegram guard (context-based restrictions)
+      try {
+        guardTelegramAgent(agentId, isAdmin);
+      } catch (guardError) {
+        logger.warn({
+          correlationId: req.correlationId,
+          chatId,
+          agentId,
+          error: guardError.message
+        }, "Telegram guard blocked agent execution");
+
+        auditLogger.logAccessDenied({
+          resource: "telegram_agent",
+          action: "run_agent",
+          reason: guardError.message,
+          user: `telegram:${chatId}`,
+          ip: "telegram",
+          correlationId: req.correlationId
+        });
+
+        await reply(chatId, `🚫 ${guardError.message}`);
         return res.sendStatus(200);
       }
 

@@ -8,6 +8,7 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "validate": "node scripts/validate.js",
+    "validate:registry": "node scripts/validate-registry.js",
     "test": "node scripts/validate.js",
     "pr-check": "node scripts/pr-review-checklist.js --local",
     "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose"
