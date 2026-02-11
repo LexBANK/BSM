@@ -95,7 +95,7 @@ function validateOrchestratorConfig() {
     // Check if agent definition file exists
     const agentDefPath = path.join(__dirname, '..', '.github', 'agents', `${agent.id}.agent.md`);
     if (!fs.existsSync(agentDefPath)) {
-      console.warn(`⚠️  Warning: Agent definition file not found: ${agentDefPath}`);
+      console.warn(`⚠️ Warning: Agent definition file not found: ${agentDefPath}`);
     }
   }
   

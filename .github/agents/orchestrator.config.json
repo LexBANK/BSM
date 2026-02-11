@@ -4,7 +4,7 @@
   "description": "Coordinates execution of multiple agents (Architect, Runner, Security) to produce comprehensive analysis reports",
   "execution": {
     "mode": "sequential",
-    "timeout": 1800,
+    "timeout": 2400,
     "continueOnError": false
   },
   "agents": [
