@@ -57,11 +57,11 @@ class AuditLogger {
   }
 
   /**
-   * Write audit entry synchronously (for backwards compatibility)
-   * Only use when async is not possible
+   * Write audit entry (fire-and-forget async)
+   * For backwards compatibility where sync write was expected but we want async I/O
    * @param {Object} entry - Audit entry to log
    */
-  writeSync(entry) {
+  writeDeferred(entry) {
     // Fire and forget async write
     this.write(entry).catch(err => {
       logger.error({ error: err.message }, "Failed async audit write");
@@ -72,7 +72,7 @@ class AuditLogger {
    * Log authentication attempt
    */
   logAuth(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "auth",
       action: data.action || "login",
       success: data.success,
@@ -87,7 +87,7 @@ class AuditLogger {
    * Log agent operation
    */
   logAgentOperation(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "agent",
       action: data.action, // start, stop, execute
       agentId: data.agentId,
@@ -103,7 +103,7 @@ class AuditLogger {
    * Log configuration change
    */
   logConfigChange(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "config",
       action: data.action, // modify, update, delete
       resource: data.resource,
@@ -119,7 +119,7 @@ class AuditLogger {
    * Log security event
    */
   logSecurityEvent(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "security",
       severity: data.severity || "medium",
       action: data.action,
@@ -134,7 +134,7 @@ class AuditLogger {
    * Log emergency action
    */
   logEmergency(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "emergency",
       action: data.action, // shutdown, kill-switch
       reason: data.reason,
@@ -148,7 +148,7 @@ class AuditLogger {
    * Log access denial
    */
   logAccessDenied(data) {
-    this.writeSync({
+    this.writeDeferred({
       event: "access_denied",
       resource: data.resource,
       action: data.action,

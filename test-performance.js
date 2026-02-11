@@ -70,7 +70,7 @@ async function testParallelLoading() {
 }
 
 async function main() {
-  console.log('=== BSU Performance Test Suite ===\n');
+  console.log('=== BSM Performance Test Suite ===\n');
   
   try {
     await testAgentLoading();

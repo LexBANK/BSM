@@ -198,12 +198,12 @@ await auditLogger.readLogs({ limit: 100, offset: 0 });
 await auditLogger.getStatistics();
 ```
 
-**Sync Methods (Backwards Compatible):**
+**Deferred Methods (Fire-and-Forget):**
 ```javascript
-// Fire-and-forget sync wrapper (for backwards compatibility)
-auditLogger.writeSync({ event: 'test', data: {} });
+// Fire-and-forget async wrapper (for backwards compatibility)
+auditLogger.writeDeferred({ event: 'test', data: {} });
 
-// Existing methods still work (they call writeSync internally)
+// Existing methods still work (they call writeDeferred internally)
 auditLogger.logAuth({ success: true, user: 'admin' });
 auditLogger.logAgentOperation({ action: 'execute', agentId: 'test' });
 ```
