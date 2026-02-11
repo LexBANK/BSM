@@ -227,15 +227,23 @@ To contribute to documentation:
 
 ## 🆘 Support
 
+### Official Support Channels
+
+- **GitHub Issues**: [LexBANK/BSM/issues](https://github.com/LexBANK/BSM/issues) - Bug reports and feature requests
+- **GitHub Discussions**: [LexBANK/BSM/discussions](https://github.com/LexBANK/BSM/discussions) - Questions and community discussions
+- **Security Issues**: [GitHub Security Advisories](https://github.com/LexBANK/BSM/security/advisories/new) - Report security vulnerabilities
+- **Documentation**: This `/docs` directory and [lexdo.uk](https://lexdo.uk)
+
+### Telegram Integration
+
+This project includes Telegram webhook integration for automation and system monitoring (not a public community channel). See [TELEGRAM_WEBHOOK.md](./TELEGRAM_WEBHOOK.md) for bot setup.
+
+**Important Note**: Currently, there is no official public Telegram channel or group for this project. For official communications, please use GitHub Issues and Discussions.
+
 ### Internal Resources
 - Technical Lead: [Contact Info]
 - Security Team: [Contact Info]
 - DevOps Team: [Contact Info]
-
-### External Resources
-- GitHub Repository: https://github.com/LexBANK/BSU
-- Issue Tracker: https://github.com/LexBANK/BSU/issues
-- Documentation Source: `/docs` directory
 
 ### Feedback
 To provide feedback on documentation:

@@ -1,5 +1,7 @@
 # Telegram Webhook Integration
 
+> **⚠️ Important Note**: This documentation covers the **Telegram bot webhook for automation**, not a public community channel. Currently, there is **no official public Telegram channel or group** for the LexBANK/BSM project. For community support and discussions, please use [GitHub Issues](https://github.com/LexBANK/BSM/issues) and [GitHub Discussions](https://github.com/LexBANK/BSM/discussions).
+
 ## Overview
 
 The Telegram webhook integration provides a remote control interface for BSM through Telegram. It enforces governance-safe execution by:
