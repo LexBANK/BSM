@@ -2,6 +2,7 @@ import { Router } from "express";
 import { adminAuth } from "../middleware/auth.js";
 import { loadAgents } from "../services/agentsService.js";
 import { loadKnowledgeIndex } from "../services/knowledgeService.js";
+import { getStats } from "../controllers/adminController.js";
 
 const router = Router();
 
@@ -24,5 +25,7 @@ router.get("/knowledge", async (req, res, next) => {
     next(err);
   }
 });
+
+router.get("/stats", getStats);
 
 export default router;
