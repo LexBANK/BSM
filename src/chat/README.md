@@ -363,9 +363,18 @@ docker run -p 3000:3000 \
 
 ## الدعم (Support)
 
+### القنوات الرسمية للدعم
+
 للمشاكل والاستفسارات:
-- GitHub Issues: [LexBANK/BSM](https://github.com/LexBANK/BSM/issues)
-- Documentation: [lexdo.uk](https://lexdo.uk)
+- **GitHub Issues**: [LexBANK/BSM](https://github.com/LexBANK/BSM/issues) - للإبلاغ عن الأخطاء وطلب الميزات
+- **Documentation**: [lexdo.uk](https://lexdo.uk) - التوثيق الشامل
+- **Security Issues**: [GitHub Security Advisories](https://github.com/LexBANK/BSM/security/advisories/new) - للإبلاغ عن الثغرات الأمنية
+
+### حول تكامل Telegram
+
+المشروع يتضمن تكامل Telegram webhook للأتمتة ومراقبة النظام (ليس قناة عامة). راجع [docs/TELEGRAM_WEBHOOK.md](../../docs/TELEGRAM_WEBHOOK.md) لإعدادات البوت.
+
+**ملاحظة مهمة**: حاليًا، لا توجد قناة أو مجموعة Telegram عامة رسمية لهذا المشروع. للتواصل الرسمي، يُرجى استخدام GitHub Issues و Discussions.
 
 ---
 
