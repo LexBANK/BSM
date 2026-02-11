@@ -2,6 +2,7 @@ import express from "express";
 import { env } from "../config/env.js";
 import { isMobileClient } from "../middleware/mobileMode.js";
 import logger from "../utils/logger.js";
+import { getSystemStatus } from "../status/systemStatus.js";
 
 const router = express.Router();
 
@@ -15,17 +16,26 @@ router.get("/status", (req, res) => {
     const isMobile = isMobileClient(req);
     const clientIp = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
     
+    // Get real system status from provider
+    const systemStatus = getSystemStatus();
+    
     const status = {
-      status: "operational",
-      timestamp: new Date().toISOString(),
-      environment: env.nodeEnv,
+      status: systemStatus.ok ? "operational" : "degraded",
+      timestamp: systemStatus.timestamp,
+      environment: systemStatus.environment,
       version: "1.0.0",
+      
+      // Real system metrics
+      system: {
+        agents: systemStatus.agents,
+        uptime: systemStatus.uptime
+      },
       
       // Feature flags (visible to clients)
       features: {
-        mobileMode: env.mobileMode,
-        lanOnly: env.lanOnly,
-        safeMode: env.safeMode
+        mobileMode: systemStatus.mobileMode,
+        lanOnly: systemStatus.lanOnly,
+        safeMode: systemStatus.safeMode
       },
       
       // Client detection
@@ -38,28 +48,35 @@ router.get("/status", (req, res) => {
       // Service capabilities
       capabilities: {
         chat: true,
-        agents: !env.safeMode,
-        admin: !env.mobileMode,
-        externalApi: !env.safeMode
+        agents: !systemStatus.safeMode,
+        admin: !systemStatus.mobileMode,
+        externalApi: !systemStatus.safeMode
       }
     };
     
+    // Add error information if system status is degraded
+    if (!systemStatus.ok && systemStatus.error) {
+      status.error = systemStatus.error;
+    }
+    
     // Add restriction information for mobile clients
-    if (env.mobileMode && isMobile) {
+    if (systemStatus.mobileMode && isMobile) {
       status.client.restrictions.push("write_operations_disabled");
       status.client.restrictions.push("agent_execution_disabled");
       status.client.restrictions.push("admin_access_disabled");
     }
     
     // Add LAN-only information
-    if (env.lanOnly) {
+    if (systemStatus.lanOnly) {
       status.client.restrictions.push("lan_only_access");
     }
     
     logger.debug({
       correlationId: req.correlationId,
       clientIp,
-      isMobile
+      isMobile,
+      agents: systemStatus.agents,
+      uptime: systemStatus.uptime
     }, "Status check");
     
     res.json(status);

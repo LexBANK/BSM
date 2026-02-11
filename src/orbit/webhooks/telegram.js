@@ -1,5 +1,6 @@
 // src/orbit/webhooks/telegram.js
 import { telegramAgent } from "../agents/TelegramAgent.js";
+import { getSystemStatus } from "../../status/systemStatus.js";
 
 const SECRET_TOKEN = process.env.TELEGRAM_WEBHOOK_SECRET;
 
@@ -28,9 +29,34 @@ export async function handleTelegramWebhook(req, res) {
       .map((s) => s.trim())
       .filter(Boolean);
 
+    const isAdmin = admins.includes(String(chatId));
+
+    // أمر /status (للمشرفين فقط)
+    if (text === "/status") {
+      if (!isAdmin) {
+        await telegramAgent.sendMessage(chatId, "🚫 ليس لديك صلاحية تنفيذ هذا الأمر.");
+        return res.sendStatus(200);
+      }
+
+      const status = getSystemStatus();
+
+      const statusMessage =
+        `📊 *BSM Status*\n\n` +
+        `✅ System: ${status.ok ? "Online" : "Degraded"}\n` +
+        `🤖 Agents: ${status.agents}\n` +
+        `🔒 Safe Mode: ${status.safeMode ? "ON" : "OFF"}\n` +
+        `📱 Mobile Mode: ${status.mobileMode ? "ON" : "OFF"}\n` +
+        `🏠 LAN Only: ${status.lanOnly ? "ON" : "OFF"}\n` +
+        `⏱️ Uptime: ${status.uptime}s\n` +
+        `🌍 Environment: ${status.environment}`;
+
+      await telegramAgent.sendMessage(chatId, statusMessage);
+      return res.sendStatus(200);
+    }
+
     // أمر /run (للمشرفين فقط)
     if (text.startsWith("/run")) {
-      if (!admins.includes(String(chatId))) {
+      if (!isAdmin) {
         await telegramAgent.sendMessage(chatId, "🚫 ليس لديك صلاحية تنفيذ هذا الأمر.");
         return res.sendStatus(200);
       }
