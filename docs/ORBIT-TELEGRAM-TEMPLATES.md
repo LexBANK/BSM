@@ -16,17 +16,22 @@
 ### `/status`
 
 ```text
-تقرير حالة LEX/BSM
+📊 BSM Status
 
-System: Operational
-Cloudflare Pages: Healthy
-Workers: Stable
-Errors (24h): 0
-Cache Hit Rate: 82%
-Last Deployment: 2 hours ago
-
-للحصول على مراجعة المستودع أرسل: /review repo
+✅ System: Online
+🤖 Agents: 6
+🔒 Safe Mode: OFF
+📱 Mobile Mode: OFF
+🏠 LAN Only: OFF
+⏱️ Uptime: 3600s
+🌍 Environment: production
 ```
+
+**Note:** This command requires admin privileges. It returns real-time system status including:
+- Number of registered agents from registry.yaml
+- Current feature flag states (Safe Mode, Mobile Mode, LAN Only)
+- System uptime in seconds
+- Current environment (development/production)
 
 ### `/review repo`
 

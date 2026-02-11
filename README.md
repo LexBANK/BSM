@@ -56,6 +56,7 @@ BSU/
 
 ### Public Endpoints
 - `GET /api/health` - Health check endpoint
+- `GET /api/status` - System status with real-time metrics (agents count, uptime, feature flags)
 - `GET /api/agents` - List all available agents
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
