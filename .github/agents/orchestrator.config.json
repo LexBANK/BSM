@@ -5,7 +5,7 @@
   "execution": {
     "mode": "sequential",
     "timeout": 2400,
-    "timeoutRationale": "Allows 10-minute buffer for orchestrator overhead beyond 30 minutes of agent execution (3×600s)",
+    "timeoutRationale": "Total 40 min (2400s) = 30 min agent execution (1800s) + 10 min orchestrator overhead (600s)",
     "continueOnError": false
   },
   "agents": [
