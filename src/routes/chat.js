@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { runAgent } from "../runners/agentRunner.js";
+import { executeAgentInput } from "../controllers/agentsController.js";
 import { runGPT } from "../services/gptService.js";
 import { models } from "../config/models.js";
 import { AppError } from "../utils/errors.js";
@@ -26,8 +26,8 @@ router.get("/key-status", (req, res) => {
 router.post("/", async (req, res, next) => {
   try {
     const { agentId, input } = req.body;
-    const result = await runAgent({ agentId, input });
-    res.json({ output: result.output });
+    const result = await executeAgentInput({ agentId, input });
+    return res.json({ output: result.output, correlationId: req.correlationId });
   } catch (err) {
     next(err);
   }

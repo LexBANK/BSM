@@ -3,23 +3,65 @@ import { loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
-import { createFile } from "../actions/githubActions.js";
 import { extractIntent, intentToAction } from "../utils/intent.js";
+import { executeTool } from "../services/executeTool.js";
+import { toolRegistry } from "../services/toolRegistry.js";
 import logger from "../utils/logger.js";
+
+const extractToolPayload = (text) => {
+  if (typeof text !== "string") return null;
+
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const payload = fenced ? fenced[1].trim() : trimmed;
+
+  if (!payload.startsWith("{")) return null;
+
+  try {
+    const parsed = JSON.parse(payload);
+    if (parsed?.tool && typeof parsed.tool === "string") {
+      return {
+        tool: parsed.tool,
+        args: parsed.args && typeof parsed.args === "object" ? parsed.args : {}
+      };
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
+const resolveAllowedTools = (agent) => {
+  if (!Array.isArray(agent.tools)) {
+    return [];
+  }
+
+  const registeredTools = new Set(toolRegistry.list());
+  return agent.tools.filter((name) => typeof name === "string" && registeredTools.has(name));
+};
 
 export const runAgent = async ({ agentId, input }) => {
   try {
     const agents = await loadAgents();
-    const agent = agents.find(a => a.id === agentId);
+    const agent = agents.find((a) => a.id === agentId);
     if (!agent) throw new AppError(`Agent not found: ${agentId}`, 404, "AGENT_NOT_FOUND");
 
     const knowledge = await loadKnowledgeIndex();
+    const allowedTools = resolveAllowedTools(agent);
 
     const provider = agent.modelProvider || "openai";
     const keyName = agent.modelKey || "bsm";
     const apiKey = models[provider]?.[keyName] || models[provider]?.default;
+    if (!apiKey) {
+      throw new AppError(`Missing API key for provider: ${provider}`, 500, "MISSING_MODEL_API_KEY");
+    }
 
-    const systemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly.`;
+    const toolInstructions = allowedTools.length
+      ? `Available tools: ${allowedTools.join(", ")}. If a tool is required, respond ONLY with JSON: {"tool":"name","args":{...}}`
+      : "No tools available for this agent.";
+
+    const systemPrompt = `You are ${agent.name}. Role: ${agent.role}. Use the knowledge responsibly. ${toolInstructions}`;
     const userPrompt = `Knowledge:\n${knowledge.join("\n")}\n\nUser Input:\n${input}`;
 
     const result = await runGPT({
@@ -28,6 +70,20 @@ export const runAgent = async ({ agentId, input }) => {
       system: systemPrompt,
       user: userPrompt
     });
+
+    const toolCall = extractToolPayload(result);
+    if (toolCall) {
+      const toolResult = await executeTool({
+        toolName: toolCall.tool,
+        args: toolCall.args,
+        allowedTools
+      });
+
+      return {
+        output: `Tool executed: ${toolCall.tool}`,
+        tool: { name: toolCall.tool, result: toolResult }
+      };
+    }
 
     const intent = extractIntent(result);
     const action = intentToAction(intent);
@@ -38,24 +94,14 @@ export const runAgent = async ({ agentId, input }) => {
       }
     }
 
-    if (intent === "create_agent") {
-      await createFile(
-        "data/agents/new-agent.yaml",
-        "id: new-agent\nname: New Agent\nrole: Auto-created\n"
-      );
-    }
-
     if (intent === "update_file") {
       throw new AppError("Update file intent not implemented", 501, "UPDATE_FILE_NOT_IMPLEMENTED");
     }
 
-    // Ensure output is always a string
-    const output =
-      (result !== null && result !== undefined && result !== "") ? result : "لم يصل رد من الوكيل.";
-
+    const output = result ? result : "لم يصل رد من الوكيل.";
     return { output };
   } catch (err) {
     logger.error({ err, agentId }, "Agent execution failed");
-    return { output: "حدث خطأ أثناء تشغيل الوكيل." };
+    throw err;
   }
 };
