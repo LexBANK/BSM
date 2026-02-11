@@ -9,7 +9,8 @@ export async function handleTelegramWebhook(req, res) {
       return; // Response already sent by verifyTelegramSecret
     }
 
-    const parsed = extractTelegramMessage(req.body);
+    // Include edited messages for orbit webhook
+    const parsed = extractTelegramMessage(req.body, true);
     if (!parsed) return res.sendStatus(200);
     
     const { chatId, text } = parsed;

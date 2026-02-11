@@ -58,11 +58,21 @@ export function isAdminChatId(chatId) {
 
 /**
  * Extract message text from Telegram update
- * @param {object} update - Telegram update object
+ * @param {object} update - Telegram update object or body
+ * @param {boolean} includeEdited - Whether to include edited_message (default: false)
  * @returns {{ chatId: string, text: string } | null} Parsed message or null
  */
-export function extractTelegramMessage(update) {
-  const message = update?.message || update?.edited_message;
+export function extractTelegramMessage(update, includeEdited = false) {
+  let message;
+  
+  if (includeEdited) {
+    // Support both message and edited_message (orbit webhook behavior)
+    message = update?.message || update?.edited_message;
+  } else {
+    // Only support message (main webhook behavior)
+    message = update?.message;
+  }
+  
   if (!message?.text) {
     return null;
   }

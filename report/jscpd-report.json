@@ -1,18 +1,18 @@
 {
   "statistics": {
-    "detectionDate": "2026-02-11T19:37:19.991Z",
+    "detectionDate": "2026-02-11T19:42:03.554Z",
     "formats": {
       "javascript": {
         "sources": {
           "src/orbit/webhooks/telegram.js": {
-            "lines": 62,
-            "tokens": 566,
+            "lines": 48,
+            "tokens": 430,
             "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 97,
+            "percentage": 25,
+            "percentageTokens": 22.56,
             "newDuplicatedLines": 0,
             "newClones": 0
           },
@@ -29,8 +29,20 @@
             "newClones": 0
           },
           "src/webhooks/telegram.js": {
-            "lines": 221,
-            "tokens": 1586,
+            "lines": 203,
+            "tokens": 1438,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 97,
+            "percentage": 5.91,
+            "percentageTokens": 6.75,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/utils/telegramUtils.js": {
+            "lines": 73,
+            "tokens": 378,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -79,6 +91,18 @@
           "src/utils/intent.js": {
             "lines": 22,
             "tokens": 169,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/utils/httpResponses.js": {
+            "lines": 76,
+            "tokens": 360,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -329,8 +353,8 @@
             "newClones": 0
           },
           "src/routes/emergency.js": {
-            "lines": 113,
-            "tokens": 814,
+            "lines": 108,
+            "tokens": 801,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -353,8 +377,8 @@
             "newClones": 0
           },
           "src/routes/chat.js": {
-            "lines": 151,
-            "tokens": 1412,
+            "lines": 113,
+            "tokens": 1094,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -521,8 +545,8 @@
             "newClones": 0
           },
           "src/controllers/agentsController.js": {
-            "lines": 134,
-            "tokens": 1139,
+            "lines": 126,
+            "tokens": 1074,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -533,8 +557,8 @@
             "newClones": 0
           },
           "src/controllers/agentControl.js": {
-            "lines": 206,
-            "tokens": 1587,
+            "lines": 192,
+            "tokens": 1465,
             "sources": 1,
             "clones": 0,
             "duplicatedLines": 0,
@@ -762,430 +786,66 @@
           }
         },
         "total": {
-          "lines": 5119,
-          "tokens": 42706,
-          "sources": 63,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "typescript": {
-        "sources": {
-          "src/agents/orbit/telegram.gateway.worker.ts": {
-            "lines": 101,
-            "tokens": 992,
-            "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 14,
-            "duplicatedTokens": 102,
-            "percentage": 13.86,
-            "percentageTokens": 10.28,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/agents/orbit/orbit.worker.ts": {
-            "lines": 42,
-            "tokens": 321,
-            "sources": 1,
-            "clones": 1,
-            "duplicatedLines": 14,
-            "duplicatedTokens": 102,
-            "percentage": 33.33,
-            "percentageTokens": 31.78,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/orchestrator/index.ts": {
-            "lines": 34,
-            "tokens": 317,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/guards/permissions.ts": {
-            "lines": 49,
-            "tokens": 385,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/guards/modes.ts": {
-            "lines": 22,
-            "tokens": 248,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/guards/approvals.ts": {
-            "lines": 14,
-            "tokens": 128,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/audit/logger.ts": {
-            "lines": 14,
-            "tokens": 95,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/types.ts": {
-            "lines": 20,
-            "tokens": 157,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/perplexity-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/openai-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/mistral-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/index.ts": {
-            "lines": 9,
-            "tokens": 88,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/groq-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/gemini-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/control.ts": {
-            "lines": 40,
-            "tokens": 423,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/cohere-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/client-factory.ts": {
-            "lines": 47,
-            "tokens": 495,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/base-client.ts": {
-            "lines": 31,
-            "tokens": 313,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/azure-openai-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/api/anthropic-client.ts": {
-            "lines": 6,
-            "tokens": 43,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 471,
-          "tokens": 4306,
-          "sources": 20,
+          "lines": 5171,
+          "tokens": 42642,
+          "sources": 65,
           "clones": 1,
-          "duplicatedLines": 14,
-          "duplicatedTokens": 102,
-          "percentage": 2.97,
-          "percentageTokens": 2.37,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "markup": {
-        "sources": {
-          "src/views/LandingPage.vue": {
-            "lines": 273,
-            "tokens": 2726,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/chat/index.html": {
-            "lines": 180,
-            "tokens": 2248,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          },
-          "src/admin/index.html": {
-            "lines": 19,
-            "tokens": 182,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 472,
-          "tokens": 5156,
-          "sources": 3,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "css": {
-        "sources": {
-          "src/chat/styles.css": {
-            "lines": 190,
-            "tokens": 919,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 190,
-          "tokens": 919,
-          "sources": 1,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
-          "newDuplicatedLines": 0,
-          "newClones": 0
-        }
-      },
-      "markdown": {
-        "sources": {
-          "src/chat/README.md": {
-            "lines": 369,
-            "tokens": 1537,
-            "sources": 1,
-            "clones": 0,
-            "duplicatedLines": 0,
-            "duplicatedTokens": 0,
-            "percentage": 0,
-            "percentageTokens": 0,
-            "newDuplicatedLines": 0,
-            "newClones": 0
-          }
-        },
-        "total": {
-          "lines": 369,
-          "tokens": 1537,
-          "sources": 1,
-          "clones": 0,
-          "duplicatedLines": 0,
-          "duplicatedTokens": 0,
-          "percentage": 0,
-          "percentageTokens": 0,
+          "duplicatedLines": 12,
+          "duplicatedTokens": 97,
+          "percentage": 0.23,
+          "percentageTokens": 0.23,
           "newDuplicatedLines": 0,
           "newClones": 0
         }
       }
     },
     "total": {
-      "lines": 6621,
-      "tokens": 54624,
-      "sources": 88,
+      "lines": 5171,
+      "tokens": 42642,
+      "sources": 65,
       "clones": 1,
-      "duplicatedLines": 14,
-      "duplicatedTokens": 102,
-      "percentage": 0.21,
-      "percentageTokens": 0.19,
+      "duplicatedLines": 12,
+      "duplicatedTokens": 97,
+      "percentage": 0.23,
+      "percentageTokens": 0.23,
       "newDuplicatedLines": 0,
       "newClones": 0
     }
   },
   "duplicates": [
     {
-      "format": "typescript",
-      "lines": 15,
-      "fragment": "}\n\nasync function dispatchToGitHub(actions: string[]) {\n  await fetch(`https://api.github.com/repos/${GITHUB_REPO}/dispatches`, {\n    method: 'POST',\n    headers: {\n      Authorization: `Bearer ${GITHUB_TOKEN}`,\n      Accept: 'application/vnd.github+json'\n    },\n    body: JSON.stringify({\n      event_type: 'orbit_actions',\n      client_payload: { actions }\n    })\n  })\n}",
+      "format": "javascript",
+      "lines": 13,
+      "fragment": "(req, res) {\n  try {\n    // Verify secret token\n    if (!verifyTelegramSecret(req, res)) {\n      return; // Response already sent by verifyTelegramSecret\n    }\n\n    const parsed = extractTelegramMessage(req.body);\n    if (!parsed) return res.sendStatus(200);\n    \n    const { chatId, text } = parsed;\n\n    logger",
       "tokens": 0,
       "firstFile": {
-        "name": "src/agents/orbit/orbit.worker.ts",
-        "start": 29,
-        "end": 43,
+        "name": "src/webhooks/telegram.js",
+        "start": 17,
+        "end": 29,
         "startLoc": {
-          "line": 29,
-          "column": 1,
-          "position": 219
+          "line": 17,
+          "column": 16,
+          "position": 106
         },
         "endLoc": {
-          "line": 43,
-          "column": 2,
-          "position": 321
+          "line": 29,
+          "column": 7,
+          "position": 203
         }
       },
       "secondFile": {
-        "name": "src/agents/orbit/telegram.gateway.worker.ts",
-        "start": 60,
-        "end": 74,
+        "name": "src/orbit/webhooks/telegram.js",
+        "start": 5,
+        "end": 17,
         "startLoc": {
-          "line": 60,
-          "column": 1,
-          "position": 651
+          "line": 5,
+          "column": 22,
+          "position": 42
         },
         "endLoc": {
-          "line": 74,
-          "column": 2,
-          "position": 753
+          "line": 17,
+          "column": 29,
+          "position": 139
         }
       }
     }
