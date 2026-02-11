@@ -1,6 +1,6 @@
 import EventEmitter from "events";
 import { loadAgents } from "../services/agentsService.js";
-import { loadKnowledgeIndex } from "../services/knowledgeService.js";
+import { formatKnowledgeForPrompt, loadKnowledgeIndex } from "../services/knowledgeService.js";
 import { models } from "../config/models.js";
 import { runGPT } from "../services/gptService.js";
 import { AppError } from "../utils/errors.js";
@@ -123,7 +123,8 @@ function buildSystemPrompt(agent, context) {
 }
 
 function buildUserPrompt(payload, context) {
-  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${JSON.stringify(payload, null, 2)}\nKnowledge:\n${context.knowledge.join("\n")}`;
+  const knowledgeSummary = formatKnowledgeForPrompt(context.knowledge);
+  return `Analyze this payload and return JSON with keys decision, score, comments.\nPayload:\n${JSON.stringify(payload, null, 2)}\nKnowledge:\n${knowledgeSummary}`;
 }
 
 function makeOrchestrationDecision(results) {
