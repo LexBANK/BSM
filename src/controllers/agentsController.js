@@ -1,39 +1,22 @@
 import { loadAgents } from "../services/agentsService.js";
 import { runAgent } from "../runners/agentRunner.js";
 import { env } from "../config/env.js";
-import fs from "fs";
-import path from "path";
-import YAML from "yaml";
+import { loadRegistry } from "../utils/registryCache.js";
 import logger from "../utils/logger.js";
-
-// Load registry for context filtering
-let registryCache = null;
-let registryLoadTime = 0;
-const CACHE_TTL = 60000; // 1 minute
-
-function loadRegistry() {
-  const now = Date.now();
-  if (registryCache && (now - registryLoadTime) < CACHE_TTL) {
-    return registryCache;
-  }
-
-  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
-  if (!fs.existsSync(registryPath)) {
-    logger.warn("agents/registry.yaml not found for API filtering");
-    return null;
-  }
-
-  const content = fs.readFileSync(registryPath, "utf8");
-  registryCache = YAML.parse(content);
-  registryLoadTime = now;
-  
-  return registryCache;
-}
 
 export const listAgents = async (req, res, next) => {
   try {
     const agents = await loadAgents();
     const mode = req.query.mode; // e.g., ?mode=mobile or ?mode=api
+    
+    // Validate mode parameter if provided
+    const validModes = ["chat", "api", "ci", "mobile", "github", "system", "security"];
+    if (mode && !validModes.includes(mode)) {
+      return res.status(400).json({
+        error: `Invalid mode parameter. Must be one of: ${validModes.join(", ")}`,
+        correlationId: req.correlationId
+      });
+    }
     
     // If mode filtering requested, load registry and filter
     if (mode) {

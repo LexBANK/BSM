@@ -136,7 +136,7 @@ agents:
 ## Current Agent Context Matrix
 
 | Agent ID | Mobile | API | CI | GitHub | Safety | Risk |
-|----------|--------|-----|----|----- --|--------|------|
+|----------|--------|-----|----|----- ---|--------|------|
 | governance-agent | ✅ | ✅ | ❌ | ❌ | safe | low |
 | legal-agent | ✅ | ✅ | ❌ | ❌ | safe | low |
 | bsu-audit-agent | ✅ | ✅ | ✅ | ❌ | safe | low |

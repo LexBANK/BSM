@@ -8,35 +8,8 @@
  * - Agents requiring approval need admin authorization
  */
 
-import fs from "fs";
-import path from "path";
-import YAML from "yaml";
+import { loadRegistry } from "../utils/registryCache.js";
 import logger from "../utils/logger.js";
-
-// Load registry (cached)
-let registryCache = null;
-let registryLoadTime = 0;
-const CACHE_TTL = 60000; // 1 minute
-
-function loadRegistry() {
-  const now = Date.now();
-  if (registryCache && (now - registryLoadTime) < CACHE_TTL) {
-    return registryCache;
-  }
-
-  const registryPath = path.join(process.cwd(), "agents", "registry.yaml");
-  if (!fs.existsSync(registryPath)) {
-    logger.warn("agents/registry.yaml not found, guard will be permissive");
-    return null;
-  }
-
-  const content = fs.readFileSync(registryPath, "utf8");
-  registryCache = YAML.parse(content);
-  registryLoadTime = now;
-  
-  logger.info({ agentCount: registryCache?.agents?.length }, "Registry loaded for Telegram guard");
-  return registryCache;
-}
 
 /**
  * Guard Telegram agent execution
@@ -142,7 +115,10 @@ export function getAvailableTelegramAgents(isAdmin = false) {
       const isDestructive = agent.safety?.mode === "destructive";
       const needsApproval = agent.approval?.required && !isAdmin;
       
-      return hasMobile && !isDestructive && !needsApproval;
+      // Also check risk level - high/critical requires admin
+      const isHighRisk = (agent.risk?.level === "high" || agent.risk?.level === "critical") && !isAdmin;
+      
+      return hasMobile && !isDestructive && !needsApproval && !isHighRisk;
     })
     .map(agent => ({
       id: agent.id,
