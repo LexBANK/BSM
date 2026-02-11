@@ -113,7 +113,12 @@ function validateOrchestratorConfig() {
   
   // Validate secrets settings (if present)
   if (config.secrets) {
-    if (config.secrets.mode && config.secrets.mode !== 'env') {
+    if (!config.secrets.mode) {
+      console.error('❌ secrets.mode is required and must be set to "env"');
+      process.exit(1);
+    }
+    
+    if (config.secrets.mode !== 'env') {
       console.error(`❌ Invalid secrets.mode: ${config.secrets.mode}. Must be 'env'`);
       process.exit(1);
     }
