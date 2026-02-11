@@ -75,7 +75,13 @@ export async function handleTelegramWebhook(req, res) {
 
     // أوامر عامة
     if (text === "/help" || text === "/start") {
-      await telegramAgent.sendMessage(chatId, "مرحبًا! أرسل /run <سؤالك> (للمشرفين فقط)");
+      const helpMessage = 
+        "مرحبًا! الأوامر المتاحة:\n\n" +
+        "🔹 /status - حالة النظام (للمشرفين فقط)\n" +
+        "🔹 /run <سؤالك> - تنفيذ أمر (للمشرفين فقط)\n" +
+        "🔹 /help - عرض هذه الرسالة";
+      
+      await telegramAgent.sendMessage(chatId, helpMessage);
       return res.sendStatus(200);
     }
 
