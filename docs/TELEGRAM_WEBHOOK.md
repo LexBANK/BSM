@@ -1,5 +1,8 @@
 # Telegram Webhook Integration
 
+> **⚠️ Note**: This is the **ORBIT admin bot** documentation (private, for administrators only).  
+> **For public Telegram community channels**, see [COMMUNITY.md](./COMMUNITY.md).
+
 ## Overview
 
 The Telegram webhook integration provides a remote control interface for BSM through Telegram. It enforces governance-safe execution by:

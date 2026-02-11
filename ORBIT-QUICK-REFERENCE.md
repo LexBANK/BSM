@@ -1,5 +1,8 @@
 # ORBIT Quick Reference Card
 
+> **⚠️ Admin Tool**: This is for the **ORBIT admin bot** (private).  
+> **For public community**, see [COMMUNITY.md](./COMMUNITY.md).
+
 ## 🚀 Setup (One-Time, 10 minutes)
 
 ```bash

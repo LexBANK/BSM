@@ -1,5 +1,8 @@
 # ORBIT Telegram Official Message Templates
 
+> **⚠️ Admin Tool**: These are templates for the **ORBIT admin bot** (private).  
+> **For public community**, see [docs/COMMUNITY.md](./COMMUNITY.md).
+
 ## Official Commands
 
 - `/status` — System status report
