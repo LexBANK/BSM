@@ -56,8 +56,13 @@ BSU/
 
 ## API Endpoints
 
+### Health & Status Endpoints
+- `GET /health` - Basic health check
+- `GET /api/health` - API health check
+- `GET /api/health/detailed` - Comprehensive health check with system validation
+- `GET /api/status` - System status with features and capabilities
+
 ### Public Endpoints
-- `GET /api/health` - Health check endpoint
 - `GET /api/agents` - List all available agents
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
@@ -261,7 +266,13 @@ npm start
 
 # Validate data structure
 npm run validate
+
+# Health checks
+npm run health              # Quick health check
+npm run health:detailed     # Comprehensive health check with integrity report
 ```
+
+For detailed health check documentation, see [docs/HEALTH-CHECK.md](docs/HEALTH-CHECK.md).
 
 ### Docker Deployment
 
