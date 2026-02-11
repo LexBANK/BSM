@@ -103,7 +103,7 @@ The orchestrator runs automatically in GitHub Actions via the workflow defined i
 
 Trigger manually:
 1. Go to Actions tab in GitHub
-2. Select "Run BSM Agents" workflow
+2. Select "Run BSU Agents" workflow
 3. Click "Run workflow"
 
 ### Environment Variables

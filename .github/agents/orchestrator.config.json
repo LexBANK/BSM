@@ -82,7 +82,7 @@
   "pr": {
     "autoCreate": false,
     "requiresApproval": true,
-    "branch": "bsm-agents-suggestions-{timestamp}",
+    "branch": "bsu-agents-suggestions-{timestamp}",
     "title": "BSU Agents Suggestions — {timestamp}",
     "labels": ["automation", "agents"]
   },

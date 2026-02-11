@@ -134,9 +134,4 @@ function validateOrchestratorConfig() {
   return true;
 }
 
-try {
-  validateOrchestratorConfig();
-} catch (err) {
-  console.error(`❌ Validation failed: ${err.message}`);
-  process.exit(1);
-}
+validateOrchestratorConfig();
