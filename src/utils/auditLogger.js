@@ -207,3 +207,18 @@ class AuditLogger {
 
 // Export singleton instance
 export const auditLogger = new AuditLogger();
+
+/**
+ * Convenience function for generic audit logging
+ * @param {Object} data - Audit data with eventType, action, and metadata
+ */
+export const auditLog = (data) => {
+  auditLogger.write({
+    event: data.eventType || "generic",
+    action: data.action,
+    correlationId: data.correlationId,
+    metadata: data.metadata || {},
+    user: data.user,
+    ip: data.ip
+  });
+};
