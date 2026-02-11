@@ -263,6 +263,44 @@ npm start
 npm run validate
 ```
 
+### Docker Deployment
+
+The platform supports multiple Docker deployment configurations:
+
+#### MySQL Multi-Container Setup
+Following [Microsoft's Docker Multi-Container Tutorial](https://learn.microsoft.com/en-us/visualstudio/docker/tutorials/tutorial-multi-container-app-mysql):
+
+```bash
+# Start with MySQL database
+docker-compose -f docker-compose.mysql.yml up -d
+
+# View logs
+docker-compose -f docker-compose.mysql.yml logs -f
+
+# Stop services
+docker-compose -f docker-compose.mysql.yml down
+```
+
+📖 See [docs/MYSQL-MULTI-CONTAINER.md](docs/MYSQL-MULTI-CONTAINER.md) for complete setup guide.
+
+#### PostgreSQL Setup
+```bash
+# Start with PostgreSQL database
+docker-compose -f docker-compose.yml.example up -d
+```
+
+#### Hybrid Node.js/Go Architecture
+```bash
+# Start with PostgreSQL, Redis, and Go services
+docker-compose -f docker-compose.hybrid.yml up -d
+```
+
+**Available Configurations:**
+- `docker-compose.mysql.yml` - MySQL 8.0 + Redis + Node.js app
+- `docker-compose.yml.example` - PostgreSQL 16 + Redis + Node.js app
+- `docker-compose.hybrid.yml` - Full hybrid stack with Go services
+- `Dockerfile.example` - Multi-stage production build
+
 ## GitHub Copilot Pro Integration
 
 After upgrading our subscription to **GitHub Copilot Pro**, the platform now leverages advanced AI-powered development capabilities:
