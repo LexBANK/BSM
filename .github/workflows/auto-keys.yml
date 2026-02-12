@@ -10,6 +10,9 @@ on:
       - "src/config/**"
       - "src/agents/**"
 
+permissions:
+  contents: read
+
 jobs:
   validate-keys:
     name: "Validate All AI Keys"

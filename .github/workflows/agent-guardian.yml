@@ -12,13 +12,14 @@ on:
       - 'scripts/validate_agent.py'
       - 'scripts/optimize_agent.py'
 
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
+
 jobs:
   guard:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-      actions: read
 
     steps:
       - name: Checkout

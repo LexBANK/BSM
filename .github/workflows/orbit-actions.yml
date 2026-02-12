@@ -4,6 +4,10 @@ on:
   repository_dispatch:
     types: [orbit_actions]
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   orbit:
     runs-on: ubuntu-latest

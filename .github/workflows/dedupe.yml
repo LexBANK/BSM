@@ -3,6 +3,9 @@ name: Dedupe Scan
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   dedupe:
     runs-on: ubuntu-latest

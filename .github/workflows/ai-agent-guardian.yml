@@ -7,6 +7,10 @@ on:
       - 'agents/**.agent.md'
       - 'bsm-config/**'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   ai-guard:
     runs-on: ubuntu-latest
