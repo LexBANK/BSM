@@ -225,7 +225,7 @@ Decision Execution (merge, approve, etc.)
 ## References
 
 - Controller: `src/controllers/webhookController.js`
-- Routes: `src/app.js` (line 45), `src/routes/webhooks.js`
+- Routes: `src/app.js` (GitHub webhook route), `src/routes/webhooks.js`
 - Orchestrator: `src/runners/orchestrator.js`
 - GitHub Actions: `src/actions/githubActions.js`
 
