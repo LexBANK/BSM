@@ -39,7 +39,18 @@ app.use(requestLogger);
 
 // GitHub webhook endpoint (before security middleware to allow external requests)
 // GitHub webhooks come from GitHub's servers, not from LAN or mobile devices
-app.post("/webhook/github", handleGitHubWebhook);
+// Rate limited separately to prevent abuse while allowing legitimate webhook traffic
+app.post(
+  "/webhook/github",
+  rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 30, // Allow 30 webhook requests per minute (reasonable for active repos)
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "Too many webhook requests, please try again later"
+  }),
+  handleGitHubWebhook
+);
 
 // Apply security middleware
 app.use(lanOnlyMiddleware);
