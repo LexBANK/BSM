@@ -144,6 +144,17 @@ export class ChiefArchitectAgent {
   async evaluateForAutoMerge(prData = {}) {
     const { prNumber, checks = {}, reviews = {}, governance = {} } = prData;
 
+    // Validate required parameters
+    if (!prNumber) {
+      logger.warn(`[${this.id}] Missing prNumber in evaluateForAutoMerge`);
+      return {
+        agentId: this.id,
+        prNumber: null,
+        action: "error",
+        reason: "Missing required parameter: prNumber"
+      };
+    }
+
     logger.info({ prNumber }, `[${this.id}] Evaluating PR for auto-merge`);
 
     if (!this.config.autoMergeEnabled) {
@@ -224,6 +235,27 @@ export class ChiefArchitectAgent {
   async evaluateForAutoClose(prData = {}) {
     const { prNumber, updatedAt, governance = {} } = prData;
 
+    // Validate required parameters
+    if (!prNumber) {
+      logger.warn(`[${this.id}] Missing prNumber in evaluateForAutoClose`);
+      return {
+        agentId: this.id,
+        prNumber: null,
+        action: "error",
+        reason: "Missing required parameter: prNumber"
+      };
+    }
+
+    if (!updatedAt) {
+      logger.warn({ prNumber }, `[${this.id}] Missing updatedAt in evaluateForAutoClose`);
+      return {
+        agentId: this.id,
+        prNumber,
+        action: "error",
+        reason: "Missing required parameter: updatedAt"
+      };
+    }
+
     logger.info({ prNumber }, `[${this.id}] Evaluating PR for auto-close`);
 
     if (!this.config.autoCloseEnabled) {
@@ -237,6 +269,18 @@ export class ChiefArchitectAgent {
 
     // Check if PR is stale
     const lastUpdate = new Date(updatedAt);
+    
+    // Validate date
+    if (isNaN(lastUpdate.getTime())) {
+      logger.warn({ prNumber, updatedAt }, `[${this.id}] Invalid date format for updatedAt`);
+      return {
+        agentId: this.id,
+        prNumber,
+        action: "error",
+        reason: "Invalid date format for updatedAt"
+      };
+    }
+
     const now = new Date();
     const daysSinceUpdate = (now - lastUpdate) / (1000 * 60 * 60 * 24);
 
@@ -248,27 +292,29 @@ export class ChiefArchitectAgent {
         ? `PR is stale (${Math.floor(daysSinceUpdate)} days since last update)`
         : `PR blocked by governance: ${governance.reason}`;
 
-      logger.info({ prNumber, reason }, `[${this.id}] Closing PR`);
+      logger.info({ prNumber, reason }, `[${this.id}] Marking PR for auto-close`);
 
       try {
         await addComment(
           prNumber,
-          `## 🤖 Chief Architect: Auto-Close\n\n` +
-          `This PR is being automatically closed.\n\n` +
+          `## 🤖 Chief Architect: Auto-Close Recommendation\n\n` +
+          `This PR should be closed based on the following:\n\n` +
           `**Reason:** ${reason}\n\n` +
-          `If you believe this was closed in error, please contact the maintainers.`
+          `The PR has been labeled for review. A maintainer with appropriate permissions should close this PR.\n\n` +
+          `If you believe this recommendation is incorrect, please contact the maintainers.`
         );
 
-        await addLabels(prNumber, ["auto-closed", "chief-architect"]);
+        await addLabels(prNumber, ["auto-close-recommended", "chief-architect"]);
 
-        // Note: Closing a PR requires a different API call
-        // This is handled by the GitHub API via PATCH /repos/{owner}/{repo}/pulls/{pull_number}
-        // For now, we log the decision
+        // Note: Closing a PR requires PATCH /repos/{owner}/{repo}/pulls/{pull_number}
+        // with body: { state: "closed" }
+        // This requires additional implementation in githubActions.js
+        // For now, we mark the PR and let maintainers close it manually
 
         return {
           agentId: this.id,
           prNumber,
-          action: "closed",
+          action: "marked_for_close",
           reason,
           timestamp: new Date().toISOString()
         };
@@ -306,7 +352,7 @@ export class ChiefArchitectAgent {
 
     // First check if PR should be closed
     const closeDecision = await this.evaluateForAutoClose(prData);
-    if (closeDecision.action === "closed") {
+    if (closeDecision.action === "marked_for_close") {
       return closeDecision;
     }
 
