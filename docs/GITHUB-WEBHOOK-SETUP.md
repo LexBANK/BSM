@@ -24,7 +24,7 @@ Repository → Settings → Webhooks → Add webhook
 
 Configure the webhook:
 - **Payload URL**: `https://your-domain.com/webhook/github`
-  - Example: `https://sr-bsm.onrender.com/webhook/github`
+  - Example: `https://corehub.nexus/webhook/github`
 - **Content type**: `application/json`
 - **Secret**: Set a strong secret token (store in `GITHUB_WEBHOOK_SECRET`)
 - **SSL verification**: Enable (recommended)
@@ -131,7 +131,7 @@ If `GITHUB_WEBHOOK_SECRET` is not set:
 
 Test webhook endpoint:
 ```bash
-curl -X POST https://sr-bsm.onrender.com/webhook/github \
+curl -X POST https://corehub.nexus/webhook/github \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: ping" \
   -d '{"hook_id": 12345, "zen": "Test webhook"}'

@@ -19,7 +19,7 @@ This guide explains how to deploy the LexBANK platform on the new `lexprim.com` 
    ```
    Type: CNAME
    Name: api
-   Target: sr-bsm.onrender.com
+   Target: sr-bsm.onrender.com (or corehub.nexus if custom domain configured)
    Proxy: ✓ Proxied (orange cloud)
    ```
 
@@ -66,13 +66,13 @@ This guide explains how to deploy the LexBANK platform on the new `lexprim.com` 
 ### Update Environment Variables on Render.com
 
 1. Go to [Render Dashboard](https://dashboard.render.com)
-2. Select your service (`bsu-api`)
+2. Select your service (`SR.BSM`)
 3. Go to **Environment**
 4. Add/update these variables:
 
 ```bash
 # Add new domain to CORS
-CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk
+CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk,https://corehub.nexus,https://www.corehub.nexus
 
 # Ensure required keys are present
 OPENAI_BSM_KEY=<your-openai-key>
@@ -167,7 +167,7 @@ EOF
 
 # Run with PM2
 npm install -g pm2
-pm2 start src/server.js --name bsu-api
+pm2 start src/server.js --name SR.BSM
 pm2 save
 pm2 startup
 
@@ -272,7 +272,7 @@ curl -X POST https://api.lexprim.com/api/chat/direct \
 ```bash
 # If using PM2
 pm2 status
-pm2 logs bsu-api
+pm2 logs SR.BSM
 pm2 monit
 
 # Check Nginx logs
@@ -287,7 +287,7 @@ sudo tail -f /var/log/nginx/error.log
 cd /var/www/BSM  # or your path
 git pull
 npm ci
-pm2 restart bsu-api
+pm2 restart SR.BSM
 ```
 
 ## Troubleshooting

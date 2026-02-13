@@ -8,7 +8,7 @@
 
 #### 1. CORS_ORIGINS (إلزامي)
 ```
-CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com
+CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com,https://corehub.nexus,https://www.corehub.nexus
 ```
 - **الوصف**: النطاقات المسموح لها بالاتصال بالـ API
 - **المطلوب**: جميع النطاقات الأمامية (frontend domains)
@@ -79,13 +79,15 @@ RATE_LIMIT_WINDOW_MS=900000
 
 ### الخطوة 2: إعدادات الخدمة
 ```
-Name: sr-bsm (أو أي اسم)
+Name: SR.BSM
 Environment: Node
-Region: Frankfurt (أو الأقرب لك)
+Region: Virginia
 Branch: main
 Build Command: npm ci
 Start Command: npm start
 Plan: Free (أو حسب الحاجة)
+Auto Deploy: Off
+Domains: corehub.nexus, www.corehub.nexus, lexprim.com, www.lexprim.com
 ```
 
 ### الخطوة 3: إضافة Environment Variables
@@ -99,9 +101,9 @@ Plan: Free (أو حسب الحاجة)
 3. انقر "Save Changes"
 
 ### الخطوة 4: Deploy
-- سيبدأ Render بالنشر تلقائيًا
+- سيبدأ Render بالنشر تلقائيًا (أو يدويًا إذا كان Auto Deploy معطلاً)
 - انتظر حتى يظهر "Live" ✅
-- سيكون الـ URL: `https://sr-bsm.onrender.com`
+- سيكون الـ URL: `https://corehub.nexus` أو `https://sr-bsm.onrender.com`
 
 ## تكوين GitHub Webhook
 
@@ -111,7 +113,7 @@ Plan: Free (أو حسب الحاجة)
 2. اذهب إلى Settings → Webhooks → Add webhook
 3. أدخل:
    ```
-   Payload URL: https://sr-bsm.onrender.com/webhook/github
+   Payload URL: https://corehub.nexus/webhook/github
    Content type: application/json
    Secret: [نفس قيمة GITHUB_WEBHOOK_SECRET]
    ```
@@ -125,19 +127,19 @@ Plan: Free (أو حسب الحاجة)
 
 ### 1. اختبار Health Endpoint
 ```bash
-curl https://sr-bsm.onrender.com/api/health
+curl https://corehub.nexus/api/health
 ```
 يجب أن ترى: `{"status":"ok",...}`
 
 ### 2. اختبار Agents Endpoint
 ```bash
-curl https://sr-bsm.onrender.com/api/agents
+curl https://corehub.nexus/api/agents
 ```
 يجب أن ترى قائمة الوكلاء (agents)
 
 ### 3. اختبار Webhook Endpoint
 ```bash
-curl -X POST https://sr-bsm.onrender.com/webhook/github \
+curl -X POST https://corehub.nexus/webhook/github \
   -H "Content-Type: application/json" \
   -H "X-GitHub-Event: ping" \
   -d '{"hook_id": 12345}'
@@ -156,7 +158,7 @@ curl -X POST https://sr-bsm.onrender.com/webhook/github \
 
 **الحل**:
 ```bash
-CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com
+CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com,https://corehub.nexus,https://www.corehub.nexus
 ```
 - تأكد من عدم وجود مسافات
 - تأكد من عدم وجود / في النهاية

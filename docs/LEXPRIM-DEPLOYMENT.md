@@ -19,7 +19,7 @@
    ```
    Type: CNAME
    Name: api
-   Target: sr-bsm.onrender.com
+   Target: sr-bsm.onrender.com (أو corehub.nexus إذا تم تكوين نطاق مخصص)
    Proxy: ✓ Proxied (البرتقالي)
    ```
 
@@ -66,13 +66,13 @@
 ### تحديث متغيرات البيئة على Render.com
 
 1. اذهب إلى [Render Dashboard](https://dashboard.render.com)
-2. اختر خدمتك (`bsu-api`)
+2. اختر خدمتك (`SR.BSM`)
 3. اذهب إلى **Environment**
 4. أضف/حدّث المتغيرات التالية:
 
 ```bash
 # إضافة النطاق الجديد إلى CORS
-CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk
+CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk,https://corehub.nexus,https://www.corehub.nexus
 
 # التأكد من وجود المفاتيح الضرورية
 OPENAI_BSM_KEY=<your-openai-key>
@@ -167,7 +167,7 @@ EOF
 
 # تشغيل بواسطة PM2
 npm install -g pm2
-pm2 start src/server.js --name bsu-api
+pm2 start src/server.js --name SR.BSM
 pm2 save
 pm2 startup
 
@@ -272,7 +272,7 @@ curl -X POST https://api.lexprim.com/api/chat/direct \
 ```bash
 # إذا كنت تستخدم PM2
 pm2 status
-pm2 logs bsu-api
+pm2 logs SR.BSM
 pm2 monit
 
 # فحص سجلات Nginx
@@ -287,7 +287,7 @@ sudo tail -f /var/log/nginx/error.log
 cd /var/www/BSM  # أو المسار الخاص بك
 git pull
 npm ci
-pm2 restart bsu-api
+pm2 restart SR.BSM
 ```
 
 ## حل المشاكل الشائعة

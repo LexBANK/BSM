@@ -4,14 +4,16 @@
 
 ### 1. DNS على Cloudflare
 ```
-api.lexprim.com → CNAME → sr-bsm.onrender.com (Proxied)
+api.lexprim.com → CNAME → sr-bsm.onrender.com أو corehub.nexus (Proxied)
 lexprim.com → A → 185.199.108-111.153 (4 records)
 www.lexprim.com → CNAME → lexbank.github.io (DNS only)
+corehub.nexus → A → [Render IP] (إذا تم تكوينه)
+www.corehub.nexus → CNAME → corehub.nexus (Proxied)
 ```
 
 ### 2. متغيرات البيئة على Render
 ```bash
-CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk
+CORS_ORIGINS=https://lexprim.com,https://www.lexprim.com,https://lexdo.uk,https://www.lexdo.uk,https://corehub.nexus,https://www.corehub.nexus
 ```
 
 ### 3. CNAME في GitHub

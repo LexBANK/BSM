@@ -1,12 +1,22 @@
 services:
   - type: web
-    name: bsu-api
-    env: node
-    plan: free
+    name: SR.BSM
+    runtime: node
+    region: virginia
     buildCommand: "npm ci"
     startCommand: "npm start"
+    domains:
+      - www.corehub.nexus
+      - corehub.nexus
+      - lexprim.com
+      - www.lexprim.com
+    autoDeployTrigger: "off"
     # Environment variables should be set in Render dashboard:
-    # - OPENAI_API_KEY or OPENAI_BSM_KEY or OPENAI_BSU_KEY (OpenAI API key)
-    # - ADMIN_TOKEN (admin authentication token)
-    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com)
+    # - SR.BSM.env (service-specific environment configuration)
+    # - RENDER_DEPLOY_HOOK (deployment webhook URL)
+    # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com,https://corehub.nexus,https://www.corehub.nexus)
+    # - ADMIN_TOKEN (admin authentication token, minimum 16 characters in production)
+    # - OPENAI_BSM_KEY or OPENAI_BSU_KEY or OPENAI_API_KEY (OpenAI API key)
     # - NODE_ENV (production)
+    # - GITHUB_WEBHOOK_SECRET (optional, for webhook signature verification)
+    # - GITHUB_BSU_TOKEN (optional, for automated GitHub actions)
