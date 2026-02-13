@@ -1,8 +1,6 @@
 import logger from "../utils/logger.js";
 import {
   mergePullRequest,
-  approvePullRequest,
-  requestChanges,
   addComment,
   addLabels
 } from "../actions/githubActions.js";
