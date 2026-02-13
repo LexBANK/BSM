@@ -4,12 +4,40 @@ export const useApi = () => {
   const apiBase = config.public.apiBase
 
   const fetchAgents = async () => {
+    const normalizeAgent = (agent = {}) => ({
+      id: agent.id,
+      name: agent.name || agent.id,
+      expose: {
+        selectable: Boolean(agent?.expose?.selectable)
+      },
+      contexts: Array.isArray(agent.contexts) ? agent.contexts : []
+    })
+
+    const normalizeAgentsResponse = (payload) => {
+      const agents = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.agents)
+          ? payload.agents
+          : []
+
+      return agents
+        .filter(agent => agent && agent.id)
+        .map(normalizeAgent)
+    }
+
     try {
-      const response = await $fetch(`${apiBase}/agents`)
-      return response
+      const response = await $fetch(`${apiBase}/agents?mode=mobile`)
+      return normalizeAgentsResponse(response)
     } catch (error) {
-      console.error('Failed to fetch agents:', error)
-      throw error
+      console.warn('Failed to fetch filtered agents endpoint, fallback to /agents:', error)
+
+      try {
+        const fallbackResponse = await $fetch(`${apiBase}/agents`)
+        return normalizeAgentsResponse(fallbackResponse)
+      } catch (fallbackError) {
+        console.error('Failed to fetch agents:', fallbackError)
+        throw fallbackError
+      }
     }
   }
 

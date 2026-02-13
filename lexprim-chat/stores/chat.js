@@ -36,7 +36,18 @@ export const useChatStore = defineStore('chat', {
     },
 
     setAgents(agents) {
-      this.availableAgents = agents
+      const selectableAgents = Array.isArray(agents)
+        ? agents.filter(agent => agent?.expose?.selectable)
+        : []
+
+      this.availableAgents = selectableAgents
+
+      if (
+        this.selectedAgent !== 'direct' &&
+        !selectableAgents.some(agent => agent.id === this.selectedAgent)
+      ) {
+        this.selectedAgent = 'direct'
+      }
     },
 
     setLoading(value) {
