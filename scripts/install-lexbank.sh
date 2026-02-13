@@ -55,6 +55,11 @@ error() {
     exit 1
 }
 
+# Print validation error without exiting (used by validation functions)
+validation_error() {
+    echo -e "${RED}❌ $1${NC}"
+}
+
 # ==============================================================================
 # Validation Functions
 # ==============================================================================
@@ -70,17 +75,26 @@ validate_domain() {
     # Validate domain format using regex
     # Pattern: alphanumeric start, alphanumeric/hyphen middle, alphanumeric end, multiple segments allowed
     if [[ ! $domain =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
-        error "Invalid domain format: $domain. Domain must contain only alphanumeric characters, hyphens, and dots."
+        validation_error "Invalid domain format: $domain. Domain must contain only alphanumeric characters, hyphens, and dots."
+        return 1
+    fi
+    
+    # Require at least one dot for non-localhost domains (must have a TLD)
+    if [[ ! $domain =~ \. ]]; then
+        validation_error "Invalid domain: $domain. Domain must have a top-level domain (e.g., example.com, not just 'example')."
+        return 1
     fi
     
     # Check for minimum length
     if [[ ${#domain} -lt 3 ]]; then
-        error "Domain too short: $domain. Minimum length is 3 characters."
+        validation_error "Domain too short: $domain. Minimum length is 3 characters."
+        return 1
     fi
     
     # Check for maximum length (253 characters per RFC)
     if [[ ${#domain} -gt 253 ]]; then
-        error "Domain too long: $domain. Maximum length is 253 characters."
+        validation_error "Domain too long: $domain. Maximum length is 253 characters."
+        return 1
     fi
     
     log "Domain validation passed: $domain"
@@ -92,7 +106,8 @@ validate_email() {
     
     # Basic email validation regex
     if [[ ! $email =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
-        error "Invalid email format: $email"
+        validation_error "Invalid email format: $email"
+        return 1
     fi
     
     log "Email validation passed: $email"
@@ -104,8 +119,13 @@ build_domain_config() {
     local should_enable_www="false"
     
     # Validate domain and email before proceeding
-    validate_domain "$DOMAIN"
-    validate_email "$EMAIL"
+    if ! validate_domain "$DOMAIN"; then
+        error "Domain validation failed. Cannot continue with invalid domain: $DOMAIN"
+    fi
+    
+    if ! validate_email "$EMAIL"; then
+        error "Email validation failed. Cannot continue with invalid email: $EMAIL"
+    fi
     
     # Count dots in domain to determine structure
     # Example: example.com = 1 dot, sub.example.com = 2 dots
@@ -143,7 +163,7 @@ build_domain_config() {
     CERTBOT_DOMAINS=("$DOMAIN")
     
     # Build CORS origins list for API
-    CORS_ORIGINS=("https://${DOMAIN}" "http://localhost:3000")
+    CORS_ORIGINS=("https://${DOMAIN}" "http://localhost:${PORT}")
 
     # Add www subdomain if enabled
     if [[ "$should_enable_www" == "true" ]]; then
@@ -955,7 +975,7 @@ server {
     server_name ${NGINX_SERVER_NAMES};
 
     location / {
-        proxy_pass http://localhost:${PORT:-3000};
+        proxy_pass http://localhost:${PORT};
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -1012,9 +1032,10 @@ NGINXEOF
     if ! nginx -t 2>&1; then
         warning "Nginx configuration test failed. Restoring backup if available..."
         
-        # Find and restore most recent backup using find instead of ls with glob
+        # Find and restore most recent backup using find and proper timestamp sorting
         local latest_backup
-        latest_backup=$(find "$(dirname "$nginx_config_path")" -name "$(basename "$nginx_config_path").bak.*" -type f 2>/dev/null | sort -r | head -1)
+        # Sort by filename which contains timestamp in YYYYMMDD_HHMMSS format
+        latest_backup=$(find "$(dirname "$nginx_config_path")" -name "$(basename "$nginx_config_path").bak.*" -type f 2>/dev/null | sort -t. -k3 -r | head -1)
         
         if [[ -n "$latest_backup" ]]; then
             cp "$latest_backup" "$nginx_config_path"
