@@ -412,6 +412,13 @@ The project includes GitHub Actions workflows:
 - [CI/CD Recommendations](docs/CICD-RECOMMENDATIONS.md) - Pipeline enhancements and automation strategies
 - [Security & Deployment Guide](docs/SECURITY-DEPLOYMENT.md) - Security best practices and deployment procedures
 
+### Deployment Guides
+- [SR.BSM Deployment Guide](docs/SR-BSM-DEPLOYMENT.md) - Production deployment configuration for Render.com
+- [Migration Guide: bsu-api → SR.BSM](docs/MIGRATION-BSU-API-TO-SR-BSM.md) - Upgrade from legacy configuration
+- [Render Deployment (Arabic)](docs/RENDER-DEPLOYMENT-AR.md) - Render.com deployment in Arabic
+- [LexPrim Deployment Guide](docs/LEXPRIM-DEPLOYMENT.md) - Deploy on lexprim.com domain
+- [GitHub Webhook Setup](docs/GITHUB-WEBHOOK-SETUP.md) - Configure GitHub webhooks integration
+
 ### API Documentation
 - API endpoints documented above
 - OpenAPI/Swagger specification (coming soon)

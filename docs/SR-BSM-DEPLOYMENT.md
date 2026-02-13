@@ -1,0 +1,288 @@
+# SR.BSM Deployment Configuration
+
+## Overview
+
+This document describes the Render deployment configuration for the **SR.BSM** service (Strategic Resources - Business Service Management). The configuration supports multiple production domains and includes comprehensive environment variable documentation.
+
+## Service Configuration
+
+### Basic Settings
+
+- **Service Name**: `SR.BSM`
+- **Runtime**: Node.js
+- **Region**: Virginia
+- **Build Command**: `npm ci`
+- **Start Command**: `npm start`
+- **Auto Deploy**: Off (manual deployment control)
+
+### Domains
+
+The service is configured to serve the following domains:
+
+1. **corehub.nexus** - Primary production domain
+2. **www.corehub.nexus** - WWW variant
+3. **lexprim.com** - Secondary domain
+4. **www.lexprim.com** - WWW variant
+
+All domains should be properly configured in your DNS provider (e.g., Cloudflare) with appropriate CNAME or A records pointing to the Render service.
+
+## Environment Variables
+
+The following environment variables must be configured in the Render dashboard:
+
+### Required Variables
+
+#### SR.BSM.env
+Service-specific environment configuration. This should contain any service-level settings required by the SR.BSM deployment.
+
+#### RENDER_DEPLOY_HOOK
+Deployment webhook URL provided by Render. This enables programmatic deployments via webhook triggers.
+
+#### CORS_ORIGINS
+Comma-separated list of allowed CORS origins:
+```
+CORS_ORIGINS=https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com,https://corehub.nexus,https://www.corehub.nexus
+```
+
+**Important**: 
+- No spaces between domains
+- No trailing slashes
+- Include both www and non-www variants
+- Use HTTPS protocol
+
+#### ADMIN_TOKEN
+Admin authentication token for accessing protected endpoints.
+
+**Requirements**:
+- Minimum 16 characters in production
+- Use a cryptographically secure random string
+- Generate with: `openssl rand -base64 24`
+
+#### OPENAI_BSM_KEY
+OpenAI API key for GPT integration.
+
+**Alternatives**: The service also accepts:
+- `OPENAI_BSU_KEY`
+- `OPENAI_API_KEY`
+
+**Priority**: `OPENAI_BSM_KEY` > `OPENAI_BSU_KEY` > `OPENAI_API_KEY`
+
+#### NODE_ENV
+Environment mode. Set to `production` for production deployments.
+
+### Optional Variables
+
+#### GITHUB_WEBHOOK_SECRET
+Secret token for verifying GitHub webhook signatures. Required if you're using GitHub webhooks.
+
+**Generate with**: `openssl rand -hex 32`
+
+#### GITHUB_BSU_TOKEN
+GitHub Personal Access Token for automated actions (PR merging, approvals, etc.).
+
+**Required Permissions**: `repo` scope minimum
+
+#### Rate Limiting
+
+```bash
+RATE_LIMIT_MAX=100                    # Requests per window (default: 100)
+RATE_LIMIT_WINDOW_MS=900000           # Window duration in ms (default: 15 min)
+```
+
+## Deployment Steps
+
+### 1. Initial Setup
+
+1. Log in to [Render Dashboard](https://dashboard.render.com)
+2. Create a new Web Service
+3. Connect to GitHub repository: `LexBANK/BSM`
+4. Configure basic settings:
+   - Name: `SR.BSM`
+   - Region: `Virginia`
+   - Branch: `main`
+   - Build Command: `npm ci`
+   - Start Command: `npm start`
+   - Auto Deploy: `Off`
+
+### 2. Configure Environment Variables
+
+In the Render dashboard Environment section, add all required variables listed above.
+
+### 3. Configure Custom Domains
+
+1. Go to Settings → Custom Domains
+2. Add each domain:
+   - corehub.nexus
+   - www.corehub.nexus
+   - lexprim.com
+   - www.lexprim.com
+3. Follow Render's instructions to update DNS records
+
+### 4. Manual Deployment
+
+Since auto-deploy is disabled, you'll need to trigger deployments manually:
+
+1. Click "Manual Deploy" in the Render dashboard
+2. Select the branch to deploy (usually `main`)
+3. Click "Deploy"
+
+Alternatively, use the deployment webhook:
+```bash
+curl -X POST $RENDER_DEPLOY_HOOK
+```
+
+## DNS Configuration
+
+### Example Cloudflare Setup
+
+For **corehub.nexus**:
+```
+Type: CNAME
+Name: @
+Target: sr-bsm.onrender.com
+Proxy: ✓ Proxied
+
+Type: CNAME
+Name: www
+Target: sr-bsm.onrender.com
+Proxy: ✓ Proxied
+```
+
+For **lexprim.com** (if using GitHub Pages for frontend):
+```
+Type: A (add 4 records)
+Name: @
+Value: 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153
+
+Type: CNAME
+Name: api
+Target: sr-bsm.onrender.com
+Proxy: ✓ Proxied
+
+Type: CNAME
+Name: www
+Target: lexbank.github.io
+Proxy: ✗ DNS only
+```
+
+## Health Check
+
+After deployment, verify the service is running:
+
+```bash
+# Health endpoint
+curl https://corehub.nexus/api/health
+
+# Expected response
+{"status":"ok","timestamp":"2026-02-13T...","version":"1.0.0"}
+
+# Agents endpoint
+curl https://corehub.nexus/api/agents
+
+# Should return list of available agents
+```
+
+## GitHub Webhook Configuration
+
+If using GitHub webhooks:
+
+1. Go to GitHub repository Settings → Webhooks
+2. Add webhook:
+   - **Payload URL**: `https://corehub.nexus/webhook/github`
+   - **Content type**: `application/json`
+   - **Secret**: Same value as `GITHUB_WEBHOOK_SECRET`
+3. Select events:
+   - Pull requests
+   - Check suites
+   - Pushes
+
+## Troubleshooting
+
+### CORS Errors
+
+**Problem**: Frontend receives CORS errors
+
+**Solution**:
+1. Verify `CORS_ORIGINS` includes all frontend domains
+2. Ensure no spaces or trailing slashes
+3. Restart the service in Render
+
+### 401 Unauthorized on Admin Endpoints
+
+**Problem**: Cannot access admin endpoints
+
+**Solution**:
+1. Verify `ADMIN_TOKEN` is set correctly
+2. Include token in request header: `x-admin-token: your-token`
+
+### Webhook Signature Verification Failed
+
+**Problem**: GitHub webhooks return 401
+
+**Solution**:
+1. Verify `GITHUB_WEBHOOK_SECRET` matches GitHub configuration
+2. Regenerate secret if needed
+3. Update in both Render and GitHub webhook settings
+
+### Service Not Starting
+
+**Problem**: Deployment fails or service crashes
+
+**Solution**:
+1. Check Render logs for error messages
+2. Verify all required environment variables are set
+3. Ensure `OPENAI_BSM_KEY` or alternative is valid
+4. Check that `NODE_ENV=production` is set
+
+## Monitoring
+
+### Logs
+
+Access logs in Render Dashboard → Logs
+
+Look for:
+```
+BSU API started successfully
+Listening on port: 10000
+Agents: 9 agents loaded
+CORS origins: https://corehub.nexus,...
+```
+
+### Metrics
+
+Monitor in Render Dashboard → Metrics:
+- Response times
+- Memory usage
+- CPU usage
+- Request volume
+
+## Security Considerations
+
+1. **Never commit secrets** to the repository
+2. **Use strong tokens** (minimum 16 characters)
+3. **Enable HTTPS** for all domains (automatic with Render)
+4. **Set webhook secrets** for GitHub integration
+5. **Limit CORS origins** to only required domains
+6. **Keep dependencies updated** regularly
+7. **Monitor logs** for suspicious activity
+
+## Related Documentation
+
+- [Render Deployment (Arabic)](./RENDER-DEPLOYMENT-AR.md)
+- [GitHub Webhook Setup](./GITHUB-WEBHOOK-SETUP.md)
+- [LexPrim Deployment](./LEXPRIM-DEPLOYMENT-EN.md)
+- [Environment Variables Reference](../.env.example)
+- [Security Guide](../SECURITY.md)
+
+## Support
+
+For deployment issues:
+1. Check Render logs for error messages
+2. Review this documentation
+3. Consult [BSM Documentation](../README.md)
+4. Open a [GitHub Issue](https://github.com/LexBANK/BSM/issues)
+
+---
+
+**Last Updated**: 2026-02-13  
+**Configuration Version**: render.yaml v1.0
