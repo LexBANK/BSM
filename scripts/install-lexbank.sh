@@ -15,6 +15,16 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
+# DOMAIN: The primary domain for this installation (e.g., lexbank.com, example.co.uk)
+# EMAIL: Email address for SSL certificate registration and admin notifications
+# ENABLE_WWW: Controls www subdomain configuration (default: auto when not set)
+#   - auto: Enables www for apex domains (e.g., example.com → www.example.com)
+#           but not for localhost or subdomains (e.g., sub.example.com)
+#   - true/yes/1: Always enable www subdomain
+#   - false/no/0: Never enable www subdomain
+# DB_PASSWORD: PostgreSQL database password (auto-generated if not provided)
+# ADMIN_TOKEN: Admin API authentication token (auto-generated if not provided)
+# JWT_SECRET: JWT signing secret (auto-generated if not provided)
 DOMAIN="${DOMAIN:-lexbank.com}"
 EMAIL="${EMAIL:-admin@lexbank.com}"
 ENABLE_WWW="${ENABLE_WWW:-auto}"
@@ -48,8 +58,18 @@ error() {
 build_domain_config() {
     local dot_count
     local should_enable_www="false"
+    local normalized_domain="$DOMAIN"
 
-    dot_count=$(awk -F'.' '{print NF-1}' <<< "$DOMAIN")
+    # Check if domain already starts with www and normalize it
+    if [[ "$DOMAIN" =~ ^www\. ]]; then
+        # Domain already has www prefix, strip it for the base domain
+        normalized_domain="${DOMAIN#www.}"
+        warning "DOMAIN already starts with 'www.', using base domain: ${normalized_domain}"
+    fi
+
+    # Count dots in domain using pure bash (no awk dependency)
+    local dots="${normalized_domain//[^.]}"
+    dot_count=${#dots}
 
     case "${ENABLE_WWW,,}" in
         true|1|yes)
@@ -59,26 +79,31 @@ build_domain_config() {
             should_enable_www="false"
             ;;
         auto|"")
-            if [[ "$DOMAIN" != "localhost" && "$dot_count" -eq 1 ]]; then
+            # Auto mode: Enable www for apex domains (single dot) that aren't localhost
+            # Note: This simple heuristic may not correctly handle multi-part TLDs (e.g., .co.uk)
+            # For such cases, set ENABLE_WWW explicitly to true or false
+            if [[ "$normalized_domain" != "localhost" && "$dot_count" -eq 1 ]]; then
                 should_enable_www="true"
             fi
             ;;
         *)
-            warning "ENABLE_WWW must be one of: auto, true, false. Falling back to auto."
-            if [[ "$DOMAIN" != "localhost" && "$dot_count" -eq 1 ]]; then
+            warning "ENABLE_WWW must be one of: auto, true, false, yes, no, 1, 0. Falling back to auto."
+            if [[ "$normalized_domain" != "localhost" && "$dot_count" -eq 1 ]]; then
                 should_enable_www="true"
             fi
             ;;
     esac
 
-    NGINX_SERVER_NAMES="$DOMAIN"
-    CERTBOT_DOMAINS=("$DOMAIN")
-    CORS_ORIGINS=("https://${DOMAIN}" "http://localhost:3000")
+    # Use normalized domain as base
+    NGINX_SERVER_NAMES="$normalized_domain"
+    CERTBOT_DOMAINS=("$normalized_domain")
+    # Note: http://localhost:3000 is included for development. Remove in production if not needed.
+    CORS_ORIGINS=("https://${normalized_domain}" "http://localhost:3000")
 
     if [[ "$should_enable_www" == "true" ]]; then
-        NGINX_SERVER_NAMES+=" www.${DOMAIN}"
-        CERTBOT_DOMAINS+=("www.${DOMAIN}")
-        CORS_ORIGINS+=("https://www.${DOMAIN}")
+        NGINX_SERVER_NAMES+=" www.${normalized_domain}"
+        CERTBOT_DOMAINS+=("www.${normalized_domain}")
+        CORS_ORIGINS+=("https://www.${normalized_domain}")
     fi
 
     CERTBOT_ARGS=""
