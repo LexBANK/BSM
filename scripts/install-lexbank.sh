@@ -83,7 +83,11 @@ build_domain_config() {
 
     CERTBOT_ARGS=""
     for domain in "${CERTBOT_DOMAINS[@]}"; do
-        CERTBOT_ARGS+=" -d ${domain}"
+        if [[ -z "${CERTBOT_ARGS}" ]]; then
+            CERTBOT_ARGS="-d ${domain}"
+        else
+            CERTBOT_ARGS+=" -d ${domain}"
+        fi
     done
 
     CORS_ORIGINS_CSV=$(IFS=,; echo "${CORS_ORIGINS[*]}")
