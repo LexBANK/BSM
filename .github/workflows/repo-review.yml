@@ -25,8 +25,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run repository review
-        run: node scripts/run-repo-review.js
+      - name: Run repository integrity check
+        run: node scripts/run-integrity-check.js
         continue-on-error: true
 
       - name: Resolve latest report path
