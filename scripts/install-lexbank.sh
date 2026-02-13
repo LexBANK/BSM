@@ -17,9 +17,9 @@ NC='\033[0m' # No Color
 # Configuration
 # DOMAIN: The primary domain for this installation (e.g., lexbank.com, example.co.uk)
 # EMAIL: Email address for SSL certificate registration and admin notifications
-# ENABLE_WWW: Controls www subdomain configuration
-#   - auto (default): Enables www for apex domains (e.g., example.com → www.example.com)
-#                     but not for localhost or subdomains (e.g., sub.example.com)
+# ENABLE_WWW: Controls www subdomain configuration (default: auto when not set)
+#   - auto: Enables www for apex domains (e.g., example.com → www.example.com)
+#           but not for localhost or subdomains (e.g., sub.example.com)
 #   - true/yes/1: Always enable www subdomain
 #   - false/no/0: Never enable www subdomain
 # DB_PASSWORD: PostgreSQL database password (auto-generated if not provided)
@@ -80,7 +80,7 @@ build_domain_config() {
             ;;
         auto|"")
             # Auto mode: Enable www for apex domains (single dot) that aren't localhost
-            # Note: This simple heuristic may not correctly handle multi-label TLDs (e.g., co.uk)
+            # Note: This simple heuristic may not correctly handle multi-part TLDs (e.g., .co.uk)
             # For such cases, set ENABLE_WWW explicitly to true or false
             if [[ "$normalized_domain" != "localhost" && "$dot_count" -eq 1 ]]; then
                 should_enable_www="true"
