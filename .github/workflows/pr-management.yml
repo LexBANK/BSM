@@ -57,7 +57,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale'];
+            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale', 'conflicts'];
             
             // Ensure labels exist
             const LABELS = [
@@ -102,7 +102,17 @@ jobs:
               if (pr.draft) continue; // Skip drafts
 
               const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
-              
+
+              // NOTE: pulls.list often returns mergeable as null, so we fetch PR details explicitly.
+              const prDetails = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: pr.number
+              });
+
+              const mergeable = prDetails.data.mergeable;
+              const mergeableState = prDetails.data.mergeable_state;
+
               // Check reviews
               const reviews = await github.rest.pulls.listReviews({
                 owner,
@@ -127,9 +137,9 @@ jobs:
               let reason = '';
 
               // Classification logic
-              if (pr.mergeable === false) {
+              if (mergeable === false || mergeableState === 'dirty') {
                 newLabel = 'conflicts';
-                reason = 'Has merge conflicts';
+                reason = `Has merge conflicts (mergeable_state=${mergeableState || 'unknown'})`;
                 summary.conflicts.push({ number: pr.number, title: pr.title });
               } else if (daysSince >= 14) {
                 newLabel = 'stale';
