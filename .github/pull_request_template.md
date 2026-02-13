@@ -10,6 +10,17 @@
 <!-- Link to the issue this PR addresses -->
 Closes #
 
+## Triage Status (Required)
+
+- [ ] `ready` (جاهز للدمج)
+- [ ] `needs-changes` (يحتاج إصلاحات)
+- [ ] `blocked` (محجوب بسبب اعتماد خارجي)
+- [ ] `stale` (غير نشط مؤقتًا)
+
+**Next Action (required):** <!-- سطر واحد يوضح الخطوة التالية -->
+
+**SLA for next update:** <!-- YYYY-MM-DD -->
+
 ## Type of Change
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
@@ -118,6 +129,13 @@ Closes #
 - [ ] **NO** - "Works locally" but not verifiable by reviewer
 
 ---
+
+## CI & Merge Gates (Required)
+
+- [ ] All required GitHub checks passed
+- [ ] PR owner assigned and accountable for CI failures
+- [ ] No merge conflicts with target branch
+- [ ] Labels applied: `priority-*` + one of (`ready`, `needs-changes`, `blocked`, `stale`)
 
 ## 🧪 Testing
 

@@ -1,80 +1,50 @@
-name: Close All Stale PRs
+name: Stale PR Management
 
 on:
+  schedule:
+    # Runs every day at 06:00 UTC
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:
   pull-requests: write
-  contents: read
+  issues: write
 
 jobs:
-  close-prs:
+  stale-prs:
     runs-on: ubuntu-latest
     steps:
-      - name: Close all open PRs
-        uses: actions/github-script@v7
+      - name: Mark and close stale pull requests
+        uses: actions/stale@v9
         with:
-          script: |
-            const prs = [];
-            let page = 1;
-            
-            // Collect all open PRs
-            while (true) {
-              const result = await github.rest.pulls.list({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                state: 'open',
-                per_page: 100,
-                page: page
-              });
-              
-              if (result.data.length === 0) break;
-              prs.push(...result.data);
-              page++;
-            }
-            
-            console.log(`Found ${prs.length} open PRs to close`);
-            
-            const comment = `## 🧹 تنظيف الطلبات المعلقة
-            
-            تم إغلاق هذا الطلب ضمن عملية تنظيف شاملة للطلبات المعلقة والقديمة.
-            
-            إذا كانت التغييرات في هذا الطلب لا تزال مطلوبة، يرجى فتح PR جديد.`;
-            
-            let closed = 0;
-            let failed = 0;
-            
-            for (const pr of prs) {
-              try {
-                // Add comment
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pr.number,
-                  body: comment
-                });
-                
-                // Close PR
-                await github.rest.pulls.update({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: pr.number,
-                  state: 'closed'
-                });
-                
-                console.log(`✅ Closed PR #${pr.number}: ${pr.title}`);
-                closed++;
-                
-                // Rate limiting - wait 1 second between operations
-                await new Promise(r => setTimeout(r, 1000));
-                
-              } catch (error) {
-                console.log(`❌ Failed to close PR #${pr.number}: ${error.message}`);
-                failed++;
-              }
-            }
-            
-            console.log(`\n========================================`);
-            console.log(`✅ Closed: ${closed}`);
-            console.log(`❌ Failed: ${failed}`);
-            console.log(`📊 Total: ${prs.length}`);
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # PR lifecycle policy
+          days-before-pr-stale: 7
+          days-before-pr-close: 3
+          stale-pr-label: stale
+
+          # Keep critical/blocking items open
+          exempt-pr-labels: blocked,priority-high,security
+
+          # Only target pull requests (not issues)
+          days-before-issue-stale: -1
+          days-before-issue-close: -1
+
+          stale-pr-message: |
+            هذا الـ PR أصبح غير نشط لمدة 7 أيام.
+
+            **الخطوة التالية خلال 3 أيام:**
+            - ادفع تحديث (commit) أو
+            - علّق بسبب التأخير وخطة الإكمال.
+
+            إذا كان هذا PR معتمدًا على عنصر آخر، أضف label `blocked` حتى لا يُغلق تلقائيًا.
+
+          close-pr-message: |
+            تم إغلاق هذا الـ PR تلقائيًا بسبب عدم النشاط.
+
+            يمكن إعادة فتحه بأي وقت بعد إضافة تحديث واضح أو ربطه بخطة تنفيذ.
+
+          ascending: true
+          remove-stale-when-updated: true
+          operations-per-run: 100
