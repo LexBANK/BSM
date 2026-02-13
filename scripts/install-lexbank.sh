@@ -22,6 +22,13 @@ ADMIN_TOKEN="${ADMIN_TOKEN:-$(openssl rand -hex 32)}"
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 64)}"
 APP_DIR="/var/www/lexbank"
 LOG_DIR="/var/log/lexbank"
+PERSIST_CREDENTIALS="${PERSIST_CREDENTIALS:-false}"
+CREDENTIALS_TTL_SECONDS="${CREDENTIALS_TTL_SECONDS:-900}"
+SECRETS_BACKEND="${SECRETS_BACKEND:-none}"
+AWS_SECRET_ID="${AWS_SECRET_ID:-}"
+VAULT_SECRET_PATH="${VAULT_SECRET_PATH:-}"
+OP_ITEM_TITLE="${OP_ITEM_TITLE:-LexBANK Production Credentials}"
+CREDENTIALS_NOTICE="Credentials persistence disabled by default (PERSIST_CREDENTIALS=false)."
 
 # ==============================================================================
 # Helper Functions
@@ -963,10 +970,8 @@ FAIL2BANEOF
 # Save Credentials
 # ==============================================================================
 
-save_credentials() {
-    log "Saving credentials..."
-
-    cat > /root/lexbank-credentials.txt << CREDEOF
+build_credentials_payload() {
+    cat << CREDEOF
 ================================================================================
 LexBANK Installation Credentials
 Generated: $(date)
@@ -984,17 +989,106 @@ SECURITY TOKENS:
   ADMIN_TOKEN: ${ADMIN_TOKEN}
   JWT_SECRET: ${JWT_SECRET}
 
-IMPORTANT:
-1. Save these credentials securely
-2. Delete this file after saving: rm /root/lexbank-credentials.txt
-3. Update .env file with your actual API keys
+SECURITY NOTES:
+1. Rotate DB_PASSWORD, ADMIN_TOKEN, and JWT_SECRET immediately after installation.
+2. Use \
+   - AWS: aws secretsmanager put-secret-value --secret-id <id> --secret-string file://payload.json
+   - Vault: vault kv put <path> key=value ...
+   - 1Password: op item create --category=Secure Note ...
+   to store production credentials in a managed secrets backend.
+3. Replace bootstrap secrets in ${APP_DIR}/.env once rotation is complete.
 
 ================================================================================
 CREDEOF
+}
 
-    chmod 600 /root/lexbank-credentials.txt
+persist_credentials_to_backend() {
+    case "${SECRETS_BACKEND}" in
+        aws)
+            command -v aws >/dev/null 2>&1 || error "SECRETS_BACKEND=aws was requested but aws CLI is not installed"
+            [[ -n "${AWS_SECRET_ID}" ]] || error "AWS_SECRET_ID is required when SECRETS_BACKEND=aws"
 
-    success "Credentials saved to /root/lexbank-credentials.txt"
+            local aws_payload
+            aws_payload=$(cat << EOF
+{"domain":"${DOMAIN}","email":"${EMAIL}","db_name":"lexbank","db_user":"lexbank","db_password":"${DB_PASSWORD}","admin_token":"${ADMIN_TOKEN}","jwt_secret":"${JWT_SECRET}"}
+EOF
+)
+
+            if ! aws secretsmanager put-secret-value --secret-id "${AWS_SECRET_ID}" --secret-string "${aws_payload}" >/dev/null 2>&1; then
+                aws secretsmanager create-secret --name "${AWS_SECRET_ID}" --secret-string "${aws_payload}" >/dev/null 2>&1 || \
+                    error "Failed to write credentials to AWS Secrets Manager"
+            fi
+            success "Credentials stored in AWS Secrets Manager"
+            ;;
+        vault)
+            command -v vault >/dev/null 2>&1 || error "SECRETS_BACKEND=vault was requested but vault CLI is not installed"
+            [[ -n "${VAULT_SECRET_PATH}" ]] || error "VAULT_SECRET_PATH is required when SECRETS_BACKEND=vault"
+
+            vault kv put "${VAULT_SECRET_PATH}" \
+                domain="${DOMAIN}" \
+                email="${EMAIL}" \
+                db_name="lexbank" \
+                db_user="lexbank" \
+                db_password="${DB_PASSWORD}" \
+                admin_token="${ADMIN_TOKEN}" \
+                jwt_secret="${JWT_SECRET}" >/dev/null 2>&1 || error "Failed to write credentials to Vault"
+            success "Credentials stored in Vault"
+            ;;
+        1password|op)
+            command -v op >/dev/null 2>&1 || error "SECRETS_BACKEND=op was requested but 1Password CLI is not installed"
+
+            op item create --category "Secure Note" --title "${OP_ITEM_TITLE}" \
+                "domain[text]=${DOMAIN}" \
+                "email[text]=${EMAIL}" \
+                "db_name[text]=lexbank" \
+                "db_user[text]=lexbank" \
+                "db_password[password]=${DB_PASSWORD}" \
+                "admin_token[password]=${ADMIN_TOKEN}" \
+                "jwt_secret[password]=${JWT_SECRET}" >/dev/null 2>&1 || error "Failed to write credentials to 1Password"
+            success "Credentials stored in 1Password"
+            ;;
+        none|"")
+            ;;
+        *)
+            error "Unsupported SECRETS_BACKEND='${SECRETS_BACKEND}'. Use one of: none, aws, vault, op"
+            ;;
+    esac
+}
+
+schedule_credentials_cleanup() {
+    local credentials_file="$1"
+
+    if command -v systemd-run >/dev/null 2>&1; then
+        systemd-run --unit "lexbank-credentials-cleanup-$(date +%s)" --on-active="${CREDENTIALS_TTL_SECONDS}" \
+            /bin/bash -lc "shred -u '${credentials_file}' 2>/dev/null || rm -f '${credentials_file}'" >/dev/null 2>&1 || true
+    else
+        nohup /bin/bash -lc "sleep '${CREDENTIALS_TTL_SECONDS}'; shred -u '${credentials_file}' 2>/dev/null || rm -f '${credentials_file}'" \
+            >/dev/null 2>&1 &
+    fi
+}
+
+save_credentials() {
+    log "Saving credentials..."
+
+    persist_credentials_to_backend
+
+    if [[ "${PERSIST_CREDENTIALS,,}" != "true" ]]; then
+        success "Credentials processed securely without persistent file storage"
+        CREDENTIALS_NOTICE="No credentials file created (PERSIST_CREDENTIALS=false)."
+        return
+    fi
+
+    local credentials_file
+    credentials_file=$(mktemp /tmp/lexbank-credentials.XXXXXX)
+
+    build_credentials_payload > "${credentials_file}"
+    chmod 600 "${credentials_file}"
+
+    trap 'shred -u "${credentials_file}" 2>/dev/null || rm -f "${credentials_file}"' INT TERM
+    schedule_credentials_cleanup "${credentials_file}"
+
+    CREDENTIALS_NOTICE="Temporary credentials file: ${credentials_file} (auto-delete in ${CREDENTIALS_TTL_SECONDS}s)"
+    success "Temporary credentials file created with automatic cleanup"
 }
 
 # ==============================================================================
@@ -1040,7 +1134,7 @@ main() {
     echo "║   Chat:      https://${DOMAIN}/chat                          ║"
     echo "║   Dashboard: https://${DOMAIN}/dashboard                     ║"
     echo "║                                                              ║"
-    echo "║   Credentials: /root/lexbank-credentials.txt                 ║"
+    printf "║   %-58s ║\n" "${CREDENTIALS_NOTICE}"
     echo "║                                                              ║"
     echo "║   Commands:                                                  ║"
     echo "║   • pm2 status     - Check status                            ║"
