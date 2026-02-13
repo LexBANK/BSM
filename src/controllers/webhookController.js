@@ -6,7 +6,8 @@ import logger from "../utils/logger.js";
 export const handleGitHubWebhook = async (req, res, next) => {
   try {
     const signature = req.headers["x-hub-signature-256"];
-    const payload = JSON.stringify(req.body);
+    const payload =
+      req.rawBody ?? Buffer.from(JSON.stringify(req.body ?? {}), "utf8");
 
     if (!verifySignature(payload, signature, process.env.GITHUB_WEBHOOK_SECRET)) {
       logger.warn("Invalid webhook signature");
@@ -91,6 +92,9 @@ function verifySignature(payload, signature, secret) {
     return false;
   }
 
-  const digest = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
+  const digest = `sha256=${crypto
+    .createHmac("sha256", secret)
+    .update(payload)
+    .digest("hex")}`;
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
 }

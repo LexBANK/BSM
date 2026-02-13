@@ -19,6 +19,14 @@ import routes from "./routes/index.js";
 
 const app = express();
 
+const jsonWithRawBody = express.json({
+  limit: "1mb",
+  verify: (req, res, buf) => {
+    // Preserve the exact raw bytes for signature verification workflows.
+    req.rawBody = Buffer.from(buf);
+  }
+});
+
 const corsOptions = env.corsOrigins.length
   ? {
       origin: (origin, callback) => {
@@ -32,7 +40,7 @@ const corsOptions = env.corsOrigins.length
 
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
+app.use(jsonWithRawBody);
 
 app.use(correlationMiddleware);
 app.use(requestLogger);
