@@ -10,13 +10,14 @@ services:
       - corehub.nexus
       - lexprim.com
       - www.lexprim.com
+    # Note: 'autoDeployTrigger: "off"' is Render's export format
+    # When manually configuring, you may also see 'autoDeploy: false'
     autoDeployTrigger: "off"
     # Environment variables should be set in Render dashboard:
-    # - SR.BSM.env (service-specific environment configuration)
-    # - RENDER_DEPLOY_HOOK (deployment webhook URL)
     # - CORS_ORIGINS (comma-separated origins, e.g., https://www.lexdo.uk,https://lexdo.uk,https://lexprim.com,https://www.lexprim.com,https://corehub.nexus,https://www.corehub.nexus)
     # - ADMIN_TOKEN (admin authentication token, minimum 16 characters in production)
     # - OPENAI_BSM_KEY or OPENAI_BSU_KEY or OPENAI_API_KEY (OpenAI API key)
     # - NODE_ENV (production)
     # - GITHUB_WEBHOOK_SECRET (optional, for webhook signature verification)
     # - GITHUB_BSU_TOKEN (optional, for automated GitHub actions)
+    # - RENDER_DEPLOY_HOOK (optional, deployment webhook URL from Render dashboard)
