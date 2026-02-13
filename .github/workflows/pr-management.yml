@@ -57,7 +57,7 @@ jobs:
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 
-            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale'];
+            const STATUS_LABELS = ['ready', 'needs-changes', 'blocked', 'stale', 'conflicts'];
             
             // Ensure labels exist
             const LABELS = [
@@ -98,11 +98,35 @@ jobs:
               conflicts: []
             };
 
+            async function getMergeabilityWithRetry(pullNumber, maxAttempts = 3) {
+              for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                const details = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: pullNumber
+                });
+
+                const { mergeable, mergeable_state: mergeableState } = details.data;
+
+                if (mergeable !== null) {
+                  return { mergeable, mergeableState };
+                }
+
+                // GitHub may compute mergeability asynchronously; retry briefly.
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              }
+
+              return { mergeable: null, mergeableState: 'unknown' };
+            }
+
             for (const pr of prs) {
               if (pr.draft) continue; // Skip drafts
 
               const daysSince = Math.floor((Date.now() - new Date(pr.updated_at)) / (1000 * 60 * 60 * 24));
-              
+
+              // pulls.list can return mergeability as null, so we poll pull details briefly.
+              const { mergeable, mergeableState } = await getMergeabilityWithRetry(pr.number);
+
               // Check reviews
               const reviews = await github.rest.pulls.listReviews({
                 owner,
@@ -127,10 +151,14 @@ jobs:
               let reason = '';
 
               // Classification logic
-              if (pr.mergeable === false) {
+              if (mergeable === false || mergeableState === 'dirty') {
                 newLabel = 'conflicts';
-                reason = 'Has merge conflicts';
+                reason = `Has merge conflicts (mergeable_state=${mergeableState || 'unknown'})`;
                 summary.conflicts.push({ number: pr.number, title: pr.title });
+              } else if (mergeable === null) {
+                newLabel = 'blocked';
+                reason = 'Mergeability is still being calculated by GitHub';
+                summary.blocked.push({ number: pr.number, title: pr.title });
               } else if (daysSince >= 14) {
                 newLabel = 'stale';
                 reason = `Inactive for ${daysSince} days`;
@@ -178,25 +206,30 @@ jobs:
             }
 
             // Generate summary issue comment
-            const summaryText = `## 📊 PR Management Summary
-            
-**Total Open PRs:** ${prs.length}
-
-### ✅ Ready to Merge (${summary.ready.length})
-${summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### ⚠️ Needs Changes (${summary.needsChanges.length})
-${summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### ⚔️ Has Conflicts (${summary.conflicts.length})
-${summary.conflicts.length > 0 ? summary.conflicts.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*'}
-
-### 🕰️ Stale (${summary.stale.length})
-${summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} (${p.days}d)`).join('\n') : '*None*'}
-
----
-*Last updated: ${new Date().toISOString()}*
-*Automated by PR Management workflow*`;
+            const summaryText = [
+              '## 📊 PR Management Summary',
+              '',
+              `**Total Open PRs:** ${prs.length}`,
+              '',
+              `### ✅ Ready to Merge (${summary.ready.length})`,
+              summary.ready.length > 0 ? summary.ready.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⚠️ Needs Changes (${summary.needsChanges.length})`,
+              summary.needsChanges.length > 0 ? summary.needsChanges.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⛔ Blocked (${summary.blocked.length})`,
+              summary.blocked.length > 0 ? summary.blocked.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### ⚔️ Has Conflicts (${summary.conflicts.length})`,
+              summary.conflicts.length > 0 ? summary.conflicts.map(p => `- #${p.number}: ${p.title}`).join('\n') : '*None*',
+              '',
+              `### 🕰️ Stale (${summary.stale.length})`,
+              summary.stale.length > 0 ? summary.stale.map(p => `- #${p.number}: ${p.title} (${p.days}d)`).join('\n') : '*None*',
+              '',
+              '---',
+              `*Last updated: ${new Date().toISOString()}*`,
+              '*Automated by PR Management workflow*'
+            ].join('\n');
 
             core.summary.addRaw(summaryText);
             await core.summary.write();
