@@ -8,7 +8,10 @@
   <meta property="og:title" content="BSU Nexus Control" />
   <meta property="og:description" content="نظام إدارة الوكلاء الذكي المتكامل مع Cloudflare وGitHub." />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://www.lexdo.uk" />
+  <meta name="api-base-url" content="https://sr-bsm.onrender.com" />
+  <meta name="description" content="LexBANK Chat Interface - Professional AI-powered chat for legal and business services. Deploy on lexprim.com or lexdo.uk" />
+  <meta property="og:url" content="https://corehub.nexus" />
+  <script src="config.js" onerror="console.warn('config.js failed to load, using fallback API URL')"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background: radial-gradient(circle at top, #0b1220, #020617 50%, #010409); }
@@ -81,15 +84,20 @@
                       <option value="research">Research Assistant</option>
                   </select>
               </div>
-              <div id="chat-container" class="flex-1 p-6 overflow-y-auto space-y-4 bg-[#010409]/40 font-code text-sm scroll-custom">
-                  <div class="chat-message text-blue-300/80">
-                      <span class="text-emerald-500 font-bold">[BSU-AI]:</span> مرحباً! نظام BSU Nexus جاهز. كيف يمكنني مساعدتك اليوم؟
+              <div id="chat" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#010409]/40 font-code scroll-custom">
+                  <div class="text-center py-10">
+                      <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-3xl">🤖</div>
+                      <h2 class="text-xl font-bold mb-2">مرحباً بك في CoreHub</h2>
+                      <p class="text-gray-400">كيف يمكنني مساعدتك اليوم؟</p>
                   </div>
               </div>
-              <div class="p-4 border-t border-white/5 bg-black/20">
+              <div class="glass-card m-4 p-4 rounded-xl border-t border-white/10">
                   <div class="flex gap-2">
-                      <input type="text" id="chat-input" placeholder="اكتب رسالتك هنا..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-gray-600 outline-none focus:border-blue-500/50 transition text-right">
-                      <button onclick="sendMessage()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-blue-900/40">إرسال</button>
+                      <input type="text" id="input" placeholder="اكتب رسالتك هنا..."
+                          class="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-blue-500">
+                      <button id="send-button" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition-colors">
+                          إرسال
+                      </button>
                   </div>
               </div>
           </div>
@@ -104,6 +112,12 @@
                       <span>مزامنة Cloudflare</span>
                   </div>
               </button>
+              <a href="calculator.html" target="_blank" class="w-full py-3 bg-purple-600/20 border border-purple-500/30 rounded-xl text-[10px] text-purple-400 hover:bg-purple-600/30 transition text-right px-4 block">
+                  <div class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                      <span>آلة حاسبة</span>
+                  </div>
+              </a>
               <div class="mt-auto p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20">
                   <p class="text-[9px] text-blue-400 italic text-center">BSU Nexus يعمل بالتكامل مع GitHub Actions وCloudflare.</p>
               </div>
@@ -125,36 +139,62 @@
       }
       setInterval(updateClock, 1000); updateClock();
 
-      function appendMessage(text, className) {
-        const container = document.getElementById('chat-container');
-        const message = document.createElement('div');
-        message.className = `chat-message ${className}`;
-        message.textContent = text;
-        container.appendChild(message);
-        container.scrollTop = container.scrollHeight;
+      // Use API base from config.js (window.__ENV__) or fallback to meta tag or default
+      const apiMeta = document.querySelector('meta[name="api-base-url"]');
+      const metaApiUrl = apiMeta && apiMeta.content ? apiMeta.content : 'https://sr-bsm.onrender.com';
+      const API_URL = (window.__ENV__ && window.__ENV__.API_BASE) ? window.__ENV__.API_BASE : metaApiUrl;
+
+      async function send() {
+        const input = document.getElementById('input');
+        const text = input.value.trim();
+        if (!text) return;
+
+        addMessage(text, 'user');
+        input.value = '';
+
+        try {
+          const response = await fetch(`${API_URL}/api/chat/direct`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              model: 'gpt-4o-mini',
+              conversationId: 'default'
+            })
+          });
+
+          const data = await response.json();
+          addMessage(data.response || data.message || 'لم أفهم طلبك', 'ai');
+        } catch (error) {
+          addMessage('عذراً، حدث خطأ في الاتصال بالخادم. تأكد من أن الخدمة تعمل.', 'error');
+        }
       }
 
-      async function sendMessage() {
-          const input = document.getElementById('chat-input');
-          const msg = input.value.trim();
-          if (!msg) return;
+      function addMessage(text, sender) {
+        const chat = document.getElementById('chat');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'msg flex ' + (sender === 'user' ? 'justify-end' : 'justify-start');
 
-          appendMessage(`[أنت]: ${msg}`, 'text-right text-blue-400 font-bold');
-          input.value = '';
+        const bubble = document.createElement('div');
+        const bgClass = sender === 'user' ? 'bg-blue-600' : (sender === 'error' ? 'bg-red-600/70' : 'glass-card');
+        bubble.className = `${bgClass} rounded-lg p-3 max-w-[80%] text-sm`;
+        bubble.textContent = text;
 
-          setTimeout(() => {
-              appendMessage('[BSU-AI]: جاري المعالجة...', 'text-emerald-400');
-          }, 500);
+        wrapper.appendChild(bubble);
+        chat.appendChild(wrapper);
+        chat.scrollTop = chat.scrollHeight;
       }
-
-      document.getElementById('chat-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-      });
 
       function activateSync() {
           document.getElementById('ai-progress').style.width = '100%';
-          appendMessage(`[${new Date().toLocaleTimeString('en-GB')}] > تمت المزامنة مع Cloudflare`, 'text-[10px] text-emerald-400');
+          addMessage(`[${new Date().toLocaleTimeString('en-GB')}] > تمت المزامنة مع Cloudflare`, 'ai');
       }
+
+      // Add event listeners
+      document.getElementById('send-button').addEventListener('click', send);
+      document.getElementById('input').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') send();
+      });
   </script>
 </body>
 </html>

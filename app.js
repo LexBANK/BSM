@@ -3,6 +3,11 @@ const { createApp, ref, computed, nextTick, onMounted } = Vue;
 // Standalone version - API URL stored in localStorage
 const STORAGE_KEY = 'lexbank_api_url';
 
+// Get default API URL from config.js (window.__ENV__) or fallback
+const DEFAULT_API_URL = (window.__ENV__ && window.__ENV__.API_BASE) 
+  ? window.__ENV__.API_BASE 
+  : 'https://sr-bsm.onrender.com';
+
 createApp({
   setup() {
     const messages = ref([]);
@@ -13,7 +18,7 @@ createApp({
     const mode = ref('direct');
     const showModeMenu = ref(false);
     const showConfig = ref(false);
-    const apiUrl = ref(localStorage.getItem(STORAGE_KEY) || '');
+    const apiUrl = ref(localStorage.getItem(STORAGE_KEY) || DEFAULT_API_URL);
     const messagesContainer = ref(null);
     const inputField = ref(null);
 
@@ -110,6 +115,10 @@ createApp({
       const text = input.value.trim();
       if (!text || loading.value) return;
 
+      const historyBeforeNewMessage = messages.value
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map(m => ({ role: m.role, content: m.content }));
+
       const base = apiUrl.value.trim().replace(/\/+$/, '');
       if (!base) {
         showConfig.value = true;
@@ -143,9 +152,7 @@ createApp({
           body = {
             message: text,
             language: lang.value,
-            history: messages.value
-              .filter(m => m.role === 'user' || m.role === 'assistant')
-              .map(m => ({ role: m.role, content: m.content }))
+            history: historyBeforeNewMessage
           };
         } else {
           url = `${base}/api/chat`;

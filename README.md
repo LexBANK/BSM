@@ -6,6 +6,13 @@ Welcome to the BSU Platform documentation. This index provides quick access to a
 
 The documentation is organized into the following categories:
 
+### 👥 Community & Support
+
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [Community Channels](COMMUNITY.md) | Telegram channels, GitHub discussions, support resources | All Users |
+| [Telegram Links](TELEGRAM_LINKS.md) | Official Telegram community links (when available) | All Users |
+
 ### 🏗️ Architecture & Design
 
 | Document | Description | Size | Audience |
@@ -32,6 +39,12 @@ The documentation is organized into the following categories:
 
 - API endpoints: See [README.md](../README.md#api-endpoints)
 - OpenAPI specification: Coming soon
+
+### 🛠️ Tools & Utilities
+
+| Tool | Description | Access |
+|------|-------------|--------|
+| [Calculator](calculator.html) | Modern calculator with keyboard support and dark theme | [Open Calculator](calculator.html) |
 
 ---
 
