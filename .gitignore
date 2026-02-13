@@ -11,6 +11,7 @@ reports/*
 !reports/SECURITY-*.md
 !reports/runner-*.json
 !reports/runner-*.md
+!reports/ios-chat-readiness-*.md
 
 # Sensitive files - Security
 *.key

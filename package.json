@@ -13,7 +13,8 @@
     "health": "node scripts/health-check.js",
     "health:detailed": "node scripts/health-check.js --detailed",
     "pr-check": "node scripts/pr-review-checklist.js --local",
-    "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose"
+    "pr-check:verbose": "node scripts/pr-review-checklist.js --local --verbose",
+    "report:ios-chat-readiness": "node scripts/generate-ios-chat-readiness-report.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
