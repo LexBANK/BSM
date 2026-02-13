@@ -215,6 +215,30 @@ cp .env.example .env
 # Edit .env with your configuration
 ```
 
+#### Secure credential handling for `scripts/install-lexbank.sh`
+
+The LexBANK one-click installer now defaults to **non-persistent credential handling**:
+
+- `PERSIST_CREDENTIALS=false` (default): no credential file is stored on disk.
+- `PERSIST_CREDENTIALS=true`: credentials are written to a temporary file in `/tmp` with auto-cleanup (`systemd-run` when available, fallback background cleanup otherwise).
+- Optional secrets-manager integration via `SECRETS_BACKEND`:
+  - `aws` (requires `AWS_SECRET_ID` and AWS CLI)
+  - `vault` (requires `VAULT_SECRET_PATH` and Vault CLI)
+  - `op` / `1password` (requires 1Password CLI)
+
+Example:
+
+```bash
+sudo PERSIST_CREDENTIALS=true CREDENTIALS_TTL_SECONDS=600 SECRETS_BACKEND=aws AWS_SECRET_ID=lexbank/prod/install ./scripts/install-lexbank.sh
+```
+
+After installation, rotate bootstrap credentials immediately:
+
+1. Generate new values for `DB_PASSWORD`, `ADMIN_TOKEN`, and `JWT_SECRET`.
+2. Update the managed secrets backend entry (AWS/Vault/1Password).
+3. Update `${APP_DIR}/.env` (or your runtime secret injection source) and restart services.
+4. Revoke/delete any temporary installation secrets once cutover is confirmed.
+
 ### ORBIT Self-Healing Agent Setup
 
 Set up automated monitoring, health checks, and self-healing capabilities:
