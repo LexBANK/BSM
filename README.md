@@ -19,39 +19,27 @@ The platform now features a **hybrid microservices architecture** combining:
 ## Project Structure
 
 ```
-BSU/
-├── data/                    # Data storage
-│   ├── agents/             # Agent configurations (YAML)
+BSM/
+├── .github/workflows/      # CI/CD and governance automation
+├── agents/                 # Agent-related assets
+├── api/                    # API-related resources
+├── data/                   # Runtime data and knowledge sources
+│   ├── agents/             # Agent configurations
 │   └── knowledge/          # Knowledge documents
-├── dns/                    # DNS configuration and documentation
-│   ├── lexdo-uk-zone.txt   # Cloudflare DNS zone file
-│   ├── DNS-RECORD-TYPES.md # DNS record types reference
-│   └── GITHUB-PAGES-VERIFICATION.md # GitHub Pages verification guide
-├── docs/                   # Documentation and GitHub Pages frontend
-│   ├── index.html          # Standalone chat interface
-│   ├── app.js              # Vue 3 chat application
-│   ├── styles.css          # Custom styles
-│   ├── CNAME               # Domain configuration
-│   ├── ARCHITECTURE.md     # System architecture documentation
-│   ├── CICD-RECOMMENDATIONS.md # CI/CD enhancement guide
-│   ├── SECURITY-DEPLOYMENT.md  # Security and deployment guide
-│   └── AGENT-ORCHESTRATION.md  # Agent patterns and workflows
-├── scripts/                # Build and validation scripts
-│   ├── validate.js         # Data structure validation
-│   └── setup_github_pages_verification.sh # GitHub Pages DNS setup
-├── src/
-│   ├── admin/              # Admin UI (HTML/CSS/JS)
-│   ├── chat/               # Chat UI (Vue 3 + Tailwind)
-│   ├── config/             # Configuration modules
-│   ├── controllers/        # Request handlers
-│   ├── middleware/         # Express middleware
-│   ├── routes/             # API route definitions
-│   ├── runners/            # Agent execution logic
-│   ├── services/           # Business logic
-│   ├── utils/              # Utility functions
-│   ├── app.js              # Express app setup
-│   └── server.js           # Server entry point
-└── .github/workflows/      # CI/CD workflows
+├── dns/                    # DNS configuration and setup guides
+├── docs/                   # Documentation + static frontend assets
+│   ├── examples/           # Documentation examples index
+│   ├── guides/             # Documentation guides index
+│   ├── index.html          # Standalone frontend entry
+│   ├── app.js              # Frontend application script
+│   └── README.md           # Documentation index (source of truth)
+├── examples/               # Repository-level code examples
+├── lexprim-chat/           # Nuxt 3 application
+├── scripts/                # Bootstrap, validation, and ops scripts
+├── services/               # Service modules
+├── src/                    # Node/Express backend source
+├── README.md               # Project overview
+└── package.json            # Node package manifest
 ```
 
 ## API Endpoints

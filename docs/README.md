@@ -1,6 +1,6 @@
-# BSU Documentation Index
+# BSM Documentation Index
 
-Welcome to the BSU Platform documentation. This index provides quick access to all architectural and operational documentation.
+Welcome to the BSM Platform documentation. This index provides quick access to all architectural and operational documentation.
 
 ## 📚 Documentation Overview
 
@@ -36,6 +36,14 @@ The documentation is organized into the following categories:
 | [GitHub Pages Verification](../dns/GITHUB-PAGES-VERIFICATION.md) | dns/ | Custom domain setup guide |
 | [Cloudflare API Names](CLOUDFLARE-API-NAMES.md) | docs/ | Complete reference for all Cloudflare API variables (Arabic) |
 | [Cloudflare Quick Reference (AR)](CLOUDFLARE-QUICK-REFERENCE-AR.md) | docs/ | Quick reference guide for Cloudflare API names (Arabic) |
+
+
+### 📂 Guides & Examples
+
+| Section | Location | Description |
+|---------|----------|-------------|
+| [Guides Index](guides/README.md) | docs/guides/ | Curated operational and implementation guides |
+| [Examples Index](examples/README.md) | docs/examples/ | UI and integration example entry points |
 
 ### 📖 API Documentation
 
@@ -83,11 +91,11 @@ The documentation is organized into the following categories:
 
 | Metric | Value |
 |--------|-------|
-| **Total Documents** | 5 major documents |
-| **Total Size** | 81KB |
-| **Code Examples** | 50+ snippets |
-| **Diagrams** | 3 architecture diagrams |
-| **Recommendations** | 20+ actionable items |
+| **Total Documents** | Multi-file index (see sections above) |
+| **Total Size** | Continuously evolving |
+| **Code Examples** | Indexed under docs/examples and examples/ |
+| **Diagrams** | Architecture and workflow diagrams across docs |
+| **Recommendations** | Distributed across architecture, security, and CI/CD docs |
 | **Last Updated** | 2026-02-06 |
 
 ---
