@@ -6,7 +6,7 @@ import logger from "../utils/logger.js";
 export const handleGitHubWebhook = async (req, res, next) => {
   try {
     const signature = req.headers["x-hub-signature-256"];
-    const payload = JSON.stringify(req.body);
+    const payload = req.body;
     const secret = process.env.GITHUB_WEBHOOK_SECRET;
 
     if (!secret) {
@@ -20,7 +20,11 @@ export const handleGitHubWebhook = async (req, res, next) => {
     }
 
     const event = req.headers["x-github-event"];
-    const data = req.body;
+    const data = parseWebhookPayload(payload);
+    if (!data) {
+      logger.warn("Rejecting GitHub webhook: invalid JSON payload");
+      return res.status(400).json({ error: "Invalid JSON payload" });
+    }
 
     logger.info({ event, action: data?.action }, "Webhook received");
 
@@ -99,10 +103,20 @@ export function verifySignature(payload, signature, secret) {
     return false;
   }
 
-  const digest = `sha256=${crypto.createHmac("sha256", secret).update(payload).digest("hex")}`;
+  const normalizedPayload = Buffer.isBuffer(payload) ? payload : Buffer.from(String(payload), "utf8");
+  const digest = `sha256=${crypto.createHmac("sha256", secret).update(normalizedPayload).digest("hex")}`;
   if (signature.length !== digest.length) {
     return false;
   }
 
   return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+}
+
+function parseWebhookPayload(payload) {
+  try {
+    const payloadText = Buffer.isBuffer(payload) ? payload.toString("utf8") : String(payload);
+    return JSON.parse(payloadText);
+  } catch {
+    return null;
+  }
 }

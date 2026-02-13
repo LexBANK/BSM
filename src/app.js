@@ -32,16 +32,11 @@ const corsOptions = env.corsOrigins.length
 
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(express.json({ limit: '1mb' }));
 
-app.use(correlationMiddleware);
-app.use(requestLogger);
-
-// GitHub webhook endpoint (before security middleware to allow external requests)
-// GitHub webhooks come from GitHub's servers, not from LAN or mobile devices
-// Rate limited separately to prevent abuse while allowing legitimate webhook traffic
+// GitHub webhook endpoint must receive raw body bytes for HMAC verification.
 app.post(
   "/webhook/github",
+  express.raw({ type: "application/json", limit: "1mb" }),
   rateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 30, // Allow 30 webhook requests per minute (reasonable for active repos)
@@ -51,6 +46,11 @@ app.post(
   }),
   handleGitHubWebhook
 );
+
+app.use(express.json({ limit: "1mb" }));
+
+app.use(correlationMiddleware);
+app.use(requestLogger);
 
 // Apply security middleware
 app.use(lanOnlyMiddleware);
