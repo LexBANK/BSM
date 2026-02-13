@@ -2,6 +2,7 @@ import app from "./app.js";
 import { env } from "./config/env.js";
 import logger from "./utils/logger.js";
 import { validateRegistry } from "./utils/registryValidator.js";
+import { chiefArchitectAgent } from "./agents/ChiefArchitectAgent.js";
 
 // Hard gate: validate registry before starting server
 try {
@@ -13,4 +14,8 @@ try {
 
 app.listen(env.port, () => {
   logger.info({ port: env.port, env: env.nodeEnv }, "BSU API started");
+  
+  // Start ChiefArchitectAgent
+  chiefArchitectAgent.start();
+  logger.info("ChiefArchitectAgent initialized and started");
 });
