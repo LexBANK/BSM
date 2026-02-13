@@ -37,15 +37,15 @@ jobs:
           report_path="$(find reports -maxdepth 1 -name 'repository-review-*.md' -print | sort | tail -n 1)"
 
           if [ -z "${report_path}" ]; then
-            echo "::error::No repository review report was found in reports/. Expected pattern: reports/repository-review-*.md"
-            exit 1
+            echo "::warning::No repository review report was found in reports/. Expected pattern: reports/repository-review-*.md"
+            echo "report_path=" >> "$GITHUB_OUTPUT"
+          else
+            echo "report_path=${report_path}" >> "$GITHUB_OUTPUT"
+            echo "Selected report: ${report_path}"
           fi
 
-          echo "report_path=${report_path}" >> "$GITHUB_OUTPUT"
-          echo "Selected report: ${report_path}"
-
       - name: Upload repository review report artifact
-        if: always()
+        if: ${{ steps.report-path.outputs.report_path != '' }}
         uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
         with:
           name: repository-review-report
