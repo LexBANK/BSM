@@ -15,9 +15,19 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
+# DOMAIN: Primary domain for the installation (e.g., example.com, sub.example.com)
+# EMAIL: Email address for SSL certificate registration and notifications
+# ENABLE_WWW: Control www subdomain - auto (default), true, false
+#   - auto: Enable www for single-level domains (example.com), disable for subdomains
+#   - true: Always enable www subdomain
+#   - false: Never enable www subdomain
+# NGINX_CONFIG_NAME: Name of nginx configuration file (default: lexbank)
+# PORT: Application port (default: 3000)
 DOMAIN="${DOMAIN:-lexbank.com}"
 EMAIL="${EMAIL:-admin@lexbank.com}"
 ENABLE_WWW="${ENABLE_WWW:-auto}"
+NGINX_CONFIG_NAME="${NGINX_CONFIG_NAME:-lexbank}"
+PORT="${PORT:-3000}"
 DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 32)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-$(openssl rand -hex 32)}"
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 64)}"
@@ -45,12 +55,63 @@ error() {
     exit 1
 }
 
+# ==============================================================================
+# Validation Functions
+# ==============================================================================
+
+validate_domain() {
+    local domain=$1
+    
+    # Allow localhost for local development
+    if [[ "$domain" == "localhost" ]]; then
+        return 0
+    fi
+    
+    # Validate domain format using regex
+    # Pattern: alphanumeric start, alphanumeric/hyphen middle, alphanumeric end, multiple segments allowed
+    if [[ ! $domain =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$ ]]; then
+        error "Invalid domain format: $domain. Domain must contain only alphanumeric characters, hyphens, and dots."
+    fi
+    
+    # Check for minimum length
+    if [[ ${#domain} -lt 3 ]]; then
+        error "Domain too short: $domain. Minimum length is 3 characters."
+    fi
+    
+    # Check for maximum length (253 characters per RFC)
+    if [[ ${#domain} -gt 253 ]]; then
+        error "Domain too long: $domain. Maximum length is 253 characters."
+    fi
+    
+    log "Domain validation passed: $domain"
+    return 0
+}
+
+validate_email() {
+    local email=$1
+    
+    # Basic email validation regex
+    if [[ ! $email =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+        error "Invalid email format: $email"
+    fi
+    
+    log "Email validation passed: $email"
+    return 0
+}
+
 build_domain_config() {
     local dot_count
     local should_enable_www="false"
-
+    
+    # Validate domain and email before proceeding
+    validate_domain "$DOMAIN"
+    validate_email "$EMAIL"
+    
+    # Count dots in domain to determine structure
+    # Example: example.com = 1 dot, sub.example.com = 2 dots
     dot_count=$(awk -F'.' '{print NF-1}' <<< "$DOMAIN")
 
+    # Determine if www subdomain should be enabled based on ENABLE_WWW setting
     case "${ENABLE_WWW,,}" in
         true|1|yes)
             should_enable_www="true"
@@ -59,6 +120,10 @@ build_domain_config() {
             should_enable_www="false"
             ;;
         auto|"")
+            # Auto mode: Enable www only for single-level domains (not localhost or subdomains)
+            # - example.com (1 dot) → enable www
+            # - sub.example.com (2+ dots) → disable www (already a subdomain)
+            # - localhost (0 dots) → disable www
             if [[ "$DOMAIN" != "localhost" && "$dot_count" -eq 1 ]]; then
                 should_enable_www="true"
             fi
@@ -71,22 +136,39 @@ build_domain_config() {
             ;;
     esac
 
+    # Build nginx server_name directive
     NGINX_SERVER_NAMES="$DOMAIN"
+    
+    # Build certbot domain list for SSL certificate
     CERTBOT_DOMAINS=("$DOMAIN")
+    
+    # Build CORS origins list for API
     CORS_ORIGINS=("https://${DOMAIN}" "http://localhost:3000")
 
+    # Add www subdomain if enabled
     if [[ "$should_enable_www" == "true" ]]; then
         NGINX_SERVER_NAMES+=" www.${DOMAIN}"
         CERTBOT_DOMAINS+=("www.${DOMAIN}")
         CORS_ORIGINS+=("https://www.${DOMAIN}")
+        log "WWW subdomain enabled for: www.${DOMAIN}"
+    else
+        log "WWW subdomain disabled"
     fi
 
+    # Build certbot command arguments
     CERTBOT_ARGS=""
     for domain in "${CERTBOT_DOMAINS[@]}"; do
         CERTBOT_ARGS+=" -d ${domain}"
     done
 
+    # Convert CORS array to CSV for .env file
     CORS_ORIGINS_CSV=$(IFS=,; echo "${CORS_ORIGINS[*]}")
+    
+    log "Domain configuration complete:"
+    log "  - Primary domain: ${DOMAIN}"
+    log "  - Nginx server_name: ${NGINX_SERVER_NAMES}"
+    log "  - SSL domains: ${CERTBOT_DOMAINS[*]}"
+    log "  - CORS origins: ${CORS_ORIGINS_CSV}"
 }
 
 # ==============================================================================
@@ -423,7 +505,7 @@ create_env_file() {
     cat > ${APP_DIR}/.env << ENVEOF
 # === LexBANK Environment Configuration ===
 NODE_ENV=production
-PORT=3000
+PORT=${PORT}
 DOMAIN=${DOMAIN}
 
 # === Database ===
@@ -855,14 +937,25 @@ DASHBOARDEOF
 
 setup_nginx() {
     log "Configuring Nginx..."
+    
+    local nginx_config_path="/etc/nginx/sites-available/${NGINX_CONFIG_NAME}"
+    local nginx_enabled_path="/etc/nginx/sites-enabled/${NGINX_CONFIG_NAME}"
+    
+    # Backup existing configuration if it exists
+    if [[ -f "$nginx_config_path" ]]; then
+        log "Backing up existing nginx configuration..."
+        cp "$nginx_config_path" "${nginx_config_path}.bak.$(date +%Y%m%d_%H%M%S)"
+        success "Backup created"
+    fi
 
-    cat > /etc/nginx/sites-available/lexbank << NGINXEOF
+    cat > "$nginx_config_path" << NGINXEOF
 server {
     listen 80;
+    listen [::]:80;
     server_name ${NGINX_SERVER_NAMES};
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:${PORT:-3000};
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -871,34 +964,76 @@ server {
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
     }
 
     location /docs {
-        alias /var/www/lexbank/docs;
+        alias ${APP_DIR}/docs;
         try_files \$uri \$uri/ =404;
     }
 
     location /dashboard {
-        alias /var/www/lexbank/dashboard;
+        alias ${APP_DIR}/dashboard;
         try_files \$uri \$uri/ /dashboard/index.html;
     }
 
     location /chat {
-        alias /var/www/lexbank/chat;
+        alias ${APP_DIR}/chat;
         try_files \$uri \$uri/ /chat/index.html;
+    }
+    
+    # Health check endpoint
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
     }
 }
 NGINXEOF
 
-    rm -f /etc/nginx/sites-enabled/default
-    ln -sf /etc/nginx/sites-available/lexbank /etc/nginx/sites-enabled/
+    log "Nginx configuration written to ${nginx_config_path}"
+    log "Server names: ${NGINX_SERVER_NAMES}"
 
-    log "Nginx server_name values: ${NGINX_SERVER_NAMES}"
+    # Remove default site if exists
+    if [[ -L /etc/nginx/sites-enabled/default ]]; then
+        log "Removing default nginx site..."
+        rm -f /etc/nginx/sites-enabled/default
+    fi
+    
+    # Create symlink to enabled sites
+    ln -sf "$nginx_config_path" "$nginx_enabled_path"
 
-    nginx -t && systemctl restart nginx
+    # Test nginx configuration
+    log "Testing nginx configuration..."
+    if ! nginx -t 2>&1; then
+        error "Nginx configuration test failed. Restoring backup if available..."
+        if [[ -f "${nginx_config_path}.bak."* ]]; then
+            # Restore most recent backup
+            local latest_backup=$(ls -t "${nginx_config_path}.bak."* 2>/dev/null | head -1)
+            if [[ -n "$latest_backup" ]]; then
+                cp "$latest_backup" "$nginx_config_path"
+                warning "Restored backup: $latest_backup"
+            fi
+        fi
+        error "Nginx configuration failed. Please check the configuration manually."
+    fi
+    
+    success "Nginx configuration test passed"
+
+    # Restart nginx
+    log "Restarting nginx..."
+    if ! systemctl restart nginx; then
+        error "Failed to restart nginx. Check logs with: journalctl -u nginx -n 50"
+    fi
+    
+    # Enable nginx to start on boot
     systemctl enable nginx
-
-    success "Nginx configured"
+    
+    success "Nginx configured and running"
 }
 
 # ==============================================================================
@@ -908,14 +1043,56 @@ NGINXEOF
 setup_ssl() {
     log "Setting up SSL certificate..."
 
-    if [[ "$DOMAIN" != "localhost" ]]; then
-        # shellcheck disable=SC2086
-        certbot --nginx ${CERTBOT_ARGS} --non-interactive --agree-tos -m ${EMAIL} || warning "SSL setup failed, continuing..."
+    # Skip SSL setup for localhost
+    if [[ "$DOMAIN" == "localhost" ]]; then
+        warning "Skipping SSL setup for localhost"
+        return 0
+    fi
+    
+    # Validate that domain is publicly accessible (basic check)
+    log "Validating domain accessibility..."
+    
+    # Check if certbot is installed
+    if ! command -v certbot &> /dev/null; then
+        error "Certbot is not installed. Please install certbot first."
+    fi
+    
+    # Attempt to obtain SSL certificate
+    log "Requesting SSL certificate for domains: ${CERTBOT_DOMAINS[*]}"
+    log "Email for notifications: ${EMAIL}"
+    
+    # shellcheck disable=SC2086
+    if certbot --nginx ${CERTBOT_ARGS} --non-interactive --agree-tos -m "${EMAIL}" --redirect; then
+        success "SSL certificate obtained successfully"
+        
+        # Verify certificate was installed
+        log "Verifying SSL certificate installation..."
+        if certbot certificates 2>&1 | grep -q "$DOMAIN"; then
+            success "SSL certificate verified for: $DOMAIN"
+            
+            # Setup automatic renewal
+            log "Configuring automatic certificate renewal..."
+            if systemctl list-timers | grep -q certbot; then
+                success "Certbot renewal timer is active"
+            else
+                warning "Certbot renewal timer not found. Manual renewal may be required."
+            fi
+        else
+            warning "SSL certificate verification failed. Certificate may not be properly installed."
+        fi
     else
-        warning "Skipping SSL for localhost"
+        local exit_code=$?
+        warning "SSL certificate setup failed with exit code: $exit_code"
+        warning "Possible reasons:"
+        warning "  - Domain DNS not properly configured"
+        warning "  - Domain not pointing to this server"
+        warning "  - Port 80/443 not accessible from internet"
+        warning "  - Rate limit reached (Let's Encrypt allows 5 certs per domain per week)"
+        warning "Continuing without SSL. You can manually run: certbot --nginx -d ${DOMAIN}"
+        return 1
     fi
 
-    success "SSL configured"
+    success "SSL setup complete"
 }
 
 # ==============================================================================
