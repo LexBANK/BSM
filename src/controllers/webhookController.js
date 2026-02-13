@@ -96,5 +96,13 @@ function verifySignature(payload, signature, secret) {
     .createHmac("sha256", secret)
     .update(payload)
     .digest("hex")}`;
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(digest));
+
+  const signatureBuffer = Buffer.from(signature);
+  const digestBuffer = Buffer.from(digest);
+
+  if (signatureBuffer.length !== digestBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(signatureBuffer, digestBuffer);
 }
