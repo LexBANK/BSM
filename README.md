@@ -67,7 +67,45 @@ BSU/
 - `GET /api/knowledge` - List all knowledge documents
 - `POST /api/agents/run` - Execute an agent with input
 - `POST /api/chat` - Agent-based chat (requires `agentId` and `input`)
-- `POST /api/chat/direct` - Direct GPT chat with conversation history
+- `GET /api/chat/key-status` - Check AI service status
+- `POST /api/chat/direct` - Direct GPT chat with conversation history (see details below)
+
+#### POST /api/chat/direct
+
+Direct GPT-4o-mini chat endpoint with bilingual support (Arabic/English) and conversation history.
+
+**Request:**
+```json
+{
+  "message": "Your question here",
+  "language": "ar|en",
+  "history": [
+    { "role": "user", "content": "Previous message" },
+    { "role": "assistant", "content": "Previous response" }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "output": "AI response text"
+}
+```
+
+**Error Responses:**
+- `400` - Invalid input (missing message, message too long, invalid language)
+- `429` - Rate limit exceeded (100 requests per 15 minutes per IP)
+- `503` - AI service not configured (missing API key)
+- `500` - Server error
+
+**Configuration:**
+- Message limit: 4000 characters (configurable via `MAX_AGENT_INPUT_LENGTH`)
+- History limit: Last 20 messages
+- Supported languages: `ar` (Arabic), `en` (English)
+- Rate limiting: 100 requests per 15 minutes per IP (configurable)
+
+📖 See [LexPrim Integration Guide](docs/LEXPRIM-INTEGRATION.md) for complete API documentation, deployment steps, and troubleshooting.
 
 ### Webhook Endpoints
 - `POST /webhook/github` - GitHub webhook endpoint (primary)
