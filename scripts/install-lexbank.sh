@@ -1010,15 +1010,17 @@ NGINXEOF
     # Test nginx configuration
     log "Testing nginx configuration..."
     if ! nginx -t 2>&1; then
-        error "Nginx configuration test failed. Restoring backup if available..."
-        if [[ -f "${nginx_config_path}.bak."* ]]; then
-            # Restore most recent backup
-            local latest_backup=$(ls -t "${nginx_config_path}.bak."* 2>/dev/null | head -1)
-            if [[ -n "$latest_backup" ]]; then
-                cp "$latest_backup" "$nginx_config_path"
-                warning "Restored backup: $latest_backup"
-            fi
+        warning "Nginx configuration test failed. Restoring backup if available..."
+        
+        # Find and restore most recent backup using find instead of ls with glob
+        local latest_backup
+        latest_backup=$(find "$(dirname "$nginx_config_path")" -name "$(basename "$nginx_config_path").bak.*" -type f 2>/dev/null | sort -r | head -1)
+        
+        if [[ -n "$latest_backup" ]]; then
+            cp "$latest_backup" "$nginx_config_path"
+            warning "Restored backup: $latest_backup"
         fi
+        
         error "Nginx configuration failed. Please check the configuration manually."
     fi
     
