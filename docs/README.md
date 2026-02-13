@@ -29,6 +29,12 @@ The documentation is organized into the following categories:
 | [Security & Deployment Guide](SECURITY-DEPLOYMENT.md) | Security best practices, deployment procedures, and incident response | 17KB | DevOps, Security |
 | [CI/CD Recommendations](CICD-RECOMMENDATIONS.md) | Pipeline enhancements and automation strategies | 13KB | DevOps, Developers |
 
+### 🧹 Repository Maintenance
+
+| Document | Description | Audience |
+|----------|-------------|----------|
+| [Repo Cleanup Log](REPO-CLEANUP-LOG.md) | Auditable record of cleanup actions (delete/rename) with verifiable Git evidence | Maintainers, DevOps, Auditors |
+
 ### 🌐 Infrastructure
 
 | Document | Location | Description |
