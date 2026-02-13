@@ -1,0 +1,89 @@
+name: Deploy BSM to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check HTML files exist
+        run: |
+          echo "Checking required files..."
+          for f in index.html kimi-chat.html calculator.html config.js; do
+            if [ -f "$f" ]; then
+              echo "  OK: $f"
+            else
+              echo "  MISSING: $f"
+            fi
+          done
+
+      - name: Validate HTML syntax
+        run: |
+          errors=0
+          for f in *.html; do
+            if ! grep -q '<!DOCTYPE html>' "$f"; then
+              echo "WARNING: $f missing DOCTYPE"
+              errors=$((errors+1))
+            fi
+            if ! grep -q '</html>' "$f"; then
+              echo "ERROR: $f missing closing </html> tag"
+              errors=$((errors+1))
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "$errors issue(s) found"
+          else
+            echo "All HTML files valid"
+          fi
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success() && secrets.TELEGRAM_BOT_TOKEN != ''
+    steps:
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d "chat_id=${TELEGRAM_CHAT_ID}" \
+            -d "text=BSM deployed successfully to GitHub Pages" \
+            -d "parse_mode=HTML" || true

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi Chat - BSM</title>
+    <meta name="description" content="Kimi Chat - واجهة محادثة ذكية لمشروع BSM">
+    <meta name="api-base-url" content="https://sr-bsm.onrender.com">
+    <script src="config.js" onerror="console.warn('config.js not loaded, using fallback')"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-user: #2b4c7e;
+            --bg-ai: #3a3a3a;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent: #4a9eff;
+            --border: #404040;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app { display: flex; height: 100vh; }
+        .sidebar {
+            width: 260px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+        .sidebar-header {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .new-chat {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 16px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+        .new-chat:hover { opacity: 0.85; }
+        .nav-links { margin-top: auto; }
+        .nav-links a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .nav-links a:hover { background: rgba(255,255,255,0.05); }
+        .main { flex: 1; display: flex; flex-direction: column; }
+        .header {
+            height: 60px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+        }
+        .header-title { font-weight: 600; font-size: 15px; }
+        .model-select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: #374151 transparent;
+        }
+        .chat-area::-webkit-scrollbar { width: 6px; }
+        .chat-area::-webkit-scrollbar-thumb { background: #374151; border-radius: 3px; }
+        .welcome {
+            text-align: center;
+            margin-top: 20vh;
+        }
+        .welcome h1 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #4a9eff, #9f4aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .welcome p { color: var(--text-secondary); }
+        .message {
+            max-width: 80%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            line-height: 1.7;
+            animation: fadeIn 0.3s ease;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user {
+            background: var(--bg-user);
+            margin-left: auto;
+            margin-right: 0;
+        }
+        .message.ai {
+            background: var(--bg-ai);
+            align-self: flex-start;
+        }
+        .message.error {
+            background: #7e2b2b;
+            align-self: flex-start;
+        }
+        .msg-header {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .msg-content { font-size: 15px; }
+        .input-area {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+        }
+        .input-box {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            transition: border-color 0.2s;
+        }
+        .input-box:focus-within { border-color: var(--accent); }
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 16px;
+            resize: none;
+            outline: none;
+            min-height: 24px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.5;
+        }
+        .input-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 12px;
+        }
+        .send-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .send-btn:hover { opacity: 0.85; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 20px;
+            background: var(--bg-ai);
+            border-radius: 12px;
+            align-self: flex-start;
+            max-width: 80px;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .message { max-width: 90%; }
+            .input-area { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <button class="new-chat" id="new-chat-btn">+ محادثة جديدة</button>
+            <div class="sidebar-header">التنقل</div>
+            <div class="nav-links">
+                <a href="index.html">لوحة التحكم</a>
+                <a href="calculator.html">الآلة الحاسبة</a>
+            </div>
+        </aside>
+        <main class="main">
+            <header class="header">
+                <div class="header-title">BSM AI Chat</div>
+                <select class="model-select" id="model">
+                    <option value="direct">دردشة مباشرة</option>
+                    <option value="legal-agent">الوكيل القانوني</option>
+                    <option value="governance-agent">وكيل الحوكمة</option>
+                </select>
+            </header>
+            <div class="chat-area" id="chat">
+                <div class="welcome" id="welcome">
+                    <h1>مرحباً، أنا Kimi</h1>
+                    <p>كيف يمكنني مساعدتك في مشروع BSM؟</p>
+                </div>
+            </div>
+            <div class="input-area">
+                <div class="input-box">
+                    <textarea id="input" placeholder="اكتب رسالتك..." rows="1"></textarea>
+                    <div class="input-actions">
+                        <button class="send-btn" id="send-btn">إرسال</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const chat = {
+            msgs: [],
+            sending: false,
+
+            getApiBase() {
+                return (window.__ENV__ && window.__ENV__.API_BASE)
+                    ? window.__ENV__.API_BASE
+                    : 'https://sr-bsm.onrender.com';
+            },
+
+            async send() {
+                const inp = document.getElementById('input');
+                const msg = inp.value.trim();
+                if (!msg || this.sending) return;
+
+                this.sending = true;
+                document.getElementById('send-btn').disabled = true;
+
+                this.addMsg(msg, 'user');
+                inp.value = '';
+                inp.style.height = 'auto';
+                this.showTyping();
+
+                try {
+                    const model = document.getElementById('model').value;
+                    const base = this.getApiBase().replace(/\/+$/, '');
+                    let url, body;
+
+                    if (model === 'direct') {
+                        url = base + '/api/chat/direct';
+                        body = {
+                            message: msg,
+                            language: 'ar',
+                            history: this.msgs
+                                .filter(function(m) { return m.role === 'user' || m.role === 'assistant'; })
+                                .map(function(m) { return { role: m.role, content: m.content }; })
+                        };
+                    } else {
+                        url = base + '/api/chat';
+                        body = { agentId: model, input: msg };
+                    }
+
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('HTTP ' + res.status);
+                    }
+
+                    const data = await res.json();
+                    this.hideTyping();
+
+                    var reply = data.output || data.response || data.message;
+                    this.addMsg(reply || 'لم يتم استلام رد.', 'ai');
+                } catch(e) {
+                    this.hideTyping();
+                    this.addMsg('خطأ في الاتصال بالخادم: ' + e.message, 'error');
+                } finally {
+                    this.sending = false;
+                    document.getElementById('send-btn').disabled = false;
+                    document.getElementById('input').focus();
+                }
+            },
+
+            addMsg(text, sender) {
+                var box = document.getElementById('chat');
+                var welcome = document.getElementById('welcome');
+                if (welcome) welcome.remove();
+
+                var div = document.createElement('div');
+                div.className = 'message ' + sender;
+
+                var header = document.createElement('div');
+                header.className = 'msg-header';
+                header.textContent = sender === 'user' ? 'أنت' : (sender === 'error' ? 'خطأ' : 'Kimi');
+
+                var content = document.createElement('div');
+                content.className = 'msg-content';
+                content.textContent = text;
+
+                div.appendChild(header);
+                div.appendChild(content);
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+
+                if (sender === 'user') {
+                    this.msgs.push({ role: 'user', content: text });
+                } else if (sender === 'ai') {
+                    this.msgs.push({ role: 'assistant', content: text });
+                }
+            },
+
+            showTyping() {
+                var box = document.getElementById('chat');
+                var div = document.createElement('div');
+                div.className = 'typing-indicator';
+                div.id = 'typing';
+                div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            },
+
+            hideTyping() {
+                var t = document.getElementById('typing');
+                if (t) t.remove();
+            },
+
+            newChat() {
+                this.msgs = [];
+                var box = document.getElementById('chat');
+                box.innerHTML = '';
+                var welcome = document.createElement('div');
+                welcome.className = 'welcome';
+                welcome.id = 'welcome';
+                var h1 = document.createElement('h1');
+                h1.textContent = 'مرحباً، أنا Kimi';
+                var p = document.createElement('p');
+                p.textContent = 'كيف يمكنني مساعدتك في مشروع BSM؟';
+                welcome.appendChild(h1);
+                welcome.appendChild(p);
+                box.appendChild(welcome);
+            }
+        };
+
+        document.getElementById('send-btn').addEventListener('click', function() { chat.send(); });
+        document.getElementById('new-chat-btn').addEventListener('click', function() { chat.newChat(); });
+        document.getElementById('input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chat.send();
+            }
+        });
+        document.getElementById('input').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+    </script>
+</body>
+</html>
