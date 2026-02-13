@@ -141,6 +141,16 @@ jobs:
                 newLabel = 'conflicts';
                 reason = `Has merge conflicts (mergeable_state=${mergeableState || 'unknown'})`;
                 summary.conflicts.push({ number: pr.number, title: pr.title });
+              } else if (
+                mergeableState === 'behind' ||
+                mergeableState === 'blocked' ||
+                mergeableState === 'unstable' ||
+                mergeableState === 'draft' ||
+                mergeableState === 'unknown'
+              ) {
+                newLabel = 'needs-changes';
+                reason = `Not mergeable (mergeable_state=${mergeableState || 'unknown'})`;
+                summary.needsChanges.push({ number: pr.number, title: pr.title });
               } else if (daysSince >= 14) {
                 newLabel = 'stale';
                 reason = `Inactive for ${daysSince} days`;
