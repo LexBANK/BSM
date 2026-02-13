@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 # Configuration
 DOMAIN="${DOMAIN:-lexbank.com}"
 EMAIL="${EMAIL:-admin@lexbank.com}"
+ENABLE_WWW="${ENABLE_WWW:-auto}"
 DB_PASSWORD="${DB_PASSWORD:-$(openssl rand -base64 32)}"
 ADMIN_TOKEN="${ADMIN_TOKEN:-$(openssl rand -hex 32)}"
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 64)}"
@@ -42,6 +43,50 @@ warning() {
 error() {
     echo -e "${RED}❌ $1${NC}"
     exit 1
+}
+
+build_domain_config() {
+    local dot_count
+    local should_enable_www="false"
+
+    dot_count=$(awk -F'.' '{print NF-1}' <<< "$DOMAIN")
+
+    case "${ENABLE_WWW,,}" in
+        true|1|yes)
+            should_enable_www="true"
+            ;;
+        false|0|no)
+            should_enable_www="false"
+            ;;
+        auto|"")
+            if [[ "$DOMAIN" != "localhost" && "$dot_count" -eq 1 ]]; then
+                should_enable_www="true"
+            fi
+            ;;
+        *)
+            warning "ENABLE_WWW must be one of: auto, true, false. Falling back to auto."
+            if [[ "$DOMAIN" != "localhost" && "$dot_count" -eq 1 ]]; then
+                should_enable_www="true"
+            fi
+            ;;
+    esac
+
+    NGINX_SERVER_NAMES="$DOMAIN"
+    CERTBOT_DOMAINS=("$DOMAIN")
+    CORS_ORIGINS=("https://${DOMAIN}" "http://localhost:3000")
+
+    if [[ "$should_enable_www" == "true" ]]; then
+        NGINX_SERVER_NAMES+=" www.${DOMAIN}"
+        CERTBOT_DOMAINS+=("www.${DOMAIN}")
+        CORS_ORIGINS+=("https://www.${DOMAIN}")
+    fi
+
+    CERTBOT_ARGS=""
+    for domain in "${CERTBOT_DOMAINS[@]}"; do
+        CERTBOT_ARGS+=" -d ${domain}"
+    done
+
+    CORS_ORIGINS_CSV=$(IFS=,; echo "${CORS_ORIGINS[*]}")
 }
 
 # ==============================================================================
@@ -387,7 +432,7 @@ DATABASE_URL=postgresql://lexbank:${DB_PASSWORD}@localhost:5432/lexbank
 # === Security ===
 ADMIN_TOKEN=${ADMIN_TOKEN}
 JWT_SECRET=${JWT_SECRET}
-CORS_ORIGINS=https://${DOMAIN},https://www.${DOMAIN},http://localhost:3000
+CORS_ORIGINS=${CORS_ORIGINS_CSV}
 
 # === AI APIs (Add your keys) ===
 # OPENAI_API_KEY=your_key_here
@@ -811,42 +856,44 @@ DASHBOARDEOF
 setup_nginx() {
     log "Configuring Nginx..."
 
-    cat > /etc/nginx/sites-available/lexbank << 'NGINXEOF'
+    cat > /etc/nginx/sites-available/lexbank << NGINXEOF
 server {
     listen 80;
-    server_name lexbank.com www.lexbank.com;
+    server_name ${NGINX_SERVER_NAMES};
 
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_cache_bypass \$http_upgrade;
     }
 
     location /docs {
         alias /var/www/lexbank/docs;
-        try_files $uri $uri/ =404;
+        try_files \$uri \$uri/ =404;
     }
 
     location /dashboard {
         alias /var/www/lexbank/dashboard;
-        try_files $uri $uri/ /dashboard/index.html;
+        try_files \$uri \$uri/ /dashboard/index.html;
     }
 
     location /chat {
         alias /var/www/lexbank/chat;
-        try_files $uri $uri/ /chat/index.html;
+        try_files \$uri \$uri/ /chat/index.html;
     }
 }
 NGINXEOF
 
     rm -f /etc/nginx/sites-enabled/default
     ln -sf /etc/nginx/sites-available/lexbank /etc/nginx/sites-enabled/
+
+    log "Nginx server_name values: ${NGINX_SERVER_NAMES}"
 
     nginx -t && systemctl restart nginx
     systemctl enable nginx
@@ -862,7 +909,8 @@ setup_ssl() {
     log "Setting up SSL certificate..."
 
     if [[ "$DOMAIN" != "localhost" ]]; then
-        certbot --nginx -d ${DOMAIN} -d www.${DOMAIN} --non-interactive --agree-tos -m ${EMAIL} || warning "SSL setup failed, continuing..."
+        # shellcheck disable=SC2086
+        certbot --nginx ${CERTBOT_ARGS} --non-interactive --agree-tos -m ${EMAIL} || warning "SSL setup failed, continuing..."
     else
         warning "Skipping SSL for localhost"
     fi
@@ -1010,6 +1058,8 @@ main() {
     echo "║                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
+
+    build_domain_config
 
     log "Starting installation for domain: ${DOMAIN}"
 
