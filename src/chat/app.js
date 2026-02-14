@@ -2,6 +2,8 @@ const { createApp, ref, computed, nextTick, onMounted } = Vue;
 
 // Detect API base URL - same origin when served from Express, configurable for standalone
 const API_BASE = window.__LEXBANK_API_URL__ || '';
+const DIRECT_CHAT_ENDPOINT = `${API_BASE}/api/chat/direct`;
+const AGENT_CHAT_ENDPOINT = `${API_BASE}/api/chat`;
 
 createApp({
   setup() {
@@ -141,7 +143,7 @@ createApp({
 
         if (mode.value === 'direct') {
           // Direct GPT chat with history
-          url = `${API_BASE}/api/chat/direct`;
+          url = DIRECT_CHAT_ENDPOINT;
           body = {
             message: text,
             language: lang.value,
@@ -149,7 +151,7 @@ createApp({
           };
         } else {
           // Agent-based chat
-          url = `${API_BASE}/api/chat`;
+          url = AGENT_CHAT_ENDPOINT;
           body = {
             agentId: mode.value,
             input: text
