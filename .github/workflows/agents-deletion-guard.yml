@@ -1,0 +1,134 @@
+name: Agents Deletion Guard
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'data/agents/*.yaml'
+      - 'data/agents/index.json'
+
+env:
+  # Override via repository variable (Settings > Variables > Actions):
+  # AGENTS_DELETION_ALLOWLIST_OVERRIDE=true
+  ALLOWLIST_OVERRIDE: ${{ vars.AGENTS_DELETION_ALLOWLIST_OVERRIDE || 'false' }}
+  # CSV labels allowed to bypass the guard with explicit human approval.
+  ALLOWLIST_LABELS: ${{ vars.AGENTS_DELETION_ALLOWLIST_LABELS || 'agents-deletion-approved' }}
+  # CSV protected agent files under data/agents/ that must never be deleted
+  # unless allowlist override/label is present.
+  PROTECTED_AGENT_FILES: ${{ vars.PROTECTED_AGENT_FILES || 'legal-agent.yaml' }}
+
+jobs:
+  guard-agent-deletions:
+    name: Guard protected agent deletions
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect protected deletions and unsafe index removals
+        env:
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+          from pathlib import Path
+
+          def run(cmd: list[str]) -> str:
+            return subprocess.check_output(cmd, text=True).strip()
+
+          event_path = Path(os.environ["GITHUB_EVENT_PATH"])
+          event = json.loads(event_path.read_text())
+          labels = {l.get("name", "") for l in event.get("pull_request", {}).get("labels", [])}
+
+          allowlist_override = os.environ.get("ALLOWLIST_OVERRIDE", "false").strip().lower() == "true"
+          allowlist_labels = {
+            item.strip() for item in os.environ.get("ALLOWLIST_LABELS", "").split(",") if item.strip()
+          }
+          bypass_by_label = bool(labels.intersection(allowlist_labels))
+          bypass = allowlist_override or bypass_by_label
+
+          if bypass:
+            reason = "repository override" if allowlist_override else "explicit allowlist label"
+            print(f"Bypass active ({reason}); deletion guard skipped.")
+            sys.exit(0)
+
+          base_ref = os.environ["BASE_REF"]
+          run(["git", "fetch", "origin", base_ref, "--depth=1"])
+          diff = run(["git", "diff", "--name-status", f"origin/{base_ref}...HEAD"])
+
+          deleted_agent_files: list[str] = []
+          index_changed = False
+
+          for line in diff.splitlines():
+            parts = line.split(maxsplit=1)
+            if len(parts) != 2:
+              continue
+            status, path = parts
+            if status == "D" and path.startswith("data/agents/") and path.endswith(".yaml"):
+              deleted_agent_files.append(Path(path).name)
+            if path == "data/agents/index.json":
+              index_changed = True
+
+          protected = {
+            p.strip() for p in os.environ.get("PROTECTED_AGENT_FILES", "").split(",") if p.strip()
+          }
+          deleted_protected = sorted(set(deleted_agent_files).intersection(protected))
+
+          def load_index(ref: str) -> set[str]:
+            try:
+              content = run(["git", "show", f"{ref}:data/agents/index.json"])
+            except subprocess.CalledProcessError:
+              return set()
+            try:
+              data = json.loads(content)
+              return set(data.get("agents", []))
+            except json.JSONDecodeError:
+              print(f"ERROR: data/agents/index.json is invalid JSON at {ref}")
+              sys.exit(1)
+
+          removed_without_replacement: list[str] = []
+          if index_changed:
+            base_agents = load_index(f"origin/{base_ref}")
+            head_agents = load_index("HEAD")
+
+            removed = base_agents - head_agents
+            added = head_agents - base_agents
+            added_stems = {Path(a).stem for a in added}
+
+            for item in sorted(removed):
+              if Path(item).stem not in added_stems:
+                removed_without_replacement.append(item)
+
+          errors: list[str] = []
+          if deleted_protected:
+            errors.append(
+              "🚫 Protected agents deleted: " + ", ".join(f"data/agents/{f}" for f in deleted_protected)
+            )
+          if removed_without_replacement:
+            errors.append(
+              "🚫 index.json entries removed without clear replacement: "
+              + ", ".join(removed_without_replacement)
+            )
+
+          if errors:
+            print("\n".join(errors))
+            print(
+              "\nTo proceed, add an explicit allowlist label "
+              f"({', '.join(sorted(allowlist_labels)) or 'configured label'}) or set "
+              "AGENTS_DELETION_ALLOWLIST_OVERRIDE=true in repository variables."
+            )
+            sys.exit(1)
+
+          print("✅ No protected agent deletions or unsafe index removals detected.")
+          PY
