@@ -163,7 +163,119 @@ jobs:
     needs: agent-review
     if: needs.agent-review.outputs.decision == 'approve_and_merge'
     steps:
+      - name: Validate merge policy conditions
+        id: validate-merge-policy
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const core = require('@actions/core');
+
+            // Mirrors data/agents/pr-merge-agent.yaml
+            const policy = {
+              minApprovals: 2,
+              requiredChecks: [
+                { name: 'code-review-agent', expected: 'approved' },
+                { name: 'security-agent', expected: 'passed' },
+                { name: 'ci_tests', expected: 'passed' }
+              ]
+            };
+
+            const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const expectedToSuccess = (expected) => {
+              const val = String(expected || '').toLowerCase();
+              return val === 'approved' || val === 'passed' || val === 'success';
+            };
+
+            const { owner, repo } = context.repo;
+            const pull_number = context.issue.number;
+            const headSha = context.payload.pull_request?.head?.sha;
+
+            const reviewsResp = await github.rest.pulls.listReviews({
+              owner,
+              repo,
+              pull_number,
+              per_page: 100
+            });
+
+            const latestReviewByUser = new Map();
+            for (const review of reviewsResp.data) {
+              if (!review.user?.login) continue;
+              latestReviewByUser.set(review.user.login, review.state);
+            }
+
+            const approvalCount = [...latestReviewByUser.values()].filter(
+              (state) => state === 'APPROVED'
+            ).length;
+
+            const combinedStatus = await github.rest.repos.getCombinedStatusForRef({
+              owner,
+              repo,
+              ref: headSha
+            });
+
+            const checksResp = await github.rest.checks.listForRef({
+              owner,
+              repo,
+              ref: headSha,
+              per_page: 100
+            });
+
+            const statusContexts = combinedStatus.data.statuses.map((item) => ({
+              name: item.context,
+              status: item.state
+            }));
+
+            const checkRuns = checksResp.data.check_runs.map((item) => ({
+              name: item.name,
+              status: item.status,
+              conclusion: item.conclusion
+            }));
+
+            const missing = [];
+
+            if (approvalCount < policy.minApprovals) {
+              missing.push(`عدد الموافقات غير كافٍ: الحالي ${approvalCount} والمطلوب ${policy.minApprovals}`);
+            }
+
+            for (const required of policy.requiredChecks) {
+              const reqNameNorm = normalize(required.name);
+              const requiresSuccess = expectedToSuccess(required.expected);
+
+              const matchingStatus = statusContexts.find((ctx) => normalize(ctx.name) === reqNameNorm);
+              const matchingCheckRun = checkRuns.find((run) => normalize(run.name) === reqNameNorm);
+
+              const statusPassed = matchingStatus
+                ? (requiresSuccess ? matchingStatus.status === 'success' : false)
+                : false;
+
+              const runPassed = matchingCheckRun
+                ? (requiresSuccess
+                    ? matchingCheckRun.status === 'completed' && matchingCheckRun.conclusion === 'success'
+                    : false)
+                : false;
+
+              if (!statusPassed && !runPassed) {
+                const observed = matchingCheckRun
+                  ? `check_run=${matchingCheckRun.status}/${matchingCheckRun.conclusion || 'none'}`
+                  : matchingStatus
+                    ? `status=${matchingStatus.status}`
+                    : 'غير موجود';
+                missing.push(`فحص مطلوب غير مستوفى: ${required.name} (المتوقع: ${required.expected}, الحالي: ${observed})`);
+              }
+            }
+
+            if (missing.length > 0) {
+              core.setOutput('can_merge', 'false');
+              core.setOutput('missing_conditions', missing.join(' | '));
+              console.log('Merge policy validation failed:', missing);
+            } else {
+              core.setOutput('can_merge', 'true');
+              core.setOutput('missing_conditions', '');
+              console.log('Merge policy validation passed');
+            }
+
       - name: Approve PR
+        if: steps.validate-merge-policy.outputs.can_merge == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -176,6 +288,7 @@ jobs:
             });
 
       - name: Add labels
+        if: steps.validate-merge-policy.outputs.can_merge == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -187,6 +300,7 @@ jobs:
             });
 
       - name: Enable auto-merge
+        if: steps.validate-merge-policy.outputs.can_merge == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -219,6 +333,26 @@ jobs:
                 console.log(`Auto-merge enable: ${autoErr.message}`);
               }
             }
+
+      - name: Comment missing merge conditions
+        if: steps.validate-merge-policy.outputs.can_merge != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const missing = `${{ steps.validate-merge-policy.outputs.missing_conditions }}`
+              .split(' | ')
+              .filter(Boolean)
+              .map((item) => `- ${item}`)
+              .join('\n');
+
+            const body = `🚫 لا يمكن تنفيذ الدمج التلقائي حالياً لأن شروط السياسة غير مكتملة:\n\n${missing}\n\nيرجى استيفاء الشروط ثم إعادة المحاولة.`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
 
   # ==================== Phase 3: Handle Rejection ====================
   handle-rejection:
