@@ -1,0 +1,7 @@
+services:
+  bsm-agentos-dashboard:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"

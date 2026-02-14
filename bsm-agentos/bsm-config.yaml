@@ -1,0 +1,11 @@
+platform:
+  name: BSM-AgentOS
+  environment: development
+  run_mode: local
+
+security:
+  enforce_permissions: true
+  static_scan: true
+
+orchestration:
+  parallel_execution: true
