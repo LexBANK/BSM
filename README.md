@@ -1,4 +1,9 @@
-# LexBANK / BSU Platform
+# LexBANK / core-hub (BSM) Platform
+
+> ⚠️ **Repository naming governance update:** the legacy "BSU" naming is being retired.
+> The active codebase should be referenced as **`LexBANK/BSM`** (runtime services) and
+> **`LexBANK/core-hub`** (organizational hub). If you landed here from an older repo link,
+> update your remotes and automation references accordingly.
 
 > 📱 **Looking for Telegram community?** See [Community & Support](#community--support) section below or [docs/COMMUNITY.md](docs/COMMUNITY.md)
 

@@ -1,4 +1,4 @@
-name: 🤖 BSU CI/CD - Build, Test & Deploy to Render
+name: 🤖 BSM CI/CD - Build, Test & Deploy to Render
 
 on:
   push:
@@ -171,7 +171,7 @@ jobs:
                   type: "header",
                   text: {
                     type: "plain_text",
-                    text: "🚀 BSU Nexus Deployed Successfully",
+                    text: "🚀 BSM Deployed Successfully",
                     emoji: true
                   }
                 },
@@ -212,7 +212,7 @@ jobs:
                   type: "header",
                   text: {
                     type: "plain_text",
-                    text: "❌ BSU Nexus Deployment Failed",
+                    text: "❌ BSM Deployment Failed",
                     emoji: true
                   }
                 },
