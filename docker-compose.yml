@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  bsm-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: lexbank/bsm-nexus:latest
+    container_name: bsm-nexus-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - OPENAI_BSM_KEY=${OPENAI_BSM_KEY}
+      - ANTHROPIC_KEY=${ANTHROPIC_KEY}
+      - PERPLEXITY_KEY=${PERPLEXITY_KEY}
+      - GOOGLE_AI_KEY=${GOOGLE_AI_KEY}
+      - MOONSHOT_API_KEY=${MOONSHOT_API_KEY}
+      - CORS_ORIGINS=http://localhost:3000,https://corehub.nexus,https://bsm.pages.dev
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data:ro
+    networks:
+      - bsm-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nginx:
+    image: nginx:alpine
+    container_name: bsm-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - bsm-api
+    networks:
+      - bsm-network
+    profiles:
+      - with-nginx
+
+  redis:
+    image: redis:7-alpine
+    container_name: bsm-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - bsm-network
+    profiles:
+      - with-redis
+
+networks:
+  bsm-network:
+    driver: bridge
+
+volumes:
+  redis-data:

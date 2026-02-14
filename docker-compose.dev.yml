@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  bsm-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server-builder
+    image: lexbank/bsm-nexus:dev
+    container_name: bsm-nexus-dev
+    restart: "no"
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DEBUG=bsm:*
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - ./node_modules:/app/node_modules
+    command: >
+      sh -c "npm install -g nodemon &&
+             nodemon --inspect=0.0.0.0:9229 src/server.js"
+    networks:
+      - bsm-dev-network
+
+networks:
+  bsm-dev-network:
+    driver: bridge

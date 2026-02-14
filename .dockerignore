@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.github
+
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Development files
+.DS_Store
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test artifacts
+coverage
+.nyc_output
+*.test.js
+tests
+mocks
+
+# Logs
+logs
+*.log
+
+# Build artifacts
+dist
+build
+.cache
+
+# Documentation markdown (optional to reduce image size)
+*.md
+docs/*.md
+!docs/config.js
+
+# Large archives/media
+*.mp4
+*.zip
+*.tar.gz
